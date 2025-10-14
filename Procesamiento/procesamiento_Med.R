@@ -128,13 +128,8 @@ dataset$p17[dataset$p17 %in% c("Moto 2T", "Moto 4T")] <- "Moto"
 # --- Moto por plataforma ---
 dataset$p17[dataset$p17 %in% c("Moto en plataforma (Ejemplo: Didi, Picap, Uber, otras)")] <- "Aplicación viajes (moto)"
 
-# --- Moto taxi (informal) ---
-dataset$p17[dataset$p17 %in% c("Moto taxi (moto ratón)")] <- "Público (informal - moto taxi)"
-
 # --- Activos: bici / caminata ---
 dataset$p17[dataset$p17 %in% c("Bicicleta",
-                               "Bicitaxi con motor",
-                               "Bicitaxi sin motor",
                                "Caminata")] <- "Activos"
 
 # --- Transporte público formal (Medellín) ---
@@ -143,9 +138,6 @@ dataset$p17[dataset$p17 %in% c("Bus, colectivo, buseta",
                                "Metroplus",
                                "Metro Cable",
                                "Tranvía")] <- "Público (formal)"
-
-# --- Transporte público informal (auto) ---
-dataset$p17[dataset$p17 %in% c("Pirata (chivero)")] <- "Público (informal - auto)"
 
 # Recodificar la educación (p5)
 dataset$p5[dataset$p5 %in% c("Básica primaria incompleta",

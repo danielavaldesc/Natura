@@ -109,14 +109,13 @@ dataset$p5 <- dplyr::recode(dataset$p5,
       "Doctorado" = "Universitario o posgrado"
 )
 
-
 # Recodificar medios de transporte (p17)
 dataset$p17 <- as.character(dataset$p17)
 
 # --- Automóvil ---
 dataset$p17[dataset$p17 %in% c("Automóvil",
-                                   "Campero/ Camioneta (SUV)",
-                                   "Van/Camioneta con platón")] <- "Auto"
+                              "Campero/ Camioneta (SUV)",
+                              "Van/Camioneta con platón")] <- "Auto"
 
 # --- Automóvil por plataforma ---
 dataset$p17[dataset$p17 == "Automóvil en plataforma (Ejemplo:Uber, Yango, Didi, InDriver)"] <- "Aplicación viajes / Taxi (auto)"
@@ -142,6 +141,8 @@ dataset$p17[dataset$p17 %in% c("Transporte público (MIO)",
 
 # --- Transporte público informal ---
 dataset$p17[dataset$p17 == "Guala o pirata"] <- "Público (informal - auto)"
+
+#Agrupaciones de medios de transporte
 
 # Recodificar la educación (p5)
 dataset$p5[dataset$p5 %in% c("Básica primaria incompleta",
