@@ -26,15 +26,29 @@ dataset <- readxl::read_excel("Input\\BD Base Movilidad Cali 2025_V01_Cliente.xl
 ##---------------------------------------------##
 ## Primera parte: recodificación de variables  ##--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ##---------------------------------------------##
-control <- c("p19Comuna", "p20","p20_1")
 
+cat <- c("filtro_a", "filtro_b", "filtro_c", "Edadr", "p2",	
+         "p2_1", "p2_1_1", "p2_2", "p2_2_1", "p3", "p4", "p5", 
+         "p6", "p7", "p7_1", "p7_2", "p7_2_1", "p7_2_2", "p7_2_3",
+         "p7_2_4", "p7_3", "p7_3_1", "p7_3_2", "p8", "p9Estrato", "p10", "p11", 
+         "p11_1", "p12", "p12.1", "p12.2", "p13", "p14", "p15", "p15_1", 
+         "p16", "p16_1", "p17", "p17_v2_1", "p17_v2_2", "p17_v2_3", "p17_v3", 
+         "p17_v3_otro", "p17_v4", "p17_v5", "p17_v6", "p17_v7", "p17_v7_1",
+         "p19Comuna", "p20", "p20_1", "p20_1_otro", "p21", "p22", "p23", 
+         "p23_1", "p23_2", "p25", "p25.1", "p25.2", "p25.3", "p25.4", "p26",
+         "p27", "p27.1", "p27.2", "p27.3", "p27.4", "p27.5", "p27.6", "p27.7", 
+         "p27.8", "p27.9", "p27.10", "p27_otro", "p29", "p29_otro", "p30", 
+         "p30_otro", "p33", "p33_otro", "p34", "p34_otro", "p35", "p35_otro", 
+         "p38p38_1", "p38p38_2", "p38p38_3", "p38p38_4", "p38p38_5", "p38p38_6", 
+         "p38p38_7", "p38p38_99", "p38_99_otro", "p39", "p39.1", "p39_otro", 
+         "p39_1", "p39_1_1", "p39_1_otro", "p39_2", "p40", "p41")
 
-cat <- c("genero", "Edadr", "p3", "p5", "p7", "p9Estrato",
-         "p10", "p17", "p22", "p23", "p25", "p26", "p31")
+cont <- c("p1Edad", "p18", "p18_p1", "p18_p2", "p18_p3", "p18_p4", "p18_c1")
 
-likert <- paste0("p28p28_", 1:9)
+likert <- c("p24", "p28p28_1", "p28p28_2", "p28p28_3", "p28p28_4", 
+            "p28p28_5", "p28p28_6", "p28p28_7", "p28p28_8", "p28p28_9", 
+            "p32", "p36", "p37")
 
-cont <- c("p1Edad", "p18", "p18_p1",	"p18_p2",	"p18_p3",	"p18_p4")
 
 dataset <- dataset %>% dplyr::mutate(across(all_of(cont), as.numeric))
 
@@ -117,21 +131,16 @@ dataset$p17[dataset$p17 %in% c("Automóvil",
                               "Campero/ Camioneta (SUV)",
                               "Van/Camioneta con platón")] <- "Auto"
 
-# --- Automóvil por plataforma ---
-dataset$p17[dataset$p17 == "Automóvil en plataforma (Ejemplo:Uber, Yango, Didi, InDriver)"] <- "Aplicación viajes / Taxi (auto)"
-
 # --- Motos ---
 dataset$p17[dataset$p17 %in% c("Moto 2T", "Moto 4T")] <- "Moto"
 
-# --- Moto en plataformas ---
-dataset$p17[dataset$p17 == "Moto en plataforma (Ejemplo: Didi, Picap, Uber, otras)"] <- "Aplicación viajes (moto)"
+# --- Transporte público informal---
+dataset$p17[dataset$p17 %in% c("Moto en plataforma (Ejemplo: Didi, Picap, Uber, otras)",
+            "Moto taxi (moto ratón)", "Bicitaxi con motor")] <- "Publico informal (moto)"
 
-# --- Moto taxi ---
-dataset$p17[dataset$p17 == "Moto taxi (moto ratón)"] <- "Público (informal - moto taxi)"
 
 # --- Bicicletas y bicitaxis ---
 dataset$p17[dataset$p17 %in% c("Bicicleta",
-                               "Bicitaxi con motor",
                                 "Bicitaxi sin motor",
                                "Caminata")] <- "Activos"
 
@@ -140,7 +149,11 @@ dataset$p17[dataset$p17 %in% c("Transporte público (MIO)",
                                 "Transporte público colectivo busetas")] <- "Público (formal)"
 
 # --- Transporte público informal ---
-dataset$p17[dataset$p17 == "Guala o pirata"] <- "Público (informal - auto)"
+dataset$p17[dataset$p17%in%c("Guala o pirata", 
+                             "Automóvil en plataforma (Ejemplo:Uber, Yango, Didi, InDriver)")] <- "Público informal (auto)"
+
+
+dataset$p17[dataset$p17 %in% c("Taxi")] <- "Taxi"
 
 #Agrupaciones de medios de transporte
 
