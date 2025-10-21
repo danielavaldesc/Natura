@@ -1,3 +1,4 @@
+
 ###############################################################################
 ###############################################################################
 ## Análisis descriptivo de la encuesta segmentado POR GÉNERO (Cali)         ##
@@ -7,62 +8,47 @@
 library(tidyverse)
 library(readxl)
 library(writexl)
+library(janitor)
 
-#---------------------------#
-# 0) Ruta y carga de datos  #
-#---------------------------#
-setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\")
-dataset <- readxl::read_excel("Output\\base_Cali_2025.xlsx")
+########################
+## Ruta y cargar datos 
+########################
 
-#---------------------------#
-# 1) Normalizar variable(s) #
-#---------------------------#
-dataset$genero <- tolower(trimws(as.character(dataset$genero)))
-dataset$genero <- dplyr::recode(dataset$genero,
-                                "femenino" = "Femenino", "mujer" = "Femenino", "f" = "Femenino", "1" = "Femenino",
-                                "masculino" = "Masculino", "hombre" = "Masculino", "m" = "Masculino", "2" = "Masculino")
+# Ruta y cargar datos
+setwd("C:\\Users\\Portatil\\Desktop\\Natura\\")
+dataset <- readxl::read_excel("Output\\base_Cali_2025.xlsx") %>%
+  janitor::clean_names()
 
-#---------------------------#
-# 2) Cargar funciones       #
-#---------------------------#
+########################
+## Variable de control
+########################
+
+# Seleccionar variable para segmentar
+dataset$genero <- dataset$p40
+
+# Recodificación 1
+dataset$genero[dataset$genero %in%
+                 c("Otras identidades de género",
+                   "Prefiere no responder")] = "Otros"
+
+
+########################
+## Funciones
+########################
 source("Analisis\\funcion_0.R", encoding = "UTF-8")
 
 # Carpeta de salida
-dir.create("Output/Cali/Output_by_genero", recursive = TRUE, showWarnings = FALSE)
+dir.create("Output/Cali/Output_by_genero", 
+           recursive = TRUE, showWarnings = FALSE)
 
-##-------------------------------------##
-## 3) Tablas cruzadas (caracterización)#
-##-------------------------------------##
+########################
+## Modulos
+########################
 
-# TABLA 1: Edad × Modo (p17)  ← aquí va p17 “donde iba género”
-cross_tab(
-  data    = dataset,
-  row_var = "p1Edad",
-  col_var = "p17",
-  caption = "Tabla 1: proporción (%) de participantes diferenciados según modo de transporte y grupos etarios",
-  tex_path  = "Output/Cali/Output_by_genero/modo_edad.tex",
-  xlsx_path = "Output/Cali/Output_by_genero/modo_edad.xlsx"
-)
+# Modulo 1
+var_m1 = 
 
-# TABLA 2: Edad × Género
-cross_tab(
-  data    = dataset,
-  row_var = "p1Edad",
-  col_var = "genero",
-  caption = "Tabla 2: proporción (%) de participantes diferenciados según género y grupos etarios",
-  tex_path  = "Output/Cali/Output_by_genero/genero_edad.tex",
-  xlsx_path = "Output/Cali/Output_by_genero/genero_edad.xlsx"
-)
 
-# TABLA 3: Modo × Estrato (informativa)
-cross_tab(
-  data    = dataset,
-  row_var = "p17",
-  col_var = "p9Estrato",
-  caption = "Tabla 3: proporción (%) de participantes diferenciados según modo de transporte y estrato socioeconómico",
-  tex_path  = "Output/Cali/Output_by_genero/modo_estrato.tex",
-  xlsx_path = "Output/Cali/Output_by_genero/modo_estrato.xlsx"
-)
 
 ##-------------------------------------##
 ## 4) Prueba de normalidad univariada  ##
