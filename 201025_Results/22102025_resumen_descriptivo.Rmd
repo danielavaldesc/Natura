@@ -1,0 +1,159 @@
+---
+title: "Proyecto Natura: Resumen Descriptivo por Módulo"
+author: "Pontificia Universidad Javeriana Cali"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+subtitle: "Encuesta de Movilidad - Cali 2025"
+output:
+  word_document:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: paged
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(readxl)
+library(dplyr)
+library(gt)
+library(tidyverse)
+```
+
+
+
+```{r cargar}
+setwd("C:/Users/sergio.barona/Desktop/Natura/201025_Results/")
+
+# --- Módulo 1 ---
+tablam1_gender <- read_excel("output/m1/21102025_v2_mod1_by_gender.xlsx")
+tablam1_ses    <- read_excel("output/m1/21102025_mod1_by_ses.xlsx")
+tablam1_travel <- read_excel("output/m1/21102025_mod1_by_travel_mode.xlsx")
+
+mod1 <- tablam1_gender %>%
+  inner_join(tablam1_ses, by = c("Variable", "Label", "Categoria")) %>%
+  inner_join(tablam1_travel, by = c("Variable", "Label", "Categoria"))
+
+# --- Módulo 2 ---
+tablam2_gender <- read_excel("output/m2/21102025_mod2_by_gender.xlsx")
+tablam2_ses    <- read_excel("output/m2/21102025_mod2_by_ses.xlsx")
+tablam2_travel <- read_excel("output/m2/21102025_mod2_by_travel_mode.xlsx")
+
+mod2 <- tablam2_gender %>%
+  inner_join(tablam2_ses, by = c("Variable", "Label", "Categoria")) %>%
+  inner_join(tablam2_travel, by = c("Variable", "Label", "Categoria"))
+
+# --- Módulo 3 ---
+tablam3_gender <- read_excel("output/m3/21102025_mod3_by_gender.xlsx")
+tablam3_ses    <- read_excel("output/m3/21102025_mod3_by_ses.xlsx")
+tablam3_travel <- read_excel("output/m3/21102025_mod3_by_travel_mode.xlsx")
+
+mod3 <- tablam3_gender %>%
+  inner_join(tablam3_ses, by = c("Variable", "Label", "Categoria")) %>%
+  inner_join(tablam3_travel, by = c("Variable", "Label", "Categoria"))
+
+# --- Módulo 4 ---
+tablam4_gender <- read_excel("output/m4/21102025_mod4_by_gender.xlsx")
+tablam4_ses    <- read_excel("output/m4/21102025_mod4_by_ses.xlsx")
+tablam4_travel <- read_excel("output/m4/21102025_mod4_by_travel_mode.xlsx")
+
+mod4 <- tablam4_gender %>%
+  inner_join(tablam4_ses, by = c("Variable", "Label", "Categoria")) %>%
+  inner_join(tablam4_travel, by = c("Variable", "Label", "Categoria"))
+```
+
+# Resultados descriptivos por módulo
+
+
+## Módulo 1 — Características socio-demográficas
+
+```{r mod1}
+mod1 %>%
+  head(20) %>%
+  gt(rowname_col = "Categoria") %>%
+  tab_header(
+    title = md("**Módulo 1. Características socio-demográficas**"),
+    subtitle = md("Distribución por género, nivel socioeconómico y modo de transporte")
+  ) %>%
+  tab_spanner(label = "Género", columns = starts_with("Hombre") | starts_with("Mujer")) %>%
+  tab_spanner(label = "Nivel socioeconómico", columns = starts_with("Alto") | starts_with("Bajo") | starts_with("Medio")) %>%
+  tab_spanner(label = "Modo de transporte principal", columns = starts_with("Auto") | starts_with("Modo") | starts_with("Transporte")) %>%
+  cols_label(
+    Variable = "Variable",
+    Label = "Descripción",
+    p_value = html("**p-valor**")
+  ) %>%
+  data_color(
+    columns = c("p_value.x", "p_value.y", "p_value"),
+    colors = scales::col_bin(
+      bins = c(0, 0.05, 0.1, 1),
+      palette = c("#90BE6D", "#F8961E", "#F94144"),
+      na.color = "white"
+    )
+  ) %>%
+  fmt_number(columns = c("p_value.x", "p_value.y", "p_value"), decimals = 4) %>%
+  opt_table_font(font = list(google_font("Roboto Condensed"))) %>%
+  tab_options(
+    table.font.size = px(11),
+    data_row.padding = px(4),
+    heading.background.color = "#f8f9fa",
+    table.border.top.color = "white",
+    column_labels.border.bottom.color = "#dee2e6",
+    table.width = pct(100)
+  )
+```
+
+## 3.2. Módulo 2 — Movilidad y patrones de desplazamiento
+
+```{r mod2}
+mod2 %>%
+  head(20) %>%
+  gt(rowname_col = "Categoria") %>%
+  tab_header(
+    title = md("**Módulo 2. Movilidad y patrones de desplazamiento**"),
+    subtitle = md("Resultados por género, SES y modo de transporte")
+  ) %>%
+  data_color(
+    columns = c("p_value.x", "p_value.y", "p_value"),
+    colors = scales::col_bin(
+      bins = c(0, 0.05, 0.1, 1),
+      palette = c("#90BE6D", "#F8961E", "#F94144")
+    )
+  ) %>%
+  fmt_number(columns = c("p_value.x", "p_value.y", "p_value"), decimals = 4)
+```
+
+## 3.3. Módulo 3 — Percepciones, preferencias y deseos
+
+```{r mod3}
+mod3 %>%
+  head(20) %>%
+  gt(rowname_col = "Categoria") %>%
+  tab_header(
+    title = md("**Módulo 3. Percepciones, preferencias y deseos**"),
+    subtitle = md("Distribuciones y contrastes estadísticos")
+  ) %>%
+  data_color(columns = c("p_value.x", "p_value.y", "p_value"),
+             colors = scales::col_bin(bins = c(0, 0.05, 0.1, 1),
+                                      palette = c("#90BE6D", "#F8961E", "#F94144"))) %>%
+  fmt_number(columns =c("p_value.x", "p_value.y", "p_value"), decimals = 4)
+```
+
+## 3.4. Módulo 4 — Experiencias de acoso, inseguridad y VBG
+
+```{r mod4}
+mod4 %>%
+  head(20) %>%
+  gt(rowname_col = "Categoria") %>%
+  tab_header(
+    title = md("**Módulo 4. Experiencias de acoso, inseguridad y VBG**"),
+    subtitle = md("Frecuencias y diferencias significativas por grupo")
+  ) %>%
+  data_color(columns = c("p_value.x", "p_value.y", "p_value"),
+             colors = scales::col_bin(bins = c(0, 0.05, 0.1, 1),
+                                      palette  = c("#90BE6D", "#F8961E", "#F94144"))) %>%
+  fmt_number(columns = c("p_value.x", "p_value.y", "p_value"), decimals = 4)
+```
+
+

@@ -1,7 +1,7 @@
 ###############################################################################
 # MÓDULO 3: PERCEPCIONES, PREFERENCIAS Y DESEOS
-# Descripción: Recodificación de variables relacionadas con tenencia de vehículos,
-#              modos de transporte, características del viaje y propósito principal.
+# Descripción: Recodificación de variables relacionadas con percepciones,
+#              preferencias y factores de decisión en la movilidad.
 # Objetivo: Estandarizar categorías para análisis comparativo por género y grupos.
 ###############################################################################
 
@@ -16,109 +16,67 @@ mod_percepciones <- diccionario_clasificado %>%
 
 vars <- mod_percepciones$codigo
 
+library(purrr)
+library(stringr)
+library(dplyr)
+
 ## ============================================================================
-## 1. Nivel de satisfacción (p24) — Escala Likert 1 a 5
+## 1. Nivel de satisfacción (p24)
 ## ============================================================================
 
 dataset <- dataset %>%
   mutate(
     p24 = case_when(
-      as.character(p24) %in% c("1", "Nada Satisfecho", "nada satisfecho") ~ 1,
-      as.character(p24) %in% c("2", "Poco Satisfecho", "poco satisfecho") ~ 2,
-      as.character(p24) %in% c("3", "Satisfecho", "satisfecho") ~ 3,
-      as.character(p24) %in% c("4", "Muy Satisfecho", "muy satisfecho") ~ 4,
-      as.character(p24) %in% c("5", "Totalmente satisfecho", "totalmente satisfecho") ~ 5,
+      as.character(p24) %in% c("1", "Nada Satisfecho") ~ 1,
+      as.character(p24) %in% c("2", "Poco Satisfecho") ~ 2,
+      as.character(p24) %in% c("3", "Satisfecho") ~ 3,
+      as.character(p24) %in% c("4", "Muy Satisfecho") ~ 4,
+      as.character(p24) %in% c("5", "Totalmente satisfecho") ~ 5,
       TRUE ~ NA_real_
     )
   )
 
 
-###############################################################################
-## MÓDULO 2: Movilidad — Razones de elección del modo de transporte (p25)
-###############################################################################
+## ============================================================================
+## 2. Razones de elección del modo de transporte (p25)
+## ============================================================================
 
-library(purrr)
-library(stringr)
-library(dplyr)
-
-# 1. Unificar respuestas múltiples
 dataset <- dataset %>%
   mutate(
     razones_transporte = pmap_chr(
       select(., p25, p25_1, p25_2, p25_3, p25_4),
       ~ c(...) %>% discard(is.na) %>% unique() %>% paste(collapse = ", ")
-    )
-  )
-
-# 2. Versión textual (preservar naturaleza múltiple)
-dataset <- dataset %>%
-  mutate(
-    p25_razones_multiples = case_when(
-      razones_transporte == "" ~ NA_character_,
-      TRUE ~ razones_transporte
-    )
-  )
-
-# 3. Variables binarias
-dataset <- dataset %>%
-  mutate(
-    p25_costo        = if_else(str_detect(razones_transporte, "costo|posibilidades económicas|capacidad adquisitiva"), 1, 0, missing = 0),
-    p25_tiempo       = if_else(str_detect(razones_transporte, "tiempo"), 1, 0, missing = 0),
-    p25_comodidad    = if_else(str_detect(razones_transporte, "comodidad|confort"), 1, 0, missing = 0),
-    p25_autonomia    = if_else(str_detect(razones_transporte, "autonomía|control"), 1, 0, missing = 0),
-    p25_seguridad    = if_else(str_detect(razones_transporte, "seguridad"), 1, 0, missing = 0),
-    p25_distancia    = if_else(str_detect(razones_transporte, "distancia"), 1, 0, missing = 0),
-    p25_salud        = if_else(str_detect(razones_transporte, "salud"), 1, 0, missing = 0),
-    p25_ambiental    = if_else(str_detect(razones_transporte, "ambiental"), 1, 0, missing = 0),
-    p25_restriccion  = if_else(str_detect(razones_transporte, "restricciones|pico y placa"), 1, 0, missing = 0),
-    p25_otro         = if_else(str_detect(razones_transporte, "otro"), 1, 0, missing = 0)
-  )
-
-# 4. Variable resumen
-dataset <- dataset %>%
-  mutate(
-    p25_razones_agregadas = paste0(
-      ifelse(p25_costo == 1, "Costo económico, ", ""),
-      ifelse(p25_tiempo == 1, "Tiempo de viaje, ", ""),
-      ifelse(p25_comodidad == 1, "Comodidad / confort, ", ""),
-      ifelse(p25_autonomia == 1, "Autonomía / control, ", ""),
-      ifelse(p25_seguridad == 1, "Percepción de seguridad, ", ""),
-      ifelse(p25_distancia == 1, "Distancia, ", ""),
-      ifelse(p25_salud == 1, "Condiciones de salud, ", ""),
-      ifelse(p25_ambiental == 1, "Motivos ambientales, ", ""),
-      ifelse(p25_restriccion == 1, "Restricciones, ", ""),
-      ifelse(p25_otro == 1, "Otro motivo, ", "")
-    ) %>%
-      str_remove(", $") %>%
-      na_if("")
+    ),
+    p25_razones_agregadas = na_if(trimws(razones_transporte), "")
   )
 
 
-###############################################################################
-## MÓDULO 2: Movilidad — Aspectos que menos le gustan del modo de transporte (p26)
-###############################################################################
+## ============================================================================
+## 3. Aspectos que menos le gustan del modo (p26)
+## ============================================================================
 
 dataset <- dataset %>%
   mutate(
     p26_agregado = case_when(
       p26 %in% c("El costo de compra", "El costo de uso u operación") ~ "Costo económico",
       p26 %in% c("El tiempo de espera", "El tiempo de viaje") ~ "Tiempo de viaje / espera",
-      p26 %in% c("Las condiciones de incomodidad", "La exposición a condiciones climáticas desfavorables (lluvia o calor)") ~ "Incomodidad / clima",
+      p26 %in% c("Las condiciones de incomodidad", 
+                 "La exposición a condiciones climáticas desfavorables (lluvia o calor)") ~ "Incomodidad / clima",
       p26 == "La falta de autonomía o control sobre el viaje" ~ "Falta de autonomía / control",
       p26 == "La percepción de inseguridad personal (robo o atraco, acoso o violencia de algún tipo)" ~ "Inseguridad personal",
       p26 == "La vulnerabilidad frente accidentes de tránsito" ~ "Riesgo de accidente",
       p26 == "El nivel de emisiones (contaminación)" ~ "Impacto ambiental",
       p26 == "Nada me disgusta" ~ "Nada le disgusta",
-      p26 %in% c("No sabe/ No responde") ~ "Sin respuesta",
+      p26 == "No sabe/ No responde" ~ "Sin respuesta",
       p26 == "Otra razón" ~ "Otro motivo",
       TRUE ~ NA_character_
     )
   )
 
 
-###############################################################################
-## MÓDULO 2: Movilidad — Situaciones que buscó evitar al elegir su modo (p27)
-###############################################################################
+## ============================================================================
+## 4. Situaciones que buscó evitar (p27)
+## ============================================================================
 
 dataset <- dataset %>%
   mutate(
@@ -127,21 +85,198 @@ dataset <- dataset %>%
       ~ c(...) %>% discard(is.na) %>% unique() %>% paste(collapse = ", ")
     ),
     p27_situaciones_multiples = na_if(trimws(situaciones_evitar), "")
-  ) %>%
-  mutate(
-    p27_costo       = if_else(str_detect(str_to_lower(situaciones_evitar), "costo|econ[oó]mic|parqueadero|m[aá]s econ[oó]mic|capacidad adquisitiva"), 1, 0, missing = 0),
-    p27_congestion  = if_else(str_detect(str_to_lower(situaciones_evitar), "congesti[oó]n|tr[aá]fico|espera|viaje|tiempo"), 1, 0, missing = 0),
-    p27_fisico      = if_else(str_detect(str_to_lower(situaciones_evitar), "esfuerzo|f[ií]sico|clim[aá]tic|lluvia|calor|desfavorables"), 1, 0, missing = 0),
-    p27_seguridad   = if_else(str_detect(str_to_lower(situaciones_evitar), "robo|atraco|acoso|violenc|discriminaci[oó]n|riesg|accident|inseguridad"), 1, 0, missing = 0),
-    p27_comodidad   = if_else(str_detect(str_to_lower(situaciones_evitar), "multitud|aglomeraci[oó]n|personas"), 1, 0, missing = 0),
-    p27_ambiental   = if_else(str_detect(str_to_lower(situaciones_evitar), "ambient|emision|contaminaci[oó]n|ecol[oó]gic"), 1, 0, missing = 0),
-    p27_otro        = if_else(str_detect(str_to_lower(situaciones_evitar), "otro|ningun|ninguna|nada|no sabe|no aplica|es lo que hay|porque era [úu]til|comodidad|v[ií]as|horarios|autonom[ií]a|molesta|servicio|accidente|todos los riesgos"), 1, 0, missing = 0)
   )
 
 
+## ============================================================================
+## 5. Importancia de distintos factores (p28_1 a p28_9)
 ###############################################################################
-## MÓDULO 2: Movilidad — Influencia social en la elección del transporte (p36, p37)
-###############################################################################
+
+dataset <- dataset %>%
+  mutate(
+    p28_importancia_costo_compra = case_when(
+      as.character(p28p28_1) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_1) %in% c("2") ~ 2,
+      as.character(p28p28_1) %in% c("3") ~ 3,
+      as.character(p28p28_1) %in% c("4") ~ 4,
+      as.character(p28p28_1) %in% c("5", "Muy importante") ~ 5,
+      TRUE ~ NA_real_
+    ),
+    p28_importancia_costo_uso = case_when(
+      as.character(p28p28_2) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_2) %in% c("2") ~ 2,
+      as.character(p28p28_2) %in% c("3") ~ 3,
+      as.character(p28p28_2) %in% c("4") ~ 4,
+      as.character(p28p28_2) %in% c("5", "Muy importante") ~ 5,
+      TRUE ~ NA_real_
+    ),
+    p28_importancia_comodidad = case_when(
+      as.character(p28p28_3) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_3) %in% c("2") ~ 2,
+      as.character(p28p28_3) %in% c("3") ~ 3,
+      as.character(p28p28_3) %in% c("4") ~ 4,
+      as.character(p28p28_3) %in% c("5", "Muy importante") ~ 5,
+      TRUE ~ NA_real_
+    ),
+    p28_importancia_tiempo = case_when(
+      as.character(p28p28_4) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_4) %in% c("2") ~ 2,
+      as.character(p28p28_4) %in% c("3") ~ 3,
+      as.character(p28p28_4) %in% c("4") ~ 4,
+      as.character(p28p28_4) %in% c("5", "Muy importante") ~ 5,
+      TRUE ~ NA_real_
+    ),
+    p28_importancia_riesgo_robo = case_when(
+      as.character(p28p28_5) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_5) %in% c("2") ~ 2,
+      as.character(p28p28_5) %in% c("3") ~ 3,
+      as.character(p28p28_5) %in% c("4") ~ 4,
+      as.character(p28p28_5) %in% c("5", "Muy importante") ~ 5,
+      TRUE ~ NA_real_
+    ),
+    p28_importancia_riesgo_acoso = case_when(
+      as.character(p28p28_6) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_6) %in% c("2") ~ 2,
+      as.character(p28p28_6) %in% c("3") ~ 3,
+      as.character(p28p28_6) %in% c("4") ~ 4,
+      as.character(p28p28_6) %in% c("5", "Muy importante") ~ 5,
+      TRUE ~ NA_real_
+    ),
+    p28_importancia_discriminacion = case_when(
+      as.character(p28p28_7) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_7) %in% c("2") ~ 2,
+      as.character(p28p28_7) %in% c("3") ~ 3,
+      as.character(p28p28_7) %in% c("4") ~ 4,
+      as.character(p28p28_7) %in% c("5", "Muy importante") ~ 5,
+      TRUE ~ NA_real_
+    ),
+    p28_importancia_emisiones = case_when(
+      as.character(p28p28_8) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_8) %in% c("2") ~ 2,
+      as.character(p28p28_8) %in% c("3") ~ 3,
+      as.character(p28p28_8) %in% c("4") ~ 4,
+      as.character(p28p28_8) %in% c("5", "Muy importante") ~ 5,
+      TRUE ~ NA_real_
+    ),
+    p28_importancia_siniestralidad = case_when(
+      as.character(p28p28_9) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_9) %in% c("2") ~ 2,
+      as.character(p28p28_9) %in% c("3") ~ 3,
+      as.character(p28p28_9) %in% c("4") ~ 4,
+      as.character(p28p28_9) %in% c("5", "Muy importante") ~ 5,
+      TRUE ~ NA_real_
+    )
+  )
+
+
+## ============================================================================
+## 6. Modo ideal de transporte (p29)
+## ============================================================================
+
+dataset <- dataset %>%
+  mutate(
+    p29_modo_ideal_agregado = case_when(
+      str_detect(str_to_lower(p29), "auto|carro") ~ "Automóvil",
+      str_detect(str_to_lower(p29), "moto") ~ "Motocicleta",
+      str_detect(str_to_lower(p29), "bici") ~ "Bicicleta",
+      str_detect(str_to_lower(p29), "bus|mio|transporte") ~ "Transporte público",
+      str_detect(str_to_lower(p29), "caminar|a pie") ~ "Caminar",
+      str_detect(str_to_lower(p29), "otro") ~ "Otro modo",
+      TRUE ~ NA_character_
+    )
+  )
+
+
+## ============================================================================
+## 7. Razón de no uso del modo ideal (p30)
+## ============================================================================
+
+dataset <- dataset %>%
+  mutate(
+    p30_razon_no_uso_agregado = case_when(
+      str_detect(str_to_lower(p30), "dinero|cost") ~ "Limitaciones económicas",
+      str_detect(str_to_lower(p30), "seguridad|acoso|robo|violenc") ~ "Inseguridad / acoso",
+      str_detect(str_to_lower(p30), "infraestructura|anden|cicloruta|distancia") ~ "Falta de infraestructura / distancia",
+      str_detect(str_to_lower(p30), "salud|edad") ~ "Condiciones físicas / salud",
+      str_detect(str_to_lower(p30), "tiempo") ~ "Tiempo / disponibilidad",
+      str_detect(str_to_lower(p30), "otro") ~ "Otro motivo",
+      TRUE ~ NA_character_
+    )
+  )
+
+
+## ============================================================================
+## 8. Fuente percibida de contaminación (p31)
+## ============================================================================
+
+dataset <- dataset %>%
+  mutate(
+    p31_fuente_contaminacion_agregada = case_when(
+      str_detect(str_to_lower(p31), "veh[ií]culos|carro|bus|moto|camiones") ~ "Vehículos motorizados",
+      str_detect(str_to_lower(p31), "f[aá]bricas|industrias") ~ "Industrias",
+      str_detect(str_to_lower(p31), "basura|quema") ~ "Quema de residuos",
+      str_detect(str_to_lower(p31), "otro") ~ "Otra fuente",
+      TRUE ~ NA_character_
+    )
+  )
+
+
+## ============================================================================
+## 9. Nivel percibido de contaminación (p32)
+## ============================================================================
+
+dataset <- dataset %>%
+  mutate(
+    p32_contaminacion_likert = case_when(
+      as.character(p32) %in% c("1", "Muy baja") ~ 1,
+      as.character(p32) %in% c("2", "Baja") ~ 2,
+      as.character(p32) %in% c("3", "Moderada") ~ 3,
+      as.character(p32) %in% c("4", "Alta") ~ 4,
+      as.character(p32) %in% c("5", "Muy alta") ~ 5,
+      TRUE ~ NA_real_
+    )
+  )
+
+
+## ============================================================================
+## 10. Modo percibido como más contaminante (p33)
+## ============================================================================
+
+dataset <- dataset %>%
+  mutate(
+    p33_modo_contaminante_agregado = case_when(
+      str_detect(str_to_lower(p33), "cam[ií]on") ~ "Camión",
+      str_detect(str_to_lower(p33), "auto|carro") ~ "Automóvil",
+      str_detect(str_to_lower(p33), "moto") ~ "Motocicleta",
+      str_detect(str_to_lower(p33), "bus|mio") ~ "Transporte público",
+      str_detect(str_to_lower(p33), "otro") ~ "Otro modo",
+      TRUE ~ NA_character_
+    )
+  )
+
+
+## ============================================================================
+## 11. Razón por la cual no hay más personas usando modos sostenibles (p35)
+## ============================================================================
+
+dataset <- dataset %>%
+  mutate(
+    p35_razon_agregada = case_when(
+      str_detect(str_to_lower(p35), "inseguridad|violenc|robo|acoso") ~ "Inseguridad / violencia",
+      str_detect(str_to_lower(p35), "infraestructura|anden|cicloruta") ~ "Falta de infraestructura",
+      str_detect(str_to_lower(p35), "clim|lluvia|calor") ~ "Condiciones climáticas",
+      str_detect(str_to_lower(p35), "informaci") ~ "Falta de información",
+      str_detect(str_to_lower(p35), "costo|econ") ~ "Costos altos",
+      str_detect(str_to_lower(p35), "salud|edad") ~ "Condiciones físicas / salud",
+      str_detect(str_to_lower(p35), "otro") ~ "Otro motivo",
+      TRUE ~ NA_character_
+    )
+  )
+
+
+## ============================================================================
+## 12. Influencia social (p36, p37)
+## ============================================================================
 
 dataset <- dataset %>%
   mutate(
@@ -165,7 +300,7 @@ dataset <- dataset %>%
 
 
 ###############################################################################
-## Actualización del diccionario
+## 13. Actualización del diccionario
 ###############################################################################
 
 diccionario_clasificado <- diccionario_clasificado %>%
@@ -203,3 +338,7 @@ diccionario_clasificado <- diccionario_clasificado %>%
     ),
     modulo = "Módulo 3: Percepciones, preferencias y deseos"
   )
+
+###############################################################################
+## FIN DEL SCRIPT DE LIMPIEZA — MÓDULO 3
+###############################################################################

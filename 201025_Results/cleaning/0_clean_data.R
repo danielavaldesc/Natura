@@ -6,7 +6,6 @@ library(tidyverse)
 library(labelled)
 
 # --- Cargar tu base limpia ya existente ---
-setwd("C:/Users/Portatil/Desktop/Natura/201025_Results/")
 dataset <- readxl::read_excel("Input\\BD Base Movilidad Cali 2025_V01_Cliente.xlsx") %>%
   janitor::clean_names()
 
