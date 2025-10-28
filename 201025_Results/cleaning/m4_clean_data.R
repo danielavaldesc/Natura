@@ -10,7 +10,7 @@
 ## 0. Cargar entorno y configuración inicial
 ## ============================================================================
 
-setwd("C:/Users/sergio.barona/Desktop/Natura/201025_Results/")
+setwd("C:/Users/Portatil/Desktop/Natura/201025_Results/")
 
 source("cleaning/m3_clean_data.R")
 
