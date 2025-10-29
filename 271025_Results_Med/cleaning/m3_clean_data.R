@@ -44,7 +44,7 @@ dataset <- dataset %>%
 dataset <- dataset %>%
   mutate(
     razones_transporte = pmap_chr(
-      select(., p25, p25_1),
+      dplyr::select(., p25, p25_1),
       ~ c(...) %>% discard(is.na) %>% unique() %>% paste(collapse = ", ")
     ),
     p25_razones_agregadas = na_if(trimws(razones_transporte), "")
@@ -81,7 +81,7 @@ dataset <- dataset %>%
 dataset <- dataset %>%
   mutate(
     situaciones_evitar = pmap_chr(
-      select(., starts_with("p27")),
+      dplyr::select(., starts_with("p27")),
       ~ c(...) %>% discard(is.na) %>% unique() %>% paste(collapse = ", ")
     ),
     p27_situaciones_multiples = na_if(trimws(situaciones_evitar), "")
@@ -95,7 +95,7 @@ dataset <- dataset %>%
 dataset <- dataset %>%
   mutate(
     p28_importancia_costo_compra = case_when(
-      as.character(p28p28_1) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_1) %in% c("1", "Nada Importante") ~ 1,
       as.character(p28p28_1) %in% c("2") ~ 2,
       as.character(p28p28_1) %in% c("3") ~ 3,
       as.character(p28p28_1) %in% c("4") ~ 4,
@@ -103,7 +103,7 @@ dataset <- dataset %>%
       TRUE ~ NA_real_
     ),
     p28_importancia_costo_uso = case_when(
-      as.character(p28p28_2) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_2) %in% c("1", "Nada Importante") ~ 1,
       as.character(p28p28_2) %in% c("2") ~ 2,
       as.character(p28p28_2) %in% c("3") ~ 3,
       as.character(p28p28_2) %in% c("4") ~ 4,
@@ -111,7 +111,7 @@ dataset <- dataset %>%
       TRUE ~ NA_real_
     ),
     p28_importancia_comodidad = case_when(
-      as.character(p28p28_3) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_3) %in% c("1", "Nada Importante") ~ 1,
       as.character(p28p28_3) %in% c("2") ~ 2,
       as.character(p28p28_3) %in% c("3") ~ 3,
       as.character(p28p28_3) %in% c("4") ~ 4,
@@ -119,7 +119,7 @@ dataset <- dataset %>%
       TRUE ~ NA_real_
     ),
     p28_importancia_tiempo = case_when(
-      as.character(p28p28_4) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_4) %in% c("1", "Nada Importante") ~ 1,
       as.character(p28p28_4) %in% c("2") ~ 2,
       as.character(p28p28_4) %in% c("3") ~ 3,
       as.character(p28p28_4) %in% c("4") ~ 4,
@@ -127,7 +127,7 @@ dataset <- dataset %>%
       TRUE ~ NA_real_
     ),
     p28_importancia_riesgo_robo = case_when(
-      as.character(p28p28_5) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_5) %in% c("1", "Nada Importante") ~ 1,
       as.character(p28p28_5) %in% c("2") ~ 2,
       as.character(p28p28_5) %in% c("3") ~ 3,
       as.character(p28p28_5) %in% c("4") ~ 4,
@@ -135,7 +135,7 @@ dataset <- dataset %>%
       TRUE ~ NA_real_
     ),
     p28_importancia_riesgo_acoso = case_when(
-      as.character(p28p28_6) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_6) %in% c("1", "Nada Importante") ~ 1,
       as.character(p28p28_6) %in% c("2") ~ 2,
       as.character(p28p28_6) %in% c("3") ~ 3,
       as.character(p28p28_6) %in% c("4") ~ 4,
@@ -143,7 +143,7 @@ dataset <- dataset %>%
       TRUE ~ NA_real_
     ),
     p28_importancia_discriminacion = case_when(
-      as.character(p28p28_7) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_7) %in% c("1", "Nada Importante") ~ 1,
       as.character(p28p28_7) %in% c("2") ~ 2,
       as.character(p28p28_7) %in% c("3") ~ 3,
       as.character(p28p28_7) %in% c("4") ~ 4,
@@ -151,7 +151,7 @@ dataset <- dataset %>%
       TRUE ~ NA_real_
     ),
     p28_importancia_emisiones = case_when(
-      as.character(p28p28_8) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_8) %in% c("1", "Nada Importante") ~ 1,
       as.character(p28p28_8) %in% c("2") ~ 2,
       as.character(p28p28_8) %in% c("3") ~ 3,
       as.character(p28p28_8) %in% c("4") ~ 4,
@@ -159,7 +159,7 @@ dataset <- dataset %>%
       TRUE ~ NA_real_
     ),
     p28_importancia_siniestralidad = case_when(
-      as.character(p28p28_9) %in% c("1", "Nada importante") ~ 1,
+      as.character(p28p28_9) %in% c("1", "Nada Importante") ~ 1,
       as.character(p28p28_9) %in% c("2") ~ 2,
       as.character(p28p28_9) %in% c("3") ~ 3,
       as.character(p28p28_9) %in% c("4") ~ 4,
@@ -177,11 +177,15 @@ dataset <- dataset %>%
   mutate(
     p29_modo_ideal_agregado = case_when(
       str_detect(str_to_lower(p29), "auto|carro") ~ "Automóvil",
+      p29 == "Van" ~ "Automóvil",
       str_detect(str_to_lower(p29), "moto") ~ "Motocicleta",
       str_detect(str_to_lower(p29), "bici") ~ "Bicicleta",
       str_detect(str_to_lower(p29), "bus|mio|transporte") ~ "Transporte público",
       str_detect(str_to_lower(p29), "caminar|a pie") ~ "Caminar",
-      str_detect(str_to_lower(p29), "otro") ~ "Otro modo",
+      p29 == "Caminata" ~ "Caminar",
+      str_detect(str_to_lower(p29), "otro") ~ "Otro",
+      p29 == "Camión liviano" ~ "Otro",
+      p29 == "Taxi" ~ "Taxi",
       TRUE ~ NA_character_
     )
   )
@@ -196,10 +200,14 @@ dataset <- dataset %>%
     p30_razon_no_uso_agregado = case_when(
       str_detect(str_to_lower(p30), "dinero|cost") ~ "Limitaciones económicas",
       str_detect(str_to_lower(p30), "seguridad|acoso|robo|violenc") ~ "Inseguridad / acoso",
+      p30 == "Nivel de siniestralidad vial" ~ "Inseguridad / acoso",
       str_detect(str_to_lower(p30), "infraestructura|anden|cicloruta|distancia") ~ "Falta de infraestructura / distancia",
+      p30 == "No hay cobertura del modo de transporte" ~ "Falta de infraestructura / distancia",
       str_detect(str_to_lower(p30), "salud|edad") ~ "Condiciones físicas / salud",
       str_detect(str_to_lower(p30), "tiempo") ~ "Tiempo / disponibilidad",
+      p30 == "Es el medio de transporte que utiliza" ~ "Modo actual",
       str_detect(str_to_lower(p30), "otro") ~ "Otro motivo",
+      p30 == "Otra razón ¿Cuál?" ~ "Otro motivo",
       TRUE ~ NA_character_
     )
   )
@@ -213,9 +221,14 @@ dataset <- dataset %>%
   mutate(
     p31_fuente_contaminacion_agregada = case_when(
       str_detect(str_to_lower(p31), "veh[ií]culos|carro|bus|moto|camiones") ~ "Vehículos motorizados",
-      str_detect(str_to_lower(p31), "f[aá]bricas|industrias") ~ "Industrias",
-      str_detect(str_to_lower(p31), "basura|quema") ~ "Quema de residuos",
+      str_detect(str_to_lower(p31), "f[aá]bricas|industrias") ~ "Industria/Obras",
+      p31 %in% c("Construcciones y obras civiles o demoliciones",
+                 "Empresas manufactureras") ~ "Industria/Obras",
+      str_detect(str_to_lower(p31), "basura|quema|residuos") ~ "Quema de residuos",
       str_detect(str_to_lower(p31), "otro") ~ "Otra fuente",
+      p31 == "No sabe /no responde" ~ "Otra fuente",
+      p31 == "Uso de aerosoles y productos químicos" ~ "Productos químicos",
+      p31 == "Vertederos (basureros) y rellenos sanitarios" ~ "Vertederos (basureros) y rellenos sanitarios",
       TRUE ~ NA_character_
     )
   )
@@ -228,11 +241,11 @@ dataset <- dataset %>%
 dataset <- dataset %>%
   mutate(
     p32_contaminacion_likert = case_when(
-      as.character(p32) %in% c("1", "Muy baja") ~ 1,
-      as.character(p32) %in% c("2", "Baja") ~ 2,
-      as.character(p32) %in% c("3", "Moderada") ~ 3,
-      as.character(p32) %in% c("4", "Alta") ~ 4,
-      as.character(p32) %in% c("5", "Muy alta") ~ 5,
+      as.character(p32) %in% c("1", "Muy baja", "Nulo") ~ 1,
+      as.character(p32) %in% c("2", "Baja", "Bajo") ~ 2,
+      as.character(p32) %in% c("3", "Moderada", "Moderado") ~ 3,
+      as.character(p32) %in% c("4", "Alta", "Alto") ~ 4,
+      as.character(p32) %in% c("5", "Muy alta", "Muy alto") ~ 5,
       TRUE ~ NA_real_
     )
   )
@@ -246,10 +259,11 @@ dataset <- dataset %>%
   mutate(
     p33_modo_contaminante_agregado = case_when(
       str_detect(str_to_lower(p33), "cam[ií]on") ~ "Camión",
-      str_detect(str_to_lower(p33), "auto|carro") ~ "Automóvil",
+      str_detect(str_to_lower(p33), "auto|carro|taxi") ~ "Automóvil",
       str_detect(str_to_lower(p33), "moto") ~ "Motocicleta",
       str_detect(str_to_lower(p33), "bus|mio") ~ "Transporte público",
-      str_detect(str_to_lower(p33), "otro") ~ "Otro modo",
+      str_detect(str_to_lower(p33), "otro|patineta") ~ "Otro modo",
+      str_detect(str_to_lower(p33), "camión") ~ "Camión",
       TRUE ~ NA_character_
     )
   )
@@ -263,7 +277,7 @@ dataset <- dataset %>%
   mutate(
     p35_razon_agregada = case_when(
       str_detect(str_to_lower(p35), "inseguridad|violenc|robo|acoso") ~ "Inseguridad / violencia",
-      str_detect(str_to_lower(p35), "infraestructura|anden|cicloruta") ~ "Falta de infraestructura",
+      str_detect(str_to_lower(p35), "infraestructura|anden|cicloruta|terreno") ~ "Falta de infraestructura",
       str_detect(str_to_lower(p35), "clim|lluvia|calor") ~ "Condiciones climáticas",
       str_detect(str_to_lower(p35), "informaci") ~ "Falta de información",
       str_detect(str_to_lower(p35), "costo|econ") ~ "Costos altos",

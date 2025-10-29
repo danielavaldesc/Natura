@@ -50,7 +50,7 @@ dataset <- dataset %>%
   filter(p40 %in% c("Mujer", "Hombre"))
 
 # Seleccionar variables relevantes del módulo
-df_m2 <- dataset %>% select(all_of(vars_m2$codigo))
+df_m2 <- dataset %>% dplyr::select(all_of(vars_m2$codigo))
 
 # Variables categóricas y continuas a describir
 cat_to_describe <- c("edad_r2", "pais",

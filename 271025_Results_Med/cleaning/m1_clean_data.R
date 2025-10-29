@@ -158,7 +158,7 @@ dataset <- dataset %>%
 dataset <- dataset %>%
   mutate(
     dias_presenciales = pmap_chr(
-      select(., p7_2, p7_2_1, p7_2_2, p7_2_3, p7_2_4),
+      dplyr::select(., p7_2, p7_2_1, p7_2_2, p7_2_3, p7_2_4),
       ~ c(...) %>% discard(is.na) %>% unique() %>% paste(collapse = ", ")
     ),
     p7_2_agregado = case_when(
@@ -185,7 +185,7 @@ dataset <- dataset %>%
 dataset <- dataset %>%
   mutate(
     dias_estudio = pmap_chr(
-      select(., p7_3, p7_3_1, p7_3_2),
+      dplyr::select(., p7_3, p7_3_1, p7_3_2),
       ~ c(...) %>% discard(is.na) %>% unique() %>% paste(collapse = ", ")
     ),
     p7_3_agregado = case_when(
@@ -262,13 +262,13 @@ dataset <- dataset %>%
 
 
 ## ============================================================================ 
-## 12. Dificultades funcionales (p12, p12_1)
+## 12. Dificultades funcionales (p12, p12_1, p12_2)
 ## ============================================================================ 
 
 dataset <- dataset %>%
   mutate(
     dificultades = pmap_chr(
-      select(., p12, p12_1),
+      dplyr::select(., p12, p12_1),
       ~ c(...) %>% discard(is.na) %>% unique() %>% paste(collapse = ", ")
     )
   )

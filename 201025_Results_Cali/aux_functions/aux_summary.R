@@ -16,7 +16,7 @@ describe_by_group <- function(data, vars_cat, vars_cont,
   labels <- NULL
   if (!is.null(diccionario)) {
     labels <- diccionario %>%
-      select(codigo, descripcion) %>%
+      dplyr::select(codigo, descripcion) %>%
       deframe()
   }
   
@@ -84,12 +84,12 @@ describe_by_group <- function(data, vars_cat, vars_cont,
       mutate(Resumen = ifelse(is.finite(Median),
                               sprintf("%.1f (%.1f–%.1f)", Median, Q1, Q3),
                               NA_character_)) %>%
-      select(!!sym(control_var), Resumen) %>%
+      dplyr::select(!!sym(control_var), Resumen) %>%
       pivot_wider(names_from = !!sym(control_var), values_from = Resumen)
     
     # Subconjunto con datos no-NA para la variable y el control
     sub <- data %>%
-      select(all_of(c(v, control_var))) %>%
+      dplyr::select(all_of(c(v, control_var))) %>%
       filter(!is.na(.data[[v]]), !is.na(.data[[control_var]]))
     
     # Número de grupos con datos

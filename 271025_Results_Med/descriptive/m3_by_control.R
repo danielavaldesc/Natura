@@ -51,7 +51,7 @@ dataset <- dataset %>%
   filter(p40 %in% c("Mujer", "Hombre"))
 
 # Subconjunto de variables del módulo
-df_m3 <- dataset %>% select(all_of(vars_m3$codigo))
+df_m3 <- dataset %>% dplyr::select(all_of(vars_m3$codigo))
 
 
 ## ============================================================================
