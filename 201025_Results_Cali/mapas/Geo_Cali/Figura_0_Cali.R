@@ -41,8 +41,8 @@ library(rgdal)
 library(maptools)
 library(maps)
 
-setwd("C:/Users/PC/Desktop/Proyecto_movilidad/Fulbright/Cali/Geo_Cali")
-dataset = readxl::read_excel("Input.remuestreo.2.xlsx")
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
+dataset = readxl::read_excel("clean_cali_dataset_21102025.xlsx")
 dataset$satisfaccion.medio = as.numeric(dataset$satisfaccion.medio)
 dataset$medio[dataset$medio == "Aplicación viajes en motocicleta"] = "Aplicación viajes"
 dataset$medio[dataset$medio == "Aplicación viajes en auto"] = "Aplicación viajes"

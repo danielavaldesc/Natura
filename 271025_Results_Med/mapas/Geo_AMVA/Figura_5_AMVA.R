@@ -42,8 +42,9 @@ library(maptools)
 library(maps)
 
 
-setwd("C:/Users/PC/Desktop/Proyecto_movilidad/Fulbright/AMVA/Geo_AMVA")
-dataset = readxl::read_excel("Input.remuestreo.2.xlsx")
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\mapas\\Geo_AMVA\\")
+dataset = readxl::read_excel("clean_med_dataset_27102025.xlsx")
+
 dataset$satisfaccion.medio = as.numeric(dataset$satisfaccion.medio)
 dataset$medio[dataset$medio == "Aplicación viajes en motocicleta"] = "Aplicación viajes"
 dataset$medio[dataset$medio == "Aplicación viajes en auto"] = "Aplicación viajes"
