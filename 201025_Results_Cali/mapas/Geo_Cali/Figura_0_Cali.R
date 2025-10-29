@@ -1,5 +1,5 @@
 ######################################################
-## Figura 5: Georreferenciación de elección modal   ##
+## Figura 1: Georreferenciación tiempos CALI        ##
 ######################################################
 
 library(readxl)
