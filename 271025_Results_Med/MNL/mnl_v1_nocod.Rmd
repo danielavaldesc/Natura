@@ -1,0 +1,87 @@
+---
+title: "Modelo Multinomial Logit – Medellín"
+author: "Daniela Valdés"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(nnet)
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(GGally)
+library(stargazer)
+library(writexl)
+```
+
+# Ruta
+```{r}
+dataset <- read_excel("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\output\\input_famd_med_29102025.xlsx")
+```
+
+# Ajuste de variables
+```{r}
+## Modificacion base con dummies 
+columna_dummy <- function(df, columna) {
+  df %>% 
+    mutate_at(columna, ~paste(columna, eval(as.symbol(columna)), sep = "_")) %>% 
+    mutate(valor = 1) %>% 
+    spread(key = columna, value = valor, fill = 0)
+}
+
+# Eliminar categorías de genero
+dataset <- subset(dataset, !(p40 %in% c("Otro", "Prefiere no responder", "Otras identidades de género")))
+
+# Conversion de variables categoricas 
+dataset <- columna_dummy(dataset, "edad_r2")
+dataset <- columna_dummy(dataset, "p5_agregado")
+dataset <- columna_dummy(dataset, "p9_estrato3")
+dataset <- columna_dummy(dataset, "p40")
+dataset <- columna_dummy(dataset, "p7_agregado")
+dataset <- columna_dummy(dataset, "p22")
+
+dataset <- subset(dataset, select = -id)
+```
+
+# Modelo: Logit Multinomial
+```{r}
+dataset$medio <- factor(dataset$medio)
+
+modelo_multinomial <- multinom(medio ~ p28_importancia_costo_compra + 
+    p28_importancia_costo_uso + p28_importancia_comodidad + 
+    p28_importancia_tiempo + p28_importancia_emisiones +
+    p28_importancia_siniestralidad + 
+    p32_contaminacion_likert + p36_influencia_amigos +
+    p37_influencia_familia + tiempo_total +
+    `p22_Menos de 5 km` + `p22_Más de 20 km` + 
+    `p22_Entre 6 y 10 km` + `p22_Entre 11 y 15 km` + 
+    `p22_Entre 16 y 20 km` + `p7_agregado_Trabajo doméstico no remunerado` +
+    `p7_agregado_Otro` + `p7_agregado_Ocupado/a` + 
+    `p7_agregado_Estudiante` + `p7_agregado_Desocupado o inactivo` + 
+    `p40_Mujer` + p40_Hombre + `edad_r2_18 - 34 años` + 
+    `edad_r2_35 - 54 años` + `edad_r2_55 - 80 años` + 
+    `p5_agregado_Primaria o menos` + `p5_agregado_Secundaria` + 
+     `p5_agregado_Superior` + `p5_agregado_Técnico / Tecnológico` + 
+    `p9_estrato3_Alto` + `p9_estrato3_Bajo` + p9_estrato3_Medio,
+  data = dataset)
+```
+
+## Resultados
+```{r}
+# Tabla de resultados
+stargazer(
+  modelo_multinomial,
+  type = "text",
+  title = "Resultados del Modelo Logit Multinomial",
+  single.row = TRUE
+)
+```

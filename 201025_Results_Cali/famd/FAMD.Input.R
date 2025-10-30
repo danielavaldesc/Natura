@@ -48,7 +48,7 @@ cat_m2 <- c("edad_r2", "pais",
                      "cilindraje_moto_agregado",
                      "cilindraje_camion_agregado",
                      "modelo_vehiculo_agregado",
-                     "p19comuna",
+                     "p19comuna","p22",
                      "p23_agregado")
 cont_m2 <- c("p1edad", "p18",
                       "p18_p1",
