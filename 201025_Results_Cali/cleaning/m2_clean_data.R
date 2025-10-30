@@ -116,9 +116,10 @@ dataset <- dataset %>%
         p17_v2_1 == "Entre 2500 y 2999 cc" ~ "2500 - 2999 cc",
         p17_v2_1 == "No aplica - (por ejemplo Vehículo eléctrico)" ~ "Eléctrico / No aplica",
         p17_v2_1 == "No sabe / No responde" ~ "No sabe / No responde",
+        p17_modo_agregado == "Transporte informal" ~ "Eléctrico / No aplica",
         TRUE ~ NA_character_
       ),
-      TRUE ~ "No aplica"
+      TRUE ~ "Eléctrico / No aplica"
     )
   )
 
@@ -133,10 +134,11 @@ dataset <- dataset %>%
         p17_v2_2 == "Entre 150 cc y 250 cc" ~ "150 - 250 cc",
         p17_v2_2 == "Más de 250 cc" ~ "Más de 250 cc",
         p17_v2_2 == "No aplica - (por ejemplo moto eléctrica)" ~ "Eléctrica / No aplica",
+        p17_modo_agregado == "Transporte informal" ~ "Eléctrico / No aplica",
         p17_v2_2 == "No sabe / No responde" ~ "No sabe / No responde",
         TRUE ~ NA_character_
       ),
-      TRUE ~ "No aplica"
+      TRUE ~ "Eléctrico / No aplica"
     )
   )
 

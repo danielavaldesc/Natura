@@ -3,6 +3,7 @@
 ###############################################################################
 
 library(tidyverse)
+library(tidytable)
 library(labelled)
 
 # --- Cargar tu base limpia ya existente ---
