@@ -3,7 +3,8 @@
 setwd("C:/Users/Portatil/Desktop/Natura/201025_Results_Cali/")
 
 # Cargar base de datos
-dataset = readxl::read_excel("output/input_famd_cali_29102025.xlsx")
+dataset = readxl::read_excel("output/input_famd_cali_29102025.xlsx") %>%
+  select(-cilindraje_camion_agregado )
 
 
 #----------------------------------------------------------------------------#
@@ -89,11 +90,12 @@ famd.dataset <- dataset %>% dplyr::select(-id, -medio)
 ##########  Implementar FAMD
 library(FactoMineR)
 library(factoextra)
-set.seed(123)
-model <-FAMD(famd.dataset, graph = FALSE, ncp = 20)
-###### Primero, examinar los valores propios y la proporción de varianza (inercia) explicada
+set.seed(291025)
+model <-FAMD(famd.dataset, graph = FALSE, ncp = 45)
+# model <-FAMD(famd.dataset, graph = TRUE, ncp = 20)
 
-model$eig[1:20,]
+###### Primero, examinar los valores propios y la proporción de varianza (inercia) explicada
+model$eig
 fviz_eig(model,choice='eigenvalue', geom='line') 
 
 # Computar matriz de correlación siguiendo a Páges:
@@ -125,7 +127,7 @@ paran <- paran::paran(paran.dataset,
 
 writexl::write_xlsx(data.frame(pc = 1:44, AdjEV = paran$AdjEv, 
                                UnadjEV = paran$Ev, Bias = paran$Bias),
-                    "FAMD/Output/Corr.Horn.xlsx")
+                    "output/corr.horn.paran.xlsx")
 
 # REVISAR: LOS VALORES PROPIOS NO AJUSTADOS NO SON IDÉNTICOS A LOS OBTENIDOS DE model$eig
 # PROBLEMA: ESTAMOS TOMANDO MAL LA DESCOMPOSICIÓN SVD (NO TENGO DOCUMENTACIÓN SOBRE ESA SALIDA)
@@ -217,4 +219,4 @@ val_df <- as.data.frame(res.pcamix$ind$coord)
 
 final_dataset <- cbind(data.frame(medio = dataset$medio), val_df[1:20])
 
-writexl::write_xlsx(final_dataset, "FAMD/Input/Output.Dataset.FAMD.xlsx")
+writexl::write_xlsx(final_dataset, "FAMD/Input/output.dataset.famd.xlsx")
