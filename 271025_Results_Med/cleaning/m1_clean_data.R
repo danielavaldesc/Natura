@@ -82,7 +82,8 @@ dataset <- dataset %>%
       p3 == "Indígena" ~ "Pueblos indígenas",
       p3 %in% c(
         "Negro(a), mulalto(a), afrodescendiente, afrocolombiano(a)",
-        "Raizal del Archipiélago de San Andrés, Providencia y Santa Catalina"
+        "Raizal del Archipiélago de San Andrés, Providencia y Santa Catalina", 
+        "Palenquero(a)"
       ) ~ "Población afrodescendiente",
       p3 == "Ninguna de las anteriores" ~ "Ninguna",
       p3 == "No sabe/ No responde" ~ "Sin respuesta",

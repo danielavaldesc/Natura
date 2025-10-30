@@ -29,9 +29,9 @@ dataset <- dataset %>%
     p24 = case_when(
       as.character(p24) %in% c("1", "Nada Satisfecho") ~ 1,
       as.character(p24) %in% c("2", "Poco Satisfecho") ~ 2,
-      as.character(p24) %in% c("3", "Satisfecho") ~ 3,
-      as.character(p24) %in% c("4", "Muy Satisfecho") ~ 4,
-      as.character(p24) %in% c("5", "Totalmente satisfecho") ~ 5,
+      as.character(p24) %in% c("3", "Ni satisfecho ni insatifecho") ~ 3,
+      as.character(p24) %in% c("4", "Satisfecho") ~ 4,
+      as.character(p24) %in% c("5", "Muy satisfecho") ~ 5,
       TRUE ~ NA_real_
     )
   )
@@ -175,20 +175,42 @@ dataset <- dataset %>%
 
 dataset <- dataset %>%
   mutate(
+    # normalizar: minúsculas, sin espacios extras, sin acentos
+    p29_norm = p29 %>%
+      as.character() %>% str_trim() %>% str_to_lower() %>%
+      stringi::stri_trans_general("Latin-ASCII"),
+    
     p29_modo_ideal_agregado = case_when(
-      str_detect(str_to_lower(p29), "auto|carro") ~ "Automóvil",
-      p29 == "Van" ~ "Automóvil",
-      str_detect(str_to_lower(p29), "moto") ~ "Motocicleta",
-      str_detect(str_to_lower(p29), "bici") ~ "Bicicleta",
-      str_detect(str_to_lower(p29), "bus|mio|transporte") ~ "Transporte público",
-      str_detect(str_to_lower(p29), "caminar|a pie") ~ "Caminar",
-      p29 == "Caminata" ~ "Caminar",
-      str_detect(str_to_lower(p29), "otro") ~ "Otro",
-      p29 == "Camión liviano" ~ "Otro",
-      p29 == "Taxi" ~ "Taxi",
+      # Automóvil (incluye plataformas y SUV/van/camioneta)
+      p29_norm %in% c("automovil",
+                      "automovil en plataforma (ejemplo:uber)") ~ "Automóvil",
+      str_detect(p29_norm, "\\b(auto|carro|campero|camioneta|suv|van)\\b") ~ "Automóvil",
+      
+      # Motocicleta (incluye 2T, 4T y plataformas)
+      str_detect(p29_norm, "\\bmoto\\b") ~ "Motocicleta",
+      
+      # Bicicleta (incluye eléctrica)
+      str_detect(p29_norm, "bici") ~ "Bicicleta",
+      
+      # Transporte público (bus, metro, metroplús, metrocable, tranvía)
+      str_detect(p29_norm, "bus|metroplus|metroplu|metrocable|metro cable|\\bmetro\\b|tranvia") ~
+        "Transporte público",
+      
+      # Caminar
+      str_detect(p29_norm, "caminata|caminar|a pie") ~ "Caminar",
+      
+      # Taxi
+      str_detect(p29_norm, "taxi") ~ "Taxi",
+      
+      # Otros (patineta eléctrica, camión liviano, “otro”)
+      str_detect(p29_norm, "patineta|scooter") ~ "Otro",
+      str_detect(p29_norm, "camion liviano") ~ "Otro",
+      str_detect(p29_norm, "\\botro\\b") ~ "Otro",
+      
       TRUE ~ NA_character_
     )
-  )
+  ) %>%
+  dplyr::select(-p29_norm)
 
 
 ## ============================================================================
@@ -257,16 +279,42 @@ dataset <- dataset %>%
 
 dataset <- dataset %>%
   mutate(
+    # Normalizar
+    p33_norm = p33 %>%
+      as.character() %>% str_trim() %>% str_to_lower() %>%
+      stringi::stri_trans_general("Latin-ASCII"),
+    
     p33_modo_contaminante_agregado = case_when(
-      str_detect(str_to_lower(p33), "cam[ií]on") ~ "Camión",
-      str_detect(str_to_lower(p33), "auto|carro|taxi") ~ "Automóvil",
-      str_detect(str_to_lower(p33), "moto") ~ "Motocicleta",
-      str_detect(str_to_lower(p33), "bus|mio") ~ "Transporte público",
-      str_detect(str_to_lower(p33), "otro|patineta") ~ "Otro modo",
-      str_detect(str_to_lower(p33), "camión") ~ "Camión",
+      # ------------------ AUTOMOVIL ------------------
+      # Automóviles particulares / plataformas / taxis / SUV
+      p33_norm %in% c("automoviles particulares",
+                      "automoviles de plataformas y taxis",
+                      "campero/ camioneta (suv)") ~ "Automóvil",
+      str_detect(p33_norm, "\\b(auto|carro|taxi|suv|camioneta)\\b") ~ "Automóvil",
+      
+      # ------------------ MOTOCICLETA ----------------
+      p33_norm %in% c("moto 2t particular",
+                      "moto 4t particular",
+                      "moto de plataforma") ~ "Motocicleta",
+      str_detect(p33_norm, "\\bmoto\\b") ~ "Motocicleta",
+      
+      # ------------- TRANSPORTE PUBLICO --------------
+      p33_norm %in% c("bus, colectivo, busetas", "metro") ~ "Transporte público",
+      str_detect(p33_norm, "\\bbus\\b|\\bmetro\\b|\\bmio\\b") ~ "Transporte público",
+      
+      # --------------------- CAMION -------------------
+      p33_norm %in% c("camion liviano", "camion pesado",
+                      "van/camioneta con platon") ~ "Camión",
+      str_detect(p33_norm, "camion|platon\\b") ~ "Camión",
+      
+      # -------------------- OTRO MODO -----------------
+      p33_norm == "otro" ~ "Otro modo",
+      str_detect(p33_norm, "patineta|scooter|otro") ~ "Otro modo",
+      
       TRUE ~ NA_character_
     )
-  )
+  ) %>%
+  dplyr::select(-p33_norm)
 
 
 ## ============================================================================
@@ -295,19 +343,19 @@ dataset <- dataset %>%
 dataset <- dataset %>%
   mutate(
     p36_influencia_amigos = case_when(
-      as.character(p36) == "Nada Importante" ~ 1,
+      as.character(p36) == "Nada influyente" ~ 1,
       as.character(p36) == "2" ~ 2,
       as.character(p36) == "3" ~ 3,
       as.character(p36) == "4" ~ 4,
-      as.character(p36) == "Muy importante" ~ 5,
+      as.character(p36) == "Muy influyente" ~ 5,
       TRUE ~ NA_real_
     ),
     p37_influencia_familia = case_when(
-      as.character(p37) == "Nada Importante" ~ 1,
+      as.character(p37) == "Nada influyente" ~ 1,
       as.character(p37) == "2" ~ 2,
       as.character(p37) == "3" ~ 3,
       as.character(p37) == "4" ~ 4,
-      as.character(p37) == "Muy importante" ~ 5,
+      as.character(p37) == "Muy influyente" ~ 5,
       TRUE ~ NA_real_
     )
   )

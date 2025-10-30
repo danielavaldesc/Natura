@@ -43,7 +43,6 @@ cat_m2 <- c("edad_r2", "pais",
                      "p17_modo_agregado",
                      "cilindraje_auto_agregado",
                      "cilindraje_moto_agregado",
-                     "cilindraje_camion_agregado",
                      "modelo_vehiculo_agregado",
                      "p19comuna",
                      "p23_agregado")

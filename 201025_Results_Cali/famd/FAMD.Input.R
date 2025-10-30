@@ -9,7 +9,7 @@
 #########################################
 #########################################
 
-setwd("C:/Users/Portatil/Desktop/Natura/201025_Results_Cali/")
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\")
 dataset = readxl::read_excel("output/clean_cali_dataset_21102025.xlsx")
 
 # Cargar librerías
@@ -112,7 +112,7 @@ dataset$tiempo_total <- rowSums(
   na.rm = TRUE
 )
 
-dataset = dataset %>% select(-c("p18", "p18_p1", "p18_p2", "p18_p3", "p18_p4", "p18_c1"))
+dataset = dataset %>% dplyr::select(-c("p18", "p18_p1", "p18_p2", "p18_p3", "p18_p4", "p18_c1"))
 
 #----------------------------#
 # Análisis de valores NAs    #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
