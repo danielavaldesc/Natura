@@ -7,7 +7,7 @@
 #########################################
 #########################################
 
-setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\")
+setwd("C:/Users/Portatil/Desktop/Natura/271025_Results_Med/")
 
 # Cargar librerías
 library(readxl)
@@ -109,6 +109,14 @@ dataset$tiempo_total <- rowSums(
 )
 
 dataset = dataset %>% dplyr::select(-c("p18", "p18_p1", "p18_p2", "p18_p3", "p18_p4", "p18_c1"))
+
+# Variables continuas
+cont_vars = cont_vars[!cont_vars %in%c("p18", "p18_p1", "p18_p2", "p18_p3", "p18_p4", "p18_c1")]
+dataset <- dataset %>%
+  dplyr::mutate(
+    across(all_of(cat_vars), ~ as.factor(.x)),    # Categóricas a factor
+    across(all_of(cont_vars), ~ as.numeric(.x))   # Continuas a numérico
+  )
 
 #----------------------------#
 # Análisis de valores NAs    #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

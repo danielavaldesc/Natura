@@ -1,9 +1,18 @@
 
+# Librerías
+library(tidyverse)
+
 # Definir directorio
-setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\")
+setwd("C:/Users/Portatil/Desktop/Natura/271025_Results_Med/")
 
 # Cargar base de datos
 dataset = readxl::read_excel("output/input_famd_med_29102025.xlsx")
+
+dataset <- dataset %>%
+  dplyr::mutate(
+    across(all_of(cat_vars), ~ as.factor(.x)),    # Categóricas a factor
+    across(all_of(cont_vars), ~ as.numeric(.x))   # Continuas a numérico
+  ) 
 
 
 #----------------------------------------------------------------------------#
@@ -79,6 +88,7 @@ corr_f <- function(df){
 # Usar la función sin añadir id
 relationship <- corr_f(dataset %>% dplyr::select(-id, medio))
 
+writexl::write_xlsx(as.data.frame(relationship), "famd/relationship_famd_29102025.xlsx")
 
 #----------------------------------------------------------------------------#
 # Análisis Factorial para Datos Mixtos (FAMD) para p variables explicativas  #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -89,19 +99,22 @@ famd.dataset <- dataset %>% dplyr::select(-id, -medio)
 ##########  Implementar FAMD
 library(FactoMineR)
 library(factoextra)
-set.seed(123)
-model <-FAMD(famd.dataset, graph = FALSE, ncp = 20)
-###### Primero, examinar los valores propios y la proporción de varianza (inercia) explicada
+set.seed(291025)
+model <-FAMD(famd.dataset, graph = FALSE, ncp = 45)
+# model <-FAMD(famd.dataset, graph = TRUE, ncp = 20)
 
-model$eig[1:20,]
-fviz_eig(model,choice='eigenvalue', geom='line') 
+###### Primero, examinar los valores propios y la proporción de varianza (inercia) explicada
+model$eig
+plot_eig = fviz_eig(model,choice='eigenvalue', geom='line') + theme_bw()
+
+ggsave("famd/plot_eigenval_famd_29102025.png", plot = plot_eig, width = 6, height = 4, dpi = 300)
 
 # Computar matriz de correlación siguiendo a Páges:
 # En sus entradas para variables cuantitativas, se calcula la correlación
 # En sus entradas para variables cuantitativas y cualitativas, se calcula el eta2
 
 library(paran)
-library(tidymodels)
+library(recipes)
 rec <- recipe(medio ~ ., dataset) %>%
   step_dummy(all_nominal_predictors(), one_hot = T)
 
@@ -123,9 +136,9 @@ set.seed(123)
 paran <- paran::paran(paran.dataset,
                       iterations = 5000)
 
-writexl::write_xlsx(data.frame(pc = 1:44, AdjEV = paran$AdjEv, 
-                               UnadjEV = paran$Ev, Bias = paran$Bias),
-                    "FAMD/Output/Corr.Horn.xlsx")
+writexl::write_xlsx(data.frame(pc = 1:28, AdjEV = paran$AdjEv[1:28], 
+                               UnadjEV = paran$Ev[1:28], Bias = paran$Bias[1:28]),
+                    "famd/corr_horn_paran_29102025.xlsx")
 
 # REVISAR: LOS VALORES PROPIOS NO AJUSTADOS NO SON IDÉNTICOS A LOS OBTENIDOS DE model$eig
 # PROBLEMA: ESTAMOS TOMANDO MAL LA DESCOMPOSICIÓN SVD (NO TENGO DOCUMENTACIÓN SOBRE ESA SALIDA)
@@ -141,36 +154,55 @@ writexl::write_xlsx(data.frame(pc = 1:44, AdjEV = paran$AdjEv,
 library(PCAmixdata)
 split <- splitmix(famd.dataset)
 res.pcamix <- PCAmix(X.quanti=split$X.quanti,  
-                     X.quali=split$X.quali, ndim = 20)
+                     X.quali=split$X.quali, ndim = 28, rename.level = TRUE)
 plot(res.pcamix, choice="cor") 
+
 round(res.pcamix$quanti.cor, 2)
 
 # Nótese que el círculo de correlación en FAMD viene dado por
-round(model$quanti.var$coord[,1:5], 2)
+quantvar = round(model$quanti.var$coord[,1:28], 2)
+quantvar = cbind(rownames(quantvar), quantvar)
+
+writexl::write_xlsx(quantvar %>%
+                      as.data.frame(),
+                    "famd/quanti_var_cor_29102025.xlsx")
 
 ###### Tercero, squared loading plots: it allow us to visualize
 # qualitative and quantitative variables in the new feature space
 # "According to the authors of the package, the coordinates are to be interpreted
 # as measuring “the links (signless) between variables and principal components”
+library(factoextra)
 p <- fviz_famd_var(model, 'var', 
                    axes = c(1,2),
                    col.var = 'cos2')
-p
+ggsave("famd/plot_cos2_famd_29102025.png",
+       plot = p, width = 12, height = 12, dpi = 300)
+
 
 fviz_add(p, model$var$coord,
          col.var = 'cos2')
 # Esto corresponde a:
-round(model$var$coord[,1:7],4)
+coord_var = round(model$var$coord[,1:7],4)
+coord_var = cbind(rownames(coord_var), coord_var)
+
+writexl::write_xlsx(coord_var %>%
+                      as.data.frame(),
+                    "famd/coord_var_29102025.xlsx")
 
 ###### Cuarto, whereas factor loading and squared loading measure shows how well
 # a given PD describes variation capture in a variable
 # Contribution describes the converse: how much a variable accounts for the
 # total variation captured by a PD.
 library(ggpubr)
-ggarrange(fviz_contrib(model, choice = "var", axes = 1),
-          fviz_contrib(model, choice = "var", axes = 2),
-          fviz_contrib(model, choice = "var", axes = 3),
-          fviz_contrib(model, choice = "var", axes = 4), nrow = 2, ncol = 2)
+contrib = ggarrange(fviz_contrib(model, choice = "var", axes = 1),
+                    fviz_contrib(model, choice = "var", axes = 2),
+                    fviz_contrib(model, choice = "var", axes = 3),
+                    fviz_contrib(model, choice = "var", axes = 4), nrow = 2, ncol = 2)
+
+ggsave("famd/plot_contrib_famd_29102025.png",
+       plot = contrib, width =12, height = 12, dpi = 300)
+
+
 
 # Quinto, Varimax rotation:
 # To facilitate interpretation of the relationships between variables and PCs,
@@ -182,14 +214,20 @@ ggarrange(fviz_contrib(model, choice = "var", axes = 1),
 pd.rot <- PCArot(res.pcamix, dim=12,
                  graph=FALSE)
 
-plot(pd.rot, choice="sqload", 
-     coloring.var=TRUE, axes=c(1, 2))
+plot_rot = plot(pd.rot, choice="sqload", 
+                coloring.var=TRUE, axes=c(1, 2))
+
+
+ggsave("famd/plot_sqload_rotation_famd_29102025.png",
+       plot = plot_rot, width = 12, height = 12, dpi = 300)
+
+
 
 # Squared loadings sobre los ejes rotados
 round(pd.rot$sqload, 2)
 
 writexl::write_xlsx(cbind(variable = rownames(pd.rot$sqload),as.data.frame(round(pd.rot$sqload,4))),
-                    "FAMD/Output/FAMD_Correlations.xlsx")
+                    "famd/correlations_famd_29102025.xlsx")
 
 round(pd.rot$sqload[,1][pd.rot$sqload[,1] > 0.4], 3)
 round(pd.rot$sqload[,2][pd.rot$sqload[,2] > 0.4], 3)
@@ -204,17 +242,4 @@ round(pd.rot$sqload[,10][pd.rot$sqload[,10] > 0.4], 3)
 round(pd.rot$sqload[,11][pd.rot$sqload[,11] > 0.4], 3)
 round(pd.rot$sqload[,12][pd.rot$sqload[,12] > 0.4], 3)
 
-#-------------------------------------------------------------------------------#
-# Análisis de Discriminante Lineal (LDA): cargas factoriales de los individuos  #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------#
 
-###### Primero, plot individual observations in the new feature space
-# Overlapping distributions suggested that this dataset are not suited
-# or sufficient to capture the diference between travel modes
-library(plotly)
-
-val_df <- as.data.frame(res.pcamix$ind$coord)
-
-final_dataset <- cbind(data.frame(medio = dataset$medio), val_df[1:20])
-
-writexl::write_xlsx(final_dataset, "FAMD/Input/Output.Dataset.FAMD.xlsx")
