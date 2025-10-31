@@ -56,22 +56,30 @@ dataset <- subset(dataset, select = -id)
 ```{r}
 dataset$medio <- factor(dataset$medio)
 
-modelo_multinomial <- multinom(medio ~ p28_importancia_costo_compra + 
+# `p22_Más de 20 km`
+# `p7_agregado_Ocupado/a`
+# `edad_r2_35 - 54 años`
+# p40_Hombre
+# `p9_estrato3_Alto`
+# `p5_agregado_Superior`
+
+modelo_multinomial <- multinom(
+  medio ~ p28_importancia_costo_compra + 
     p28_importancia_costo_uso + p28_importancia_comodidad + 
     p28_importancia_tiempo + p28_importancia_emisiones +
     p28_importancia_siniestralidad + 
     p32_contaminacion_likert + p36_influencia_amigos +
     p37_influencia_familia + tiempo_total +
-    `p22_Menos de 5 km` + `p22_Más de 20 km` + 
+    `p22_Menos de 5 km` + 
     `p22_Entre 6 y 10 km` + `p22_Entre 11 y 15 km` + 
     `p22_Entre 16 y 20 km` + `p7_agregado_Trabajo doméstico no remunerado` +
-    `p7_agregado_Otro` + `p7_agregado_Ocupado/a` + 
+    `p7_agregado_Otro` + 
     `p7_agregado_Estudiante` + `p7_agregado_Desocupado o inactivo` + 
-    `p40_Mujer` + p40_Hombre + `edad_r2_18 - 34 años` + 
-    `edad_r2_35 - 54 años` + `edad_r2_55 - 80 años` + 
+    `p40_Mujer` + `edad_r2_18 - 34 años` + 
+     `edad_r2_55 - 80 años` + 
     `p5_agregado_Primaria o menos` + `p5_agregado_Secundaria` + 
-     `p5_agregado_Superior` + `p5_agregado_Técnico / Tecnológico` + 
-    `p9_estrato3_Alto` + `p9_estrato3_Bajo` + p9_estrato3_Medio,
+     `p5_agregado_Técnico / Tecnológico` + 
+     `p9_estrato3_Bajo` + p9_estrato3_Medio,
   data = dataset)
 ```
 
