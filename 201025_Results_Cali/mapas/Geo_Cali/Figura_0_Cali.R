@@ -1,172 +1,95 @@
 ######################################################
-## Figura 1: Georreferenciación tiempos CALI        ##
+## Figura 1: Georreferenciación tiempo total CALI   ##
 ######################################################
 
 library(readxl)
-library(ggplot2)
-library(dplyr)
-library(reshape2)
-library(ggpubr)
-library(plyr)
-library(readxl)
-library(rlang)
 library(dplyr)
 library(ggplot2)
-library(reshape2)
-library(knitr)
-library(haven)
-library(foreign)
-library(stringi)
-library(labelled)
-library(tidyr)
-library(moments)
-library(treemapify)
-library(hrbrthemes)
-library(viridis)
-library(kableExtra)
 library(sf)
-library(rgdal)
-library(moments)
-library(RColorBrewer)
-library(memisc)
-library(assertthat)
-library(sqldf)
-library(magrittr)
-library(dplyr)
-library(reshape2)
-library(ggplot2)
-library(oz)
-library(scatterpie)
-library(rgdal)
-library(maptools)
-library(maps)
+library(viridis)
+library(stringr)
 
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
-dataset = readxl::read_excel("clean_cali_dataset_21102025.xlsx")
-dataset$satisfaccion.medio = as.numeric(dataset$satisfaccion.medio)
-dataset$medio[dataset$medio == "Aplicación viajes en motocicleta"] = "Aplicación viajes"
-dataset$medio[dataset$medio == "Aplicación viajes en auto"] = "Aplicación viajes"
-dataset$medio[dataset$medio == "Taxi"] = "Auto"
-data = dataset
+ruta_xlsx <- "input_famd_cali_29102025.xlsx"
+ruta_shp  <- "mc_comunas.shp"
 
-# La variable barrio no aplica si es de otra ciudad
-data$residencia = as.character(data$residencia)
-data$barrio = as.character(data$barrio)
-for (k in 1:nrow(data)) {
-  if (data$residencia[k] != "Cali") {
-    data$barrio[k] = "No aplica"
-  }
-}
-data$residencia = as.factor(data$residencia)
-data$barrio = as.factor(data$barrio)
+# 1) Datos
+df <- readxl::read_excel(ruta_xlsx)
 
-# Recuperar la comuna origen
-barrios = data.frame(id = data$id, Barrio = data$barrio)
-comunas = read_excel("Listado barrios.xlsx", sheet = 2)
+df <- df %>%
+  mutate(
+    # Normaliza sexo (por si viene con minúsculas, espacios, etc.)
+    p40 = str_to_title(trimws(as.character(p40))),
+    # Quédate con Hombre/Mujer
+    p40 = ifelse(p40 %in% c("Hombre","Mujer"), p40, NA_character_),
+    # Comunas a entero (si vinieran como "Comuna 1", extrae dígitos)
+    p19comuna = as.character(p19comuna),
+    p19comuna = str_extract(p19comuna, "\\d+"),
+    p19comuna = suppressWarnings(as.integer(p19comuna)),
+    tiempo_total = suppressWarnings(as.numeric(tiempo_total))
+  ) %>%
+  filter(!is.na(p40), !is.na(p19comuna), !is.na(tiempo_total))
 
-no_aplica = data.frame(Comuna = 99, Barrio = "No aplica")
-comunas = rbind(no_aplica, comunas)
+agg <- df %>%
+  group_by(p19comuna, p40) %>%
+  summarise(
+    n = n(),
+    mean_time = mean(tiempo_total, na.rm = TRUE),
+    .groups = "drop"
+  )
 
-barrio_comunas = merge(barrios, comunas, by = "Barrio")
-barrio_comunas = barrio_comunas[c("id", "Barrio", "Comuna")]
-barrio_comunas = barrio_comunas[order(barrio_comunas$id),]
+# 2) Shape de Cali
+shape_cali <- sf::st_read(ruta_shp, quiet = TRUE)
 
-data = merge(data, barrio_comunas, by = "id")
+# --- detectar columna de comuna en el SHP ---
+cand <- names(shape_cali)
+cand <- cand[grepl("comuna|cod_?comuna|id_?comuna", cand, ignore.case = TRUE)]
+if (length(cand) == 0) stop("No encuentro una columna de comuna en el SHP. Renómbrala o dime cómo se llama.")
 
+# si hay varias candidatas, toma la primera; puedes fijarla si sabes el nombre exacto
+col_comuna <- cand[1]
 
-data$medio = as.character(data$medio)
-data$medio[data$medio == "Aplicación viajes"] = "Otro"
-data$medio[data$medio == "Transporte informal"] = "Otro"
-data$medio[data$medio == "Activo"] = "Otro"
+# extrae dígitos y pásalo a entero para empatar con p19comuna
+shape_cali <- shape_cali %>%
+  mutate(
+    comuna_join_chr = as.character(.data[[col_comuna]]),
+    comuna_join_num = str_extract(comuna_join_chr, "\\d+"),
+    comuna_join_num = suppressWarnings(as.integer(comuna_join_num))
+  )
 
+# 3) Join
+shape_join <- shape_cali %>%
+  left_join(agg, by = c("comuna_join_num" = "p19comuna"))
 
-# Filtrar para la información de Cali
-data_grouped = data %>% filter(Comuna != 99)
-data_grouped = data_grouped %>% filter(residencia == "Cali")
+# Chequeos 
+cat("Candidata de columna en SHP:", col_comuna, "\n")
+cat("Comunas únicas en SHP (parseadas):", sort(unique(shape_join$comuna_join_num)), "\n")
+cat("Comunas únicas en datos:", sort(unique(agg$p19comuna)), "\n")
+cat("Filas con datos después del join:", sum(!is.na(shape_join$mean_time)), "\n")
 
-# Recodificar el tiempo recorrido
-data_grouped = data_grouped %>% mutate(tiempo_class = factor(tiempo.medio,
-                                                             levels = c("Entre 10 y 20 minutos",
-                                                                        "Entre 21 y 30 minutos",
-                                                                        "Entre 31 y 40 minutos",
-                                                                        "Entre 41 y 50 minutos",
-                                                                        "Entre 51 y 60 minutos",
-                                                                        "Más de 60 minutos"), 
-                                                             labels = c("11-20", 
-                                                                        "21-30",
-                                                                        "31-40",
-                                                                        "41-50",
-                                                                        "51-60", 
-                                                                        "61-70")))
+# 4) Mapa facetado con una sola escala
+lims <- range(shape_join$mean_time, na.rm = TRUE)
+p <- ggplot(shape_join) +
+  geom_sf(aes(fill = mean_time), color = NA) +
+  scale_fill_viridis_c(
+    name = "Mean time (min)",
+    limits = lims,
+    direction = -1,
+    na.value = "grey90"
+  ) +
+  facet_wrap(~ p40, nrow = 1) +
+  labs(
+    title = "Cali • Tiempo promedio de viaje (min) por comuna",
+    subtitle = "Variable continua: tiempo_total • Facet por sexo (p40)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    panel.grid.major = element_line(color = "grey85", linewidth = 0.2),
+    panel.grid.minor = element_blank(),
+    axis.title = element_blank(),
+    legend.position = "right"
+  )
 
-dataset = data_grouped[c("id", "estrato", "Comuna",
-                         "tiempo_class")]
-colnames(dataset) = c("id", "est", "comuna",
-                      "tiempo")
-grouped_var = c("tiempo")
-
-# Datos diferenciados según comuna
-
-
-n.comunas = length(levels(as.factor(dataset$comuna)))
-input.comunas = list(length = n.comunas)
-for (i in 1:n.comunas) {
-  df.i = dataset %>% filter(comuna == i)
-  input.comunas[[i]] = df.i
-  names(input.comunas)[i] = paste0("Comuna.",i)
-}
-
-time.comunas = data.frame(comuna = levels(as.factor(dataset$comuna)),
-                          n =NA,
-                          mean = NA, sd = NA,
-                          median = NA, Q1 = NA, Q3 = NA)
-
-output.list = list(tiempo = time.comunas)
-
-for (i in grouped_var) {
-  n.list = which(names(output.list) == i)
-  
-  for (j in 1:length(input.comunas)) {
-    gp.comuna = input.comunas[[j]]
-    gp_aux = grouped_function(gp.comuna, i)
-    comuna.row = which(output.list[[n.list]]$comuna == j)
-    
-    output.list[[n.list]]$comuna[comuna.row] = paste0("Comuna ", j) 
-    output.list[[n.list]]$n[comuna.row] = sum(gp_aux$f)
-    output.list[[n.list]]$mean[comuna.row] = mean_gp(gp_aux)
-    output.list[[n.list]]$sd[comuna.row] = sd_gp(gp_aux)
-    output.list[[n.list]]$median[comuna.row] = quartil_qp(gp_aux, 0.5)
-    output.list[[n.list]]$Q1[comuna.row] = quartil_qp(gp_aux, 0.25)
-    output.list[[n.list]]$Q3[comuna.row] = quartil_qp(gp_aux, 0.75)
-    
-  }
-  
-}
-
-data.plot = output.list[[1]]
-data.plot$Comuna = data.plot$comuna
-
-
-# Archivo shape
-shape = readOGR(dsn = ".", layer = "mc_comunas")
-shape_st = st_read("mc_comunas.shp")
-shape_st = shape_st[order(shape_st$comuna),]
-colnames(shape_st)[2] = "Comuna"
-
-shape_st = merge(shape_st, data.plot, by = "Comuna")
-
-shape_st$Comuna = as.factor(shape_st$Comuna)
-palette = brewer.pal(n=4,name = "Greys")
-
-time.cali = ggplot() + geom_sf(data = shape_st, mapping = aes(fill = mean)) +
-  scale_fill_viridis_c(name = "Mean time", direction = -1) 
-
-
-ggsave(
-  plot = time.cali,
-  filename = "tiempo.cali.png",
-  bg = "transparent"
-) 
-
+ggsave("cali_tiempo_continuo_facet.png", p, width = 10, height = 6, dpi = 300, bg = "transparent")
 
 
