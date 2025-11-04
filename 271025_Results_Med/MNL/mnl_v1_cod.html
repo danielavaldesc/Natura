@@ -11,7 +11,7 @@
 
 <meta name="author" content="Daniela Valdés" />
 
-<meta name="date" content="2025-10-31" />
+<meta name="date" content="2025-11-04" />
 
 <title>Modelo Multinomial Logit – Medellín</title>
 
@@ -370,74 +370,450 @@ display: none;
 
 <h1 class="title toc-ignore">Modelo Multinomial Logit – Medellín</h1>
 <h4 class="author">Daniela Valdés</h4>
-<h4 class="date">2025-10-31</h4>
+<h4 class="date">2025-11-04</h4>
 
 </div>
 
 
+<pre class="r"><code>library(dplyr)
+library(nnet)
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(GGally)
+library(stargazer)
+library(writexl)</code></pre>
 <div id="ruta" class="section level1">
 <h1>Ruta</h1>
+<pre class="r"><code>dataset &lt;- read_excel(&quot;C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\output\\input_famd_med_29102025.xlsx&quot;)</code></pre>
 </div>
 <div id="ajuste-de-variables" class="section level1">
 <h1>Ajuste de variables</h1>
+<pre class="r"><code>## --- Función dummies (robusta) ---
+columna_dummy &lt;- function(df, columna) {
+  # `columna` es un string con el nombre de la variable categórica
+  df %&gt;%
+    mutate(!!columna := paste(columna, .data[[columna]], sep = &quot;_&quot;)) %&gt;%
+    mutate(valor = 1) %&gt;%
+    tidyr::pivot_wider(
+      names_from  = !!rlang::sym(columna),
+      values_from = valor,
+      values_fill = 0
+    )
+}
+
+# Eliminar categorías de genero
+dataset &lt;- subset(dataset, !(p40 %in% c(&quot;Otro&quot;, &quot;Prefiere no responder&quot;, &quot;Otras identidades de género&quot;)))
+
+# Recodificación 
+vars_dummy &lt;- c(
+  &quot;edad_r2&quot;,&quot;pais&quot;,&quot;p3_agregado&quot;,&quot;p5_agregado&quot;,&quot;p7_agregado&quot;,&quot;p8_agregado&quot;,
+  &quot;p9_estrato3&quot;,&quot;p40&quot;,&quot;p13&quot;,&quot;p14&quot;,&quot;p15_autos_agregado&quot;,&quot;p15_1_autos_propios_agregado&quot;,
+  &quot;p16_motos_agregado&quot;,&quot;p16_1_motos_propias_agregado&quot;,&quot;p17_modo_agregado&quot;,
+  &quot;cilindraje_auto_agregado&quot;,&quot;cilindraje_moto_agregado&quot;,&quot;modelo_vehiculo_agregado&quot;,
+  &quot;p19comuna&quot;,&quot;p22&quot;,&quot;p23_agregado&quot;,&quot;p26_agregado&quot;,&quot;p29_modo_ideal_agregado&quot;,
+  &quot;p30_razon_no_uso_agregado&quot;,&quot;p31_fuente_contaminacion_agregada&quot;,
+  &quot;p33_modo_contaminante_agregado&quot;,&quot;p35_razon_agregada&quot;,
+  &quot;p38p38_1&quot;,&quot;p38p38_2&quot;,&quot;p38p38_3&quot;,&quot;p38p38_4&quot;,&quot;p38p38_5&quot;,&quot;p38p38_6&quot;,&quot;p38p38_7&quot;,&quot;p38p38_99&quot;)
+
+# --- Aplicar función columna_dummy  ---
+for (v in vars_dummy) {
+  if (v %in% names(dataset)) {
+    dataset &lt;- columna_dummy(dataset, v)
+    message(&quot;✅ Dummies creadas para: &quot;, v)
+  } else {
+    message(&quot;⚠️ Variable no encontrada: &quot;, v)
+  }
+}
+
+if (&quot;id&quot; %in% names(dataset)) dataset &lt;- subset(dataset, select = -id)</code></pre>
 </div>
 <div id="modelo-logit-multinomial" class="section level1">
 <h1>Modelo: Logit Multinomial</h1>
-<pre><code>## # weights:  140 (108 variable)
-## initial  value 640.556289 
-## iter  10 value 395.071900
-## iter  20 value 318.454137
-## iter  30 value 262.080451
-## iter  40 value 251.831936
-## iter  50 value 250.099358
-## iter  60 value 249.161289
-## iter  70 value 249.020333
-## iter  80 value 248.880347
-## iter  90 value 248.821124
-## iter 100 value 248.816227
-## final  value 248.816227 
-## stopped after 100 iterations</code></pre>
+<pre class="r"><code># --- Modelo ---
+dataset$medio &lt;- relevel(factor(dataset$medio), ref = &quot;Moto privada&quot;)
+
+library(nnet)
+
+modelo_multinomial &lt;- multinom(
+  medio ~ 
+    # ------------------ CONTINUAS ------------------
+  p24 +
+    p28_importancia_costo_compra +
+    p28_importancia_costo_uso +
+    p28_importancia_comodidad +
+    p28_importancia_tiempo +
+    p28_importancia_riesgo_robo +
+    p28_importancia_riesgo_acoso +
+    p28_importancia_discriminacion +
+    p28_importancia_emisiones +
+    p28_importancia_siniestralidad +
+    p32_contaminacion_likert +
+    p36_influencia_amigos +
+    p37_influencia_familia +
+    tiempo_total +
+    
+    # ------------------ CATEGÓRICAS (una base comentada) ------------------
+  
+  # edad_r2  (BASE: 35 - 54 años)
+  `edad_r2_18 - 34 años` + `edad_r2_55 - 80 años` +
+    
+    # pais  (BASE: Colombia)
+    `pais_Venezuela` + `pais_Otro` +
+    
+    # p3_agregado  (BASE: Ninguna)
+    `p3_agregado_Población afrodescendiente` +
+    `p3_agregado_Sin respuesta` +
+    `p3_agregado_Pueblos indígenas` +
+    
+    # p5_agregado  (BASE: Superior)
+    `p5_agregado_Secundaria` +
+    `p5_agregado_Primaria o menos` +
+    `p5_agregado_Técnico / Tecnológico` +
+    
+    # p7_agregado  (BASE: Ocupado/a)
+    `p7_agregado_Trabajo doméstico no remunerado` +
+    `p7_agregado_Desocupado o inactivo` +
+    `p7_agregado_Estudiante` +
+    `p7_agregado_Otro` +
+    
+    # p8_agregado  (BASE: Vive con pareja (con o sin hijos/as))
+    `p8_agregado_Vive solo/a` +
+    `p8_agregado_Vive con familiares (otros)` +
+    `p8_agregado_Vive con no familiares` +
+    `p8_agregado_Vive con hijos/as (sin pareja)` +
+    
+    # p9_estrato3  (BASE: Alto)
+    `p9_estrato3_Medio` + `p9_estrato3_Bajo` +
+    
+    # p40  (BASE: Hombre)
+    `p40_Mujer` +
+    
+    # p13  (BASE: Sí, auto y motocicleta)
+    `p13_Sí, auto` + `p13_No` + `p13_Sí, motocicleta` +
+    
+    # p14  (BASE: Si de auto y motocicleta)
+    `p14_Si, auto` + `p14_No` + `p14_Si, motocicleta` +
+    
+    # p15_autos_agregado  (BASE: Sin autos)
+    `p15_autos_agregado_1 auto` + `p15_autos_agregado_2 o más autos` +
+    
+    # p15_1_autos_propios_agregado  (BASE: Sin autos propios)
+    `p15_1_autos_propios_agregado_1 auto propio` +
+    `p15_1_autos_propios_agregado_2 o más autos propios` +
+    
+    # p16_motos_agregado  (BASE: 2 o más motocicletas)
+    `p16_motos_agregado_Sin motocicletas` +
+    `p16_motos_agregado_1 motocicleta` +
+    
+    # p16_1_motos_propias_agregado  (BASE: 1 motocicleta propia)
+    `p16_1_motos_propias_agregado_Sin motocicletas propias` +
+    `p16_1_motos_propias_agregado_2 o más motocicletas propias` +
+    
+    # cilindraje_auto_agregado  (BASE: Eléctrico / No aplica)
+    `cilindraje_auto_agregado_1500 - 1999 cc` +
+    `cilindraje_auto_agregado_1000 - 1499 cc` +
+    `cilindraje_auto_agregado_3000 cc o más` +
+    `cilindraje_auto_agregado_2000 - 2499 cc` +
+    `cilindraje_auto_agregado_Menos de 1000 cc` +
+    `cilindraje_auto_agregado_No sabe / No responde` +
+    `cilindraje_auto_agregado_2500 - 2999 cc` +
+    
+    # cilindraje_moto_agregado  (BASE: 125 cc)
+    `cilindraje_moto_agregado_Eléctrico / No aplica` +
+    `cilindraje_moto_agregado_150 - 250 cc` +
+    `cilindraje_moto_agregado_Menos de 125 cc` +
+    `cilindraje_moto_agregado_150 cc` +
+    `cilindraje_moto_agregado_No sabe / No responde` +
+    `cilindraje_moto_agregado_Más de 250 cc` +
+    
+    # modelo_vehiculo_agregado  (BASE: 2016 - 2020)
+    `modelo_vehiculo_agregado_2005 - 2010` +
+    `modelo_vehiculo_agregado_No aplica` +
+    `modelo_vehiculo_agregado_Anterior a 2005` +
+    `modelo_vehiculo_agregado_2021 o más reciente` +
+    `modelo_vehiculo_agregado_2011 - 2015` +
+    `modelo_vehiculo_agregado_Sin información` +
+    
+    # p19comuna  (BASE: Comuna 16 - Belén)
+    `p19comuna_Comuna 13 - San Javier` +
+    `p19comuna_Comuna 15 - Guayabal` +
+    `p19comuna_Comuna 3 - Manrique` +
+    `p19comuna_Comuna 6 - Doce de Octubre` +
+    `p19comuna_Comuna 8 - Villa Hermosa` +
+    `p19comuna_Comuna 4 - Aranjuez` +
+    `p19comuna_Comuna 12 - La América` +
+    `p19comuna_Comuna 1 - Popular` +
+    `p19comuna_Comuna 5 - Castilla` +
+    `p19comuna_Comuna 10 - La Candelaria` +
+    `p19comuna_Comuna 2 - Santa Cruz` +
+    `p19comuna_Comuna 7 - Robledo` +
+    `p19comuna_Comuna 9 - Buenos Aires` +
+    `p19comuna_Comuna 11 - Laureles Estadio` +
+    `p19comuna_Comuna 14 - El Poblado` +
+    
+    # p22  (BASE: Más de 20 km)
+    `p22_Entre 16 y 20 km` +
+    `p22_Entre 11 y 15 km` +
+    `p22_Entre 6 y 10 km` +
+    `p22_Menos de 5 km` +
+    
+    # p23_agregado  (BASE: Trabajo)
+    `p23_agregado_Recreación, salud y actividades personales` +
+    `p23_agregado_Compras y trámites` +
+    `p23_agregado_Estudio` +
+    `p23_agregado_Visitas sociales` +
+    `p23_agregado_Cuidado y familia (escuela, niñas/os)` +
+    `p23_agregado_Cuidado y familia (recreación, niñas/os)` +
+    `p23_agregado_Cuidado y familia (salud, niñas/os)` +
+    `p23_agregado_Cuidado y familia (persona enferma)` +
+    `p23_agregado_Otro` +
+    `p23_agregado_Cuidado y familia (persona con discapacidad)` +
+    
+    # p26_agregado  (BASE: Incomodidad / clima)
+    `p26_agregado_Riesgo de accidente` +
+    `p26_agregado_Costo económico` +
+    `p26_agregado_Inseguridad personal` +
+    `p26_agregado_Impacto ambiental` +
+    `p26_agregado_Nada le disgusta` +
+    `p26_agregado_Tiempo de viaje / espera` +
+    `p26_agregado_Otro motivo` +
+    `p26_agregado_Falta de autonomía / control` +
+    `p26_agregado_Sin respuesta` +
+    
+    # p29_modo_ideal_agregado  (BASE: Motocicleta)
+    `p29_modo_ideal_agregado_Automóvil` +
+    `p29_modo_ideal_agregado_Transporte público` +
+    `p29_modo_ideal_agregado_Taxi` +
+    `p29_modo_ideal_agregado_Bicicleta` +
+    `p29_modo_ideal_agregado_Caminar` +
+    `p29_modo_ideal_agregado_Otro` +
+    
+    # p30_razon_no_uso_agregado  (BASE: Modo actual)
+    `p30_razon_no_uso_agregado_Tiempo / disponibilidad` +
+    `p30_razon_no_uso_agregado_Limitaciones económicas` +
+    `p30_razon_no_uso_agregado_Inseguridad / acoso` +
+    `p30_razon_no_uso_agregado_Otro motivo` +
+    `p30_razon_no_uso_agregado_Condiciones físicas / salud` +
+    `p30_razon_no_uso_agregado_Falta de infraestructura / distancia` +
+    
+    # p31_fuente_contaminacion_agregada  (BASE: Vehículos motorizados)
+    `p31_fuente_contaminacion_agregada_Industria/Obras` +
+    `p31_fuente_contaminacion_agregada_Productos químicos` +
+    `p31_fuente_contaminacion_agregada_Otra fuente` +
+    `p31_fuente_contaminacion_agregada_Vertederos (basureros) y rellenos sanitarios` +
+    `p31_fuente_contaminacion_agregada_Quema de residuos` +
+    
+    # p33_modo_contaminante_agregado  (BASE: Motocicleta)
+    `p33_modo_contaminante_agregado_Transporte público` +
+    `p33_modo_contaminante_agregado_Camión` +
+    `p33_modo_contaminante_agregado_Automóvil` +
+    `p33_modo_contaminante_agregado_Otro modo` +
+    
+    # p35_razon_agregada  (BASE: Falta de infraestructura)
+    `p35_razon_agregada_Otro motivo` +
+    `p35_razon_agregada_Costos altos` +
+    `p35_razon_agregada_Inseguridad / violencia` +
+    `p35_razon_agregada_Falta de información` +
+    `p35_razon_agregada_Condiciones climáticas` +
+    
+    # p38p38_1  (BASE: No)
+    `p38p38_1_Si` + `p38p38_1_No sabe` +
+    
+    # p38p38_2  (BASE: No)
+    `p38p38_2_Si` + `p38p38_2_No sabe` +
+    
+    # p38p38_3  (BASE: No)
+    `p38p38_3_Si` + `p38p38_3_No sabe` +
+    
+    # p38p38_4  (BASE: No)
+    `p38p38_4_Si` + `p38p38_4_No sabe` +
+    
+    # p38p38_5  (BASE: No)
+    `p38p38_5_Si` + `p38p38_5_No sabe` +
+    
+    # p38p38_6  (BASE: No)
+    `p38p38_6_Si` + `p38p38_6_No sabe` +
+    
+    # p38p38_7  (BASE: No)
+    `p38p38_7_Si` + `p38p38_7_No sabe` +
+    
+    # p38p38_99  (BASE: No sabe)
+    `p38p38_99_No` + `p38p38_99_Si`
+  ,
+  data = dataset,
+  trace = FALSE
+)</code></pre>
 <div id="resultados" class="section level2">
 <h2>Resultados</h2>
+<pre class="r"><code># Tabla de resultados
+stargazer(
+  modelo_multinomial,
+  type = &quot;text&quot;,
+  title = &quot;Resultados del Modelo Logit Multinomial&quot;,
+  single.row = TRUE
+)</code></pre>
 <pre><code>## 
 ## Resultados del Modelo Logit Multinomial
-## ==========================================================================================================================
-##                                                                           Dependent variable:                             
-##                                               ----------------------------------------------------------------------------
-##                                                 Auto privado        Modo activo      Taxi / Plataforma  Transporte público
-##                                                      (1)                (2)                 (3)                (4)        
-## --------------------------------------------------------------------------------------------------------------------------
-## p28_importancia_costo_compra                   -0.303 (0.290)      0.474 (0.457)      -0.073 (0.214)      0.156 (0.182)   
-## p28_importancia_costo_uso                      0.714* (0.383)     -0.156 (0.340)       0.229 (0.229)    -0.428*** (0.161) 
-## p28_importancia_comodidad                       0.322 (0.534)     -0.831* (0.439)      0.137 (0.382)      -0.204 (0.301)  
-## p28_importancia_tiempo                         -0.376 (0.426)     -0.336 (0.461)      -0.382 (0.322)      0.254 (0.261)   
-## p28_importancia_emisiones                       0.455 (0.310)      0.367 (0.396)       0.261 (0.214)     0.346** (0.167)  
-## p28_importancia_siniestralidad                -0.789** (0.330)    -0.111 (0.393)      -0.170 (0.228)     -0.322* (0.178)  
-## p32_contaminacion_likert                        0.622 (0.411)    -1.487*** (0.412)    0.496* (0.264)      -0.125 (0.203)  
-## p36_influencia_amigos                           0.012 (0.352)      0.078 (0.389)       0.035 (0.231)      0.251 (0.188)   
-## p37_influencia_familia                         -0.246 (0.256)      0.168 (0.403)       0.035 (0.200)      -0.165 (0.167)  
-## tiempo_total                                    0.012 (0.027)    0.106*** (0.019)     -0.003 (0.020)     0.111*** (0.015) 
-## `p22_Menos de 5 km`                            -1.498 (1.241)    10.396*** (0.864)    -0.221 (0.964)      1.078 (0.864)   
-## `p22_Entre 6 y 10 km`                          -0.911 (1.071)    7.772*** (0.872)     -0.753 (0.974)      0.217 (0.823)   
-## `p22_Entre 11 y 15 km`                         -0.966 (1.009)   -4.464*** (0.0001)    -1.110 (0.984)      -0.728 (0.835)  
-## `p22_Entre 16 y 20 km`                        -2.983** (1.407)   9.053*** (0.896)     -0.691 (1.028)      -0.731 (0.923)  
-## `p7_agregado_Trabajo doméstico no remunerado`  -0.843 (1.327)     -1.334 (1.206)       0.726 (0.674)      0.852 (0.631)   
-## p7_agregado_Otro                              14.322*** (1.205) -2.454*** (0.00000) -3.233*** (0.00000) 10.657*** (1.205) 
-## p7_agregado_Estudiante                          1.260 (2.190)    5.069*** (1.678)      2.186 (1.637)     2.865** (1.250)  
-## `p7_agregado_Desocupado o inactivo`             0.802 (1.388)     -1.236 (1.491)      1.833** (0.800)     1.477* (0.791)  
-## p40_Mujer                                      1.373** (0.696)     0.243 (0.788)     1.859*** (0.547)    0.886** (0.427)  
-## `edad_r2_18 - 34 años`                          0.942 (0.778)     -0.871 (1.240)       0.070 (0.599)      0.590 (0.455)   
-## `edad_r2_55 - 80 años`                          1.919 (1.218)      1.668 (1.053)      1.729** (0.741)     0.857 (0.653)   
-## `p5_agregado_Primaria o menos`                 -1.105 (1.866)    11.077*** (1.036)     0.921 (1.236)      -0.402 (1.012)  
-## p5_agregado_Secundaria                         -1.612* (0.964)   9.908*** (0.734)      1.175 (0.955)      -1.014 (0.687)  
-## `p5_agregado_Técnico / Tecnológico`           -2.099** (0.976)   7.755*** (1.163)      0.646 (0.929)      -0.922 (0.674)  
-## p9_estrato3_Bajo                              -2.102** (0.998)    -1.465 (1.542)      -1.348* (0.766)     1.189* (0.674)  
-## p9_estrato3_Medio                              -1.612* (0.857)    -1.784 (1.484)      -1.122 (0.725)     1.381** (0.648)  
-## Constant                                       -1.414 (2.946)   -17.388*** (1.632)    -3.440 (2.246)     -4.113** (1.913) 
-## --------------------------------------------------------------------------------------------------------------------------
-## Akaike Inf. Crit.                                  713.632            713.632             713.632            713.632      
-## ==========================================================================================================================
-## Note:                                                                                          *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
+## =================================================================================================================================================================
+##                                                                                                                Dependent variable:                               
+##                                                                                  --------------------------------------------------------------------------------
+##                                                                                     Auto privado         Modo activo      Taxi / Plataforma   Transporte público 
+##                                                                                          (1)                 (2)                 (3)                 (4)         
+## -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+## p24                                                                              -2.892 (5,245.758)   2.859 (5,537.082)  -5.882 (3,779.699)   1.242 (4,640.083)  
+## p28_importancia_costo_compra                                                      3.732 (5,462.988)   3.217 (4,531.031)   5.149 (4,543.421)   3.875 (4,787.210)  
+## p28_importancia_costo_uso                                                        -3.414 (6,541.022)   0.346 (5,962.124)  -0.250 (4,468.180)   -0.525 (4,742.322) 
+## p28_importancia_comodidad                                                         1.155 (5,376.869)  -5.500 (5,625.234)  -0.200 (4,238.160)   0.818 (4,989.743)  
+## p28_importancia_tiempo                                                           -2.373 (6,023.769)  -4.101 (5,837.950)  -8.178 (5,217.555)   -2.482 (4,961.661) 
+## p28_importancia_riesgo_robo                                                       0.211 (4,883.144)   3.160 (4,271.716)   8.201 (4,902.827)   -0.004 (3,857.355) 
+## p28_importancia_riesgo_acoso                                                      0.644 (5,408.744)   1.942 (6,563.313)  -5.226 (3,988.421)   2.185 (3,607.681)  
+## p28_importancia_discriminacion                                                   -0.106 (4,949.887)  -2.587 (7,168.231)   2.598 (4,559.650)   -0.162 (4,129.597) 
+## p28_importancia_emisiones                                                        -0.864 (6,177.005)  -0.542 (5,537.163)  -1.187 (5,235.351)   -2.328 (4,915.707) 
+## p28_importancia_siniestralidad                                                    1.320 (6,083.891)  -0.594 (6,257.606)   1.386 (5,270.342)   0.006 (5,221.558)  
+## p32_contaminacion_likert                                                          0.817 (5,139.274)  -6.510 (6,542.922)   6.016 (4,858.234)   1.027 (4,772.200)  
+## p36_influencia_amigos                                                            -0.629 (5,078.611)   0.606 (4,014.956)   1.057 (3,289.007)   1.197 (4,123.736)  
+## p37_influencia_familia                                                           -1.949 (4,423.370)  -2.475 (5,531.935)   0.566 (4,143.548)   -3.786 (4,044.856) 
+## tiempo_total                                                                      -0.153 (605.233)     0.009 (427.665)    -1.022 (461.196)     0.281 (402.965)   
+## `edad_r2_18 - 34 años`                                                           -1.300 (3,681.626)  -0.824 (4,542.021)  -3.734 (5,839.018)   4.428 (6,236.548)  
+## `edad_r2_55 - 80 años`                                                           -1.558 (4,644.402)  21.205 (4,856.923)  -10.488 (6,385.230)  -0.029 (7,291.709) 
+## pais_Venezuela                                                                   -0.920 (3,612.541)   6.396 (5,077.304)  -31.157 (4,838.689)  14.327 (5,155.816) 
+## pais_Otro                                                                         -4.019*** (0.012)   0.398*** (0.000)    1.039*** (0.000)    -0.078*** (0.012)  
+## `p3_agregado_Población afrodescendiente`                                         -5.668 (5,155.973)  -5.181 (6,086.378)  -14.289 (6,401.443)  0.128 (7,862.749)  
+## `p3_agregado_Sin respuesta`                                                       -2.679 (884.433)   -4.717 (3,404.694)  11.621 (5,221.505)   1.853 (4,749.848)  
+## `p3_agregado_Pueblos indígenas`                                                   6.053*** (0.147)     2.780 (201.916)   -16.586*** (0.004)    16.333 (201.829)  
+## p5_agregado_Secundaria                                                           -7.307 (6,557.461)  10.912 (4,629.486)   7.870 (4,956.758)  -18.126 (5,358.305) 
+## `p5_agregado_Primaria o menos`                                                   -2.341 (3,291.879)   4.765 (3,607.637)   1.963 (5,352.897)  -15.380 (4,985.181) 
+## `p5_agregado_Técnico / Tecnológico`                                              -3.788 (5,041.412)  -4.422 (4,850.732)  10.889 (4,763.706)  -14.218 (5,892.821) 
+## `p7_agregado_Trabajo doméstico no remunerado`                                     3.977 (4,622.081)  -0.677 (3,717.059)  -4.445 (5,173.659)   3.960 (4,846.131)  
+## `p7_agregado_Desocupado o inactivo`                                               5.426 (4,798.198)  -21.422 (5,203.839)  4.581 (5,782.388)   -1.173 (7,839.758) 
+## p7_agregado_Estudiante                                                            1.215 (1,980.243)   3.482 (1,580.863)  -5.369 (4,060.099)   9.000 (3,913.613)  
+## p7_agregado_Otro                                                                  7.128 (3,163.905)  -0.054*** (0.0002)    2.552 (673.247)    -8.518 (2,816.795) 
+## `p8_agregado_Vive solo/a`                                                         5.663 (6,260.948)  -13.386 (3,276.834)  6.522 (4,987.766)   5.222 (6,305.240)  
+## `p8_agregado_Vive con familiares (otros)`                                         0.730 (6,211.441)  -3.048 (4,770.582)  -0.709 (5,924.544)   5.337 (5,980.891)  
+## `p8_agregado_Vive con no familiares`                                                4.343 (5.702)    -0.794 (1,013.013)   1.256 (2,698.477)   -4.751 (2,072.160) 
+## `p8_agregado_Vive con hijos/as (sin pareja)`                                      1.370 (3,926.218)  -18.831 (5,141.453)  8.639 (7,475.919)   2.692 (7,055.067)  
+## p9_estrato3_Medio                                                                 4.182 (4,578.180)  -2.645 (5,119.528)  -16.666 (5,570.909)  10.477 (6,455.069) 
+## p9_estrato3_Bajo                                                                 -3.373 (3,560.559)  -8.825 (4,285.405)  -14.377 (4,881.710)  6.018 (4,630.515)  
+## p40_Mujer                                                                         1.450 (4,704.522)  -0.459 (4,192.131)   8.788 (6,423.201)   -1.743 (5,356.496) 
+## `p13_Sí, auto`                                                                    5.878 (4,371.284)  -7.681 (4,129.092)  -1.834 (4,884.732)   1.018 (5,385.545)  
+## p13_No                                                                            3.527 (5,349.666)  -18.153 (3,691.524) 13.435 (5,719.757)   3.453 (5,671.356)  
+## `p13_Sí, motocicleta`                                                            -5.874 (5,438.975)  -8.529 (4,832.363)   2.840 (5,301.165)   -1.824 (6,019.925) 
+## `p14_Si, auto`                                                                   -2.758 (3,656.540)  -9.002 (3,778.820)  16.671 (5,507.424)   1.495 (4,508.315)  
+## p14_No                                                                            0.193 (4,444.618)  -6.202 (5,331.074)  -1.572 (6,171.795)   -5.497 (7,122.699) 
+## `p14_Si, motocicleta`                                                            -1.279 (3,721.306)  -5.337 (4,118.489)  -14.677 (6,295.646)  -8.036 (6,178.003) 
+## `p15_autos_agregado_1 auto`                                                       0.215 (3,602.281)  -3.712 (6,422.857)  13.124 (6,551.200)   -1.310 (5,319.363) 
+## `p15_autos_agregado_2 o más autos`                                               -0.393 (4,387.271)  -4.697 (1,859.656)  14.658 (4,766.216)  -16.498 (3,145.573) 
+## `p15_1_autos_propios_agregado_1 auto propio`                                     -0.200 (5,214.434)   0.323 (3,792.492)  -2.332 (6,670.683)  -10.077 (5,818.534) 
+## `p15_1_autos_propios_agregado_2 o más autos propios`                              3.394 (2,577.298)  -5.291 (1,273.729)  13.528 (2,629.952)  -13.284*** (0.00000)
+## `p16_motos_agregado_Sin motocicletas`                                            -3.657 (5,343.859)  -0.433 (5,804.523)  -5.602 (5,014.904)   -9.835 (5,388.190) 
+## `p16_motos_agregado_1 motocicleta`                                                0.386 (4,713.192)   8.780 (5,744.968)   0.737 (5,746.420)  -12.194 (5,280.941) 
+## `p16_1_motos_propias_agregado_Sin motocicletas propias`                          10.689 (3,359.004)  10.769 (3,559.132)  -7.680 (5,096.663)   -0.298 (5,591.126) 
+## `p16_1_motos_propias_agregado_2 o más motocicletas propias`                       1.961*** (0.002)    -3.716*** (0.615)  -4.800 (3,816.944)    0.721*** (0.065)  
+## `cilindraje_auto_agregado_1500 - 1999 cc`                                        12.651 (3,255.109)   1.387*** (0.073)   -4.949 (3,256.026)  -0.292*** (0.00001) 
+## `cilindraje_auto_agregado_1000 - 1499 cc`                                        12.769 (3,340.708)   7.586 (3,144.199)   3.956 (1,842.609)   -16.542** (7.078)  
+## `cilindraje_auto_agregado_3000 cc o más`                                         14.125 (3,313.071)  1.307*** (0.00001)  -5.658 (3,313.071)   -0.843*** (0.000)  
+## `cilindraje_auto_agregado_2000 - 2499 cc`                                        -1.273 (2,050.737)   1.657*** (0.000)    1.977 (2,059.060)  -3.180*** (0.00000) 
+## `cilindraje_auto_agregado_Menos de 1000 cc`                                       9.028 (1,736.080)   0.223*** (0.0002)   -2.987 (680.977)     0.486*** (0.000)  
+## `cilindraje_auto_agregado_No sabe / No responde`                                 12.097 (1,895.888)   2.984*** (0.000)   -5.309 (1,896.388)    0.755*** (0.000)  
+## `cilindraje_auto_agregado_2500 - 2999 cc`                                        14.107 (2,884.205)  -0.458 (1,461.211)  -8.996 (2,103.421)   3.882*** (0.0001)  
+## `cilindraje_moto_agregado_Eléctrico / No aplica`                                 60.448 (1,920.091)  35.381 (4,088.767)  22.224 (3,604.004)   24.602 (4,362.948) 
+## `cilindraje_moto_agregado_150 - 250 cc`                                            -8.637* (4.945)     -7.430* (3.901)   -5.603 (5,657.700)   2.497 (2,596.248)  
+## `cilindraje_moto_agregado_Menos de 125 cc`                                       -8.273*** (0.0002)  -2.880 (1,871.149)   6.920 (4,435.093)    -9.763 (37.174)   
+## `cilindraje_moto_agregado_150 cc`                                                -6.244*** (0.0002)   4.388 (3,053.792)  -8.170 (5,346.288)  -13.393 (2,245.215) 
+## `cilindraje_moto_agregado_No sabe / No responde`                                 -6.661*** (0.0001)  2.063*** (0.00000)  -1.500 (4,178.144)  -0.992*** (0.00000) 
+## `cilindraje_moto_agregado_Más de 250 cc`                                           1.942** (0.920)     1.753 (32.737)     3.030*** (0.025)    1.015 (5,338.795)  
+## `modelo_vehiculo_agregado_2005 - 2010`                                            4.566 (2,274.791)   -2.846*** (0.070)  -6.964 (2,271.460)   -9.816 (5,113.639) 
+## `modelo_vehiculo_agregado_No aplica`                                             -13.054 (3,788.062) 20.696 (4,499.488)  44.189 (4,099.409)   40.337 (4,363.474) 
+## `modelo_vehiculo_agregado_Anterior a 2005`                                        1.307 (3,347.310)  -5.965 (3,359.685)    7.586 (673.247)      -7.002 (7.078)   
+## `modelo_vehiculo_agregado_2021 o más reciente`                                    4.970 (4,233.508)  -5.873 (2,916.474)  -6.566 (5,730.700)  -12.697 (3,634.088) 
+## `modelo_vehiculo_agregado_2011 - 2015`                                            5.889 (3,740.102)   1.110 (2,256.634)  -7.020 (4,292.254)    -9.167 (690.969)  
+## `modelo_vehiculo_agregado_Sin información`                                       -8.367 (1,895.888)    -2.780 (20.944)   -7.036 (4,585.891)  -16.196 (2,245.215) 
+## `p19comuna_Comuna 13 - San Javier`                                                4.460 (3,020.610)  -5.152 (3,040.604)  -5.830 (3,736.386)   -5.260 (5,358.333) 
+## `p19comuna_Comuna 15 - Guayabal`                                                  3.775 (4,050.556)  -10.998 (3,959.035) -0.888 (2,309.516)   2.858 (3,539.463)  
+## `p19comuna_Comuna 3 - Manrique`                                                    -1.736 (36.204)   -1.209 (2,386.673)  -2.399 (3,884.388)   1.715 (5,252.144)  
+## `p19comuna_Comuna 6 - Doce de Octubre`                                            3.984 (3,689.282)   3.996 (3,120.161)  13.756 (5,897.880)   -7.777 (5,280.029) 
+## `p19comuna_Comuna 8 - Villa Hermosa`                                              3.559 (3,640.121)  -4.427 (3,022.933)  -13.914 (3,498.248)  -2.242 (3,315.797) 
+## `p19comuna_Comuna 4 - Aranjuez`                                                   4.721 (4,600.718)  -2.767 (5,646.607)  -4.483 (5,866.457)   4.390 (6,506.525)  
+## `p19comuna_Comuna 12 - La América`                                               -3.242 (2,490.941)  -2.202 (3,585.997)  25.981 (5,864.421)  -21.503 (5,597.355) 
+## `p19comuna_Comuna 1 - Popular`                                                    3.420 (2,990.690)   3.500 (3,970.269)  14.650 (4,086.724)  -13.265 (5,713.578) 
+## `p19comuna_Comuna 5 - Castilla`                                                   2.614 (3,330.291)  -4.068 (1,646.178)  -4.440 (6,229.475)   2.895 (5,090.915)  
+## `p19comuna_Comuna 10 - La Candelaria`                                            -0.441 (2,461.746)  12.809 (5,377.751)  -4.045 (4,396.009)  -10.762 (4,517.036) 
+## `p19comuna_Comuna 2 - Santa Cruz`                                                 -4.332*** (0.412)  -14.708 (2,751.568)  3.915 (3,967.621)   -6.321 (5,701.191) 
+## `p19comuna_Comuna 7 - Robledo`                                                    5.202 (2,162.071)   9.236 (4,230.958)   7.017 (4,067.237)   -7.570 (5,942.581) 
+## `p19comuna_Comuna 9 - Buenos Aires`                                              -7.836 (3,457.241)  -3.162 (2,829.102)   3.810 (5,135.928)  -17.026 (5,906.261) 
+## `p19comuna_Comuna 11 - Laureles Estadio`                                         -3.648 (3,547.303)   8.903 (4,129.919)  -4.554 (4,152.472)   -4.283 (2,411.937) 
+## `p19comuna_Comuna 14 - El Poblado`                                               -1.078 (3,953.722)   2.422 (3,123.761)   4.195 (3,623.693)   -9.062 (7,128.720) 
+## `p22_Entre 16 y 20 km`                                                           -12.319 (3,712.402) -1.490 (4,199.844)   1.401 (6,538.347)  -14.385 (6,049.591) 
+## `p22_Entre 11 y 15 km`                                                           -6.089 (3,872.660)  -1.416 (3,971.145)   0.014 (4,922.431)   -0.993 (5,552.746) 
+## `p22_Entre 6 y 10 km`                                                            -7.176 (4,877.903)  -3.600 (5,832.706)  -7.954 (6,281.435)   1.899 (6,582.619)  
+## `p22_Menos de 5 km`                                                              -1.640 (5,882.956)   3.223 (4,265.461)  -4.791 (5,332.370)   4.399 (6,248.228)  
+## `p23_agregado_Recreación, salud y actividades personales`                        -2.456 (5,004.167)  -6.321 (5,012.996)  12.197 (6,178.882)   -0.431 (7,172.479) 
+## `p23_agregado_Compras y trámites`                                                 4.166 (4,495.158)   2.815 (5,520.572)   3.859 (5,177.610)   -0.111 (5,455.662) 
+## p23_agregado_Estudio                                                              1.221 (1,965.078)  -5.359 (1,598.964)  -6.360 (4,137.984)   0.599 (4,029.238)  
+## `p23_agregado_Visitas sociales`                                                   0.309 (1,706.884)  -11.432*** (0.405)   8.205 (3,592.424)   0.586 (4,082.099)  
+## `p23_agregado_Cuidado y familia (escuela, niñas/os)`                              -9.013*** (0.374)   3.742*** (0.888)    -11.448 (645.399)   -0.788 (2,705.286) 
+## `p23_agregado_Cuidado y familia (recreación, niñas/os)`                          -1.718*** (0.00000)  -3.362*** (0.082)   2.745*** (0.000)     1.231*** (0.082)  
+## `p23_agregado_Cuidado y familia (salud, niñas/os)`                               1.025*** (0.00000)     0.223 (0.319)      5.238 (336.234)     -2.820 (336.430)  
+## `p23_agregado_Cuidado y familia (persona enferma)`                                0.180*** (0.0003)   -0.466*** (0.000)  -23.294*** (0.006)   23.178*** (0.007)  
+## p23_agregado_Otro                                                                 1.760 (1,776.467)  14.239 (2,345.448)   1.548 (2,995.273)  -15.277 (2,522.141) 
+## `p23_agregado_Cuidado y familia (persona con discapacidad)`                      0.233*** (0.00000)   0.126*** (0.000)   22.810*** (0.00000) -21.508*** (0.00000)
+## `p26_agregado_Riesgo de accidente`                                                2.097 (4,595.493)  -0.604 (2,145.473)  25.391 (6,121.734)  -29.355 (2,930.629) 
+## `p26_agregado_Costo económico`                                                    0.381 (3,997.880)    -3.228 (7.207)    21.251 (3,559.788)   -8.132 (4,314.703) 
+## `p26_agregado_Inseguridad personal`                                              -1.021 (2,526.227)  -3.137 (4,146.507)  30.777 (4,149.456)  -15.880 (4,399.099) 
+## `p26_agregado_Impacto ambiental`                                                  7.902 (1,894.344)  -14.127 (1,013.006) 18.427 (1,896.386)   -2.292 (1,013.987) 
+## `p26_agregado_Nada le disgusta`                                                   1.962 (4,800.043)  -10.083 (6,322.833) 15.981 (5,680.528)  -10.635 (5,772.539) 
+## `p26_agregado_Tiempo de viaje / espera`                                           3.021 (5,492.390)  -4.574 (5,168.117)  22.696 (5,196.425)   -5.681 (6,169.349) 
+## `p26_agregado_Otro motivo`                                                       -2.959 (2,239.573)   6.822 (1,281.934)   8.331 (2,380.163)   -9.111 (2,605.174) 
+## `p26_agregado_Falta de autonomía / control`                                       2.824*** (0.000)    -4.381*** (0.007)  -2.702*** (0.00000)   5.887*** (0.007)  
+## `p26_agregado_Sin respuesta`                                                     0.351*** (0.00000)   14.791*** (3.362)    3.317** (1.586)    -15.709*** (2.027) 
+## p29_modo_ideal_agregado_Automóvil                                                -2.412 (6,213.950)  -5.940 (5,545.933)   0.646 (5,173.603)   1.935 (5,730.520)  
+## `p29_modo_ideal_agregado_Transporte público`                                     -2.332 (3,287.552)  -14.086 (4,615.560) -20.779 (5,530.234)  24.817 (6,865.594) 
+## p29_modo_ideal_agregado_Taxi                                                     -3.147 (1,987.159)  -0.639 (1,281.703)  14.787 (4,667.507)   -0.551 (4,782.656) 
+## p29_modo_ideal_agregado_Bicicleta                                                 2.603 (1,979.805)  10.092 (2,049.208)  -1.761 (4,193.417)   2.462 (6,838.248)  
+## p29_modo_ideal_agregado_Caminar                                                  -2.982 (1,796.767)   32.484 (122.441)    -31.863 (949.599)   8.933 (2,239.147)  
+## p29_modo_ideal_agregado_Otro                                                     -1.791 (2,263.688)   -2.667*** (0.037)   5.186*** (0.161)    -1.425 (2,263.733) 
+## `p30_razon_no_uso_agregado_Tiempo / disponibilidad`                                0.255 (138.569)    7.601 (4,359.985)   -17.137 (816.370)   9.120 (3,671.697)  
+## `p30_razon_no_uso_agregado_Limitaciones económicas`                               4.076 (6,446.755)  -6.972 (6,232.872)  -15.007 (5,876.945)  14.462 (5,386.608) 
+## `p30_razon_no_uso_agregado_Inseguridad / acoso`                                   2.480 (3,109.356)  -11.049 (1,458.826) -11.873 (4,438.111)  20.615 (3,900.137) 
+## `p30_razon_no_uso_agregado_Otro motivo`                                          -5.414 (4,080.998)  -11.493 (4,053.444)  3.455 (5,200.620)   9.624 (5,769.908)  
+## `p30_razon_no_uso_agregado_Condiciones físicas / salud`                            1.398 (884.670)     1.499 (32.630)    -8.497 (1,007.076)   8.174 (5,812.028)  
+## `p30_razon_no_uso_agregado_Falta de infraestructura / distancia`                   -2.392 (2.848)    -1.381 (2,142.016)  -5.288 (2,532.037)    13.256 (745.622)  
+## `p31_fuente_contaminacion_agregada_Industria/Obras`                              -5.091 (5,043.396)  -7.995 (4,904.439)  -4.603 (6,779.425)   -2.538 (6,473.402) 
+## `p31_fuente_contaminacion_agregada_Productos químicos`                             -0.357 (9.540)    11.332 (3,004.276)  -13.988 (3,883.539)  11.927 (4,749.724) 
+## `p31_fuente_contaminacion_agregada_Otra fuente`                                   -1.036 (263.858)   -7.184 (1,284.621)  -0.869 (1,273.813)    0.565 (939.633)   
+## `p31_fuente_contaminacion_agregada_Vertederos (basureros) y rellenos sanitarios`  4.440 (4,278.018)  -2.233 (3,764.364)   0.875 (6,427.379)   7.034 (8,338.668)  
+## `p31_fuente_contaminacion_agregada_Quema de residuos`                              -9.653* (4.970)   13.981 (3,257.243)  -11.480 (3,713.658)  -2.403 (3,382.368) 
+## `p33_modo_contaminante_agregado_Transporte público`                              -2.124 (5,126.927)   1.299 (5,342.419)   3.600 (5,322.465)   -1.195 (4,488.761) 
+## p33_modo_contaminante_agregado_Camión                                            -8.171 (5,358.176)  -7.566 (7,052.855)  -0.346 (4,817.415)   -1.902 (5,600.211) 
+## p33_modo_contaminante_agregado_Automóvil                                         -3.661 (6,137.503)  -7.479 (6,558.702)  -6.824 (6,028.993)   3.924 (5,447.579)  
+## `p33_modo_contaminante_agregado_Otro modo`                                       -3.674 (1,777.681)  13.855 (4,186.538)   9.617 (3,612.429)   -8.931 (4,247.811) 
+## `p35_razon_agregada_Otro motivo`                                                 -2.597 (5,505.487)   1.764 (4,485.659)   1.724 (4,401.712)  -14.173 (6,070.824) 
+## `p35_razon_agregada_Costos altos`                                                -2.907 (4,110.184)  14.094 (4,504.356)  -9.689 (5,135.450)   -7.389 (5,112.116) 
+## `p35_razon_agregada_Inseguridad / violencia`                                      3.496 (5,115.546)   5.075 (5,255.342)  -3.935 (6,837.279)   1.902 (7,591.828)  
+## `p35_razon_agregada_Falta de información`                                        -0.289 (4,221.359)  10.907 (4,642.935)  -7.823 (6,127.708)   -8.962 (6,056.824) 
+## `p35_razon_agregada_Condiciones climáticas`                                       3.419 (3,282.363)  10.852 (2,287.026)  -19.464 (4,080.980)  4.801 (4,881.114)  
+## p38p38_1_Si                                                                      -1.130 (2,864.981)  22.233 (5,058.919)  -2.504 (5,203.748)   -4.783 (5,112.705) 
+## `p38p38_1_No sabe`                                                                -0.901*** (0.021)  -1.456*** (0.00000) -10.683 (2,161.628)  9.200 (3,392.004)  
+## p38p38_2_Si                                                                       1.592 (2,814.306)  -2.700 (4,995.928)  -6.588 (6,050.933)   6.681 (4,632.780)  
+## `p38p38_2_No sabe`                                                                -0.901*** (0.021)  -1.456*** (0.00000) -10.683 (2,161.628)  9.200 (3,392.004)  
+## p38p38_3_Si                                                                      -4.495 (3,961.964)  -11.102 (4,325.568)  8.510 (7,303.691)   -1.990 (6,444.744) 
+## `p38p38_3_No sabe`                                                                0.757*** (0.021)    16.550*** (4.107)  -6.800 (2,161.628)  -10.841 (3,392.680) 
+## p38p38_4_Si                                                                      -1.218 (4,729.254)  -6.293 (3,842.542)   5.430 (6,811.332)   -2.006 (6,412.919) 
+## `p38p38_4_No sabe`                                                                -1.679*** (0.021)   -1.004*** (0.000)  -4.336 (2,161.544)   -0.076*** (0.000)  
+## p38p38_5_Si                                                                       1.340 (3,966.676)   6.531 (4,505.128)   0.274 (6,562.977)   -1.112 (5,386.401) 
+## `p38p38_5_No sabe`                                                                -1.357*** (0.021)   -2.927*** (0.000)  -0.799 (2,161.544)   -2.192*** (0.000)  
+## p38p38_6_Si                                                                      -7.029 (3,338.981)   7.769 (2,061.589)   1.382 (3,817.046)   -7.748 (2,895.668) 
+## `p38p38_6_No sabe`                                                                 -0.021 (0.021)     -2.543*** (0.000)   2.523 (2,161.544)   -10.398*** (0.000) 
+## p38p38_7_Si                                                                       5.593 (3,021.261)  -4.594 (6,095.464)  -4.949 (3,410.930)   0.704 (5,858.152)  
+## `p38p38_7_No sabe`                                                                 0.932 (512.489)    0.249 (3,013.560)  -3.020*** (0.00000)  1.830 (4,106.463)  
+## p38p38_99_No                                                                     -6.412 (3,208.866)   6.707 (3,069.415)  -22.524 (4,731.078)  9.733 (4,001.057)  
+## p38p38_99_Si                                                                      1.658*** (0.000)    18.006*** (4.107)   3.883*** (0.000)    -20.041*** (4.107) 
+## Constant                                                                         -12.685 (1,920.223) -2.853 (1,679.082)  15.611 (2,012.223)  -40.793 (2,353.045) 
+## -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+## Akaike Inf. Crit.                                                                     1,168.000           1,168.000           1,168.000           1,168.000      
+## =================================================================================================================================================================
+## Note:                                                                                                                                 *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
 </div>
 </div>
 
