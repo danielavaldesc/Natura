@@ -54,7 +54,7 @@ dataset <- subset(dataset, select = -id)
 
 # Modelo: Logit Multinomial
 ```{r}
-dataset$medio <- factor(dataset$medio)
+dataset$medio <- relevel(factor(dataset$medio), ref = "Moto privada")
 
 # `p22_Más de 20 km`
 # `p7_agregado_Ocupado/a`

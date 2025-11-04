@@ -48,7 +48,7 @@ dataset <- columna_dummy(dataset, "p22")
 if ("id" %in% names(dataset)) dataset <- subset(dataset, select = -id)
 
 # --- Modelo ---
-dataset$medio <- factor(dataset$medio)
+dataset$medio <- relevel(factor(dataset$medio), ref = "Moto privada")
 
 # `p22_Más de 20 km`
 # `p7_agregado_Ocupado/a`

@@ -17,9 +17,7 @@ library(stringr)
 # Base de  #
 #   Datos  #
 ############
-dataset <- read_excel(
-  "C:/Users/danie/OneDrive/Escritorio/Natura/201025_Results_Cali/output/input_famd_cali_29102025.xlsx"
-)
+dataset <- read_excel("C:/Users/danie/OneDrive/Escritorio/Natura/201025_Results_Cali/output/input_famd_cali_29102025.xlsx")
 
 ## --- Función dummies (robusta) ---
 columna_dummy <- function(df, columna) {
@@ -45,7 +43,7 @@ dataset <- columna_dummy(dataset, "p22")
 if ("id" %in% names(dataset)) dataset <- subset(dataset, select = -id)
 
 # --- Modelo ---
-dataset$medio <- factor(dataset$medio)
+dataset$medio <- relevel(factor(dataset$medio), ref = "Moto privada")
 
 # p22_Más de 12 km
 # Hombre
