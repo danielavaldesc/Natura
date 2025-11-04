@@ -152,10 +152,13 @@ writexl::write_xlsx(data.frame(pc = 1:28, AdjEV = paran$AdjEv[1:28],
 # This provides a measure of the proportion of variance in a variable that is
 
 # captures by a particular PD
+
 library(PCAmixdata)
 split <- splitmix(famd.dataset)
-res.pcamix <- PCAmix(X.quanti=split$X.quanti,  
-                     X.quali=split$X.quali, ndim = 28, rename.level = TRUE)
+res.pcamix <- PCAmixdata::PCAmix(X.quanti=split$X.quanti,  
+                     X.quali=split$X.quali, ndim = 28, 
+                     rename.level = T)
+
 plot(res.pcamix, choice="cor") 
 
 round(res.pcamix$quanti.cor, 2)
@@ -189,6 +192,34 @@ coord_var = cbind(rownames(coord_var), coord_var)
 writexl::write_xlsx(coord_var %>%
                       as.data.frame(),
                     "famd/coord_var_29102025.xlsx")
+
+# Ad hoc: coordenadas individuos
+library(plotly)
+df_ind <- as.data.frame(model$ind$coord[, 1:3])
+df_ind$p17_modo_agregado <- model$call$X$p17_modo_agregado
+
+p3d <- plot_ly(
+  data = df_ind,
+  x = ~Dim.1,
+  y = ~Dim.2,
+  z = ~Dim.3,
+  color = ~p17_modo_agregado,
+  colors = "Set1",
+  type = "scatter3d",
+  mode = "markers",
+  marker = list(size = 3, opacity = 0.85)
+) %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "Dim 1", range = c(-5, 5)),
+      yaxis = list(title = "Dim 2", range = c(-5, 5)),
+      zaxis = list(title = "Dim 3")
+    ),
+    legend = list(title = list(text = "Modo"))
+  )
+
+p3d
+
 
 ###### Cuarto, whereas factor loading and squared loading measure shows how well
 # a given PD describes variation capture in a variable
