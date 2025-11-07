@@ -48,8 +48,6 @@ cont_m2 <- c("p1edad", "p18",
 
 # Seleccionar variables del Módulo 3
 cat_m3 <- c(
-  "p30_razon_no_uso_agregado",   # Razones para no usar modo ideal
-  "p31_fuente_contaminacion_agregada", # Fuente percibida de contaminación
   "p32_contaminacion_likert" # Nivel de contaminación generado por su forma de movilizarse
 )
 
@@ -71,8 +69,7 @@ cont_m3 <- c(
 
 
 # Seleccionar variables del Módulo 4
-cat_m4 <- c("p38p38_1", "p38p38_2", "p38p38_3",
-            "p38p38_4","p38p38_5","p38p38_6","p38p38_7","p38p38_99", "p39_lugar_agregado"
+cat_m4 <- c("p38p38_dummy", "p39_lugar_agregado_mod"
 )
 
 # Agregar p38p38 (dummy) ; agregar p39 (modo individual u otro lugar)

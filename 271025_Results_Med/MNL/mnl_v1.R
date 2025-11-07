@@ -46,8 +46,7 @@ vars_dummy <- c(
   "p12_dificultad_binaria",
   "p40","p13","p14","p15_autos_agregado","p16_motos_agregado",
   "p19comuna","p22","p23_agregado",
-  "p30_razon_no_uso_agregado","p31_fuente_contaminacion_agregada",
-  "p38p38_1","p38p38_2","p38p38_3","p38p38_4","p38p38_5","p38p38_6","p38p38_7","p38p38_99"
+  "p38p38_dummy", "p39_lugar_agregado_mod"
 )
 
 
@@ -150,30 +149,12 @@ modelo_multinomial <- multinom(
     `p23_agregado_Otro` +
     `p23_agregado_Cuidado y familia (persona con discapacidad)` +
     
-    # p30_razon_no_uso_agregado  (BASE: Modo actual)
-    `p30_razon_no_uso_agregado_Tiempo / disponibilidad` +
-    `p30_razon_no_uso_agregado_Limitaciones económicas` +
-    `p30_razon_no_uso_agregado_Inseguridad / acoso` +
-    `p30_razon_no_uso_agregado_Otro motivo` +
-    `p30_razon_no_uso_agregado_Condiciones físicas / salud` +
-    `p30_razon_no_uso_agregado_Falta de infraestructura / distancia` +
+    # p38p38_i  (BASE: No; dummy_0) 
+    `p38p38_dummy_1`+
     
-    # p31_fuente_contaminacion_agregada  (BASE: Vehículos motorizados)
-    `p31_fuente_contaminacion_agregada_Industria/Obras` +
-    `p31_fuente_contaminacion_agregada_Productos químicos` +
-    `p31_fuente_contaminacion_agregada_Otra fuente` +
-    `p31_fuente_contaminacion_agregada_Vertederos (basureros) y rellenos sanitarios` +
-    `p31_fuente_contaminacion_agregada_Quema de residuos` +
-    
-    # p38p38_i  (BASE: No) | p38p38_99 (BASE: No sabe)
-    `p38p38_1_Si` + `p38p38_1_No sabe` +
-    `p38p38_2_Si` + `p38p38_2_No sabe` +
-    `p38p38_3_Si` + `p38p38_3_No sabe` +
-    `p38p38_4_Si` + `p38p38_4_No sabe` +
-    `p38p38_5_Si` + `p38p38_5_No sabe` +
-    `p38p38_6_Si` + `p38p38_6_No sabe` +
-    `p38p38_7_Si` + `p38p38_7_No sabe` +
-    `p38p38_99_No` + `p38p38_99_Si` +
+    # p39_lugaragregado_mod (NA (NO LE SUCEDIÓ))
+    `p39_lugar_agregado_mod_En otro lugar` + 
+    `p39_lugar_agregado_mod_En su modo de transporte` +
     
     # p19comuna  (BASE: Comuna 16 - Belén)
     `p19comuna_Comuna 13 - San Javier` +
@@ -235,21 +216,9 @@ modelo_multinomial_sin <- multinom(
     `p23_agregado_Cuidado y familia (recreación, niñas/os)` + `p23_agregado_Cuidado y familia (salud, niñas/os)` +
     `p23_agregado_Cuidado y familia (persona enferma)` + `p23_agregado_Otro` +
     `p23_agregado_Cuidado y familia (persona con discapacidad)` +
-    `p30_razon_no_uso_agregado_Tiempo / disponibilidad` + `p30_razon_no_uso_agregado_Limitaciones económicas` +
-    `p30_razon_no_uso_agregado_Inseguridad / acoso` + `p30_razon_no_uso_agregado_Otro motivo` +
-    `p30_razon_no_uso_agregado_Condiciones físicas / salud` + `p30_razon_no_uso_agregado_Falta de infraestructura / distancia` +
-    `p31_fuente_contaminacion_agregada_Industria/Obras` + `p31_fuente_contaminacion_agregada_Productos químicos` +
-    `p31_fuente_contaminacion_agregada_Otra fuente` +
-    `p31_fuente_contaminacion_agregada_Vertederos (basureros) y rellenos sanitarios` +
-    `p31_fuente_contaminacion_agregada_Quema de residuos` +
-    `p38p38_1_Si` + `p38p38_1_No sabe` +
-    `p38p38_2_Si` + `p38p38_2_No sabe` +
-    `p38p38_3_Si` + `p38p38_3_No sabe` +
-    `p38p38_4_Si` + `p38p38_4_No sabe` +
-    `p38p38_5_Si` + `p38p38_5_No sabe` +
-    `p38p38_6_Si` + `p38p38_6_No sabe` +
-    `p38p38_7_Si` + `p38p38_7_No sabe` +
-    `p38p38_99_No` + `p38p38_99_Si`
+    `p38p38_dummy_1`+
+    `p39_lugar_agregado_mod_En otro lugar` + 
+    `p39_lugar_agregado_mod_En su modo de transporte`
   ,
   data = dataset,
   trace = FALSE
