@@ -10,7 +10,7 @@
 ## 0. Cargar entorno y configuración inicial
 ## ============================================================================
 
-setwd("C:/Users/Portatil/Desktop/Natura/201025_Results_Cali/")
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\")
 
 source("cleaning/m3_clean_data.R")
 
@@ -27,38 +27,23 @@ library(dplyr)
 
 dataset <- dataset %>%
   mutate(
+    p39_norm = str_squish(str_to_lower(p39)),
     p39_lugar_agregado = case_when(
-      # Transporte público masivo o colectivo
-      p39 %in% c("En los buses del transporte público (metro)",
-                 "En los paraderos o estaciones",
-                 "En uno de los alimentadores") ~ "Transporte público / estaciones",
+      p39_norm %in% str_to_lower(c(
+        "En los buses del transporte público (metro)",
+        "En los paraderos o estaciones",
+        "En uno de los alimentadores"
+      )) ~ "Transporte público / estaciones",
       
-      # Transporte intermunicipal
-      p39 %in% c("En un bus de transporte intermunicipal") ~ "Transporte intermunicipal",
-      
-      # Transporte escolar
-      p39 == "En la ruta escolar" ~ "Transporte escolar",
-      
-      # Transporte informal
-      p39 %in% c("En un jeep (guala)",
-                 "En un motoratón") ~ "Transporte informal",
-      
-      # Transporte privado o individual
-      p39 %in% c("En un taxi",
-                 "En un vehículo de aplicación Uber, Cabify,",
-                 "En una motocicleta") ~ "Transporte privado o individual",
-      
-      # Entorno peatonal
-      p39 %in% c("Mientras caminaba",
-                 "Entre el paradero y la casa") ~ "Entorno peatonal / calle",
-      
-      # Otro
-      p39 == "Otro" ~ "Otro lugar",
-      
+      p39_norm == "en un bus de transporte intermunicipal" ~ "Transporte intermunicipal",
+      p39_norm == "en la ruta escolar" ~ "Transporte escolar",
+      p39_norm %in% str_to_lower(c("En un jeep (guala)", "En un motoratón")) ~ "Transporte informal",
+      p39_norm %in% str_to_lower(c("En un taxi", "En un vehículo de aplicación Uber, Cabify,", "En una motocicleta")) ~ "Transporte privado o individual",
+      p39_norm %in% str_to_lower(c("Mientras caminaba", "Entre el paradero y la casa")) ~ "Entorno peatonal / calle",
+      p39_norm == "otro" ~ "Otro lugar",
       TRUE ~ NA_character_
     )
   )
-
 
 ###############################################################################
 ## Actualizar diccionario de variables

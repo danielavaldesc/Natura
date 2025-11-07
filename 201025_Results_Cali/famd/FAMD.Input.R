@@ -32,22 +32,14 @@ N = nrow(dataset)
 diccionario_clasificado <- read_excel("output/diccionario_cali.xlsx")
 
 # Seleccionar variables del Módulo 1
-cat_m1 <- c("edad_r2", "pais", "p3_agregado", "p5_agregado",
-                     "p7_agregado", "p8_agregado", "p9_estrato3", "p40")
+cat_m1 <- c("edad_r2", "p3_agregado", "p5_agregado",
+                     "p7_agregado", "p9_estrato3","p12_dificultad_binaria","p40")
 cont_m1 <- c("p1edad")
 
 # Seleccionar variables del Módulo 2
-cat_m2 <- c("edad_r2", "pais",
-                     "p13","p14",
+cat_m2 <- c("edad_r2", "p13","p14",
                      "p15_autos_agregado", 
-                     "p15_1_autos_propios_agregado", 
-                     "p16_motos_agregado", 
-                     "p16_1_motos_propias_agregado",
-                     "p17_modo_agregado",
-                     "cilindraje_auto_agregado",
-                     "cilindraje_moto_agregado",
-                     "cilindraje_camion_agregado",
-                     "modelo_vehiculo_agregado",
+                     "p16_motos_agregado",
                      "p19comuna","p22",
                      "p23_agregado")
 cont_m2 <- c("p1edad", "p18",
@@ -59,14 +51,9 @@ cont_m2 <- c("p1edad", "p18",
 
 # Seleccionar variables del Módulo 3
 cat_m3 <- c(
-  #"p25_razones_agregadas",       # Razones para elección de modo
-  "p26_agregado",                # Aspecto que menos le gusta
-  #"p27_situaciones_multiples",   # Situaciones percibidas / evitadas
-  "p29_modo_ideal_agregado",     # Modo de transporte ideal
   "p30_razon_no_uso_agregado",   # Razones para no usar modo ideal
   "p31_fuente_contaminacion_agregada", # Fuente percibida de contaminación
-  "p33_modo_contaminante_agregado",    # Modo más contaminante percibido
-  "p35_razon_agregada"                # Razones principales (agregadas)
+  "p32_contaminacion_likert" # Nivel de contaminación generado por su forma de movilizarse
 )
 
 cont_m3 <- c(
@@ -88,9 +75,8 @@ cont_m3 <- c(
 
 # Seleccionar variables del Módulo 4
 cat_m4 <- c("p38p38_1", "p38p38_2", "p38p38_3",
-  "p38p38_4","p38p38_5","p38p38_6","p38p38_7","p38p38_99"
+            "p38p38_4","p38p38_5","p38p38_6","p38p38_7","p38p38_99", "p39_lugar_agregado"
 )
-
 
 # Vector de variables categóricas
 cat_vars = c(cat_m1, cat_m2, cat_m3, cat_m4)
