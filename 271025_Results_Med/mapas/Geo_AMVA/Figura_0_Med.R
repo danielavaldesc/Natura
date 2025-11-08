@@ -1,21 +1,22 @@
-######################################################
-## Figura 1: Georreferenciación tiempo total MED    ##
-## (Usando sólo el layer de Comunas de Medellín)
-######################################################
+#########################################################
+## Figura 1: Georreferenciación tiempo total MEDELLÍN  ##
+#########################################################
 
 library(readxl)
 library(dplyr)
 library(ggplot2)
 library(sf)
-library(viridis)
 library(stringr)
+library(grid)
+library(units)
 
-# === Rutas de tus datos ===
+# === Rutas (AMVA) ===
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\mapas\\Geo_AMVA\\")
-ruta_xlsx  <- "input_famd_med_29102025.xlsx"
+ruta_xlsx <- "input_famd_med_29102025.xlsx"
+ruta_shp  <- "LimiteComunaCorregimiento_2014.shp"
 
-# === 1) Datos: p40 (H/M), p19comuna (1..16), tiempo_total numérico ===
-df <- read_excel(ruta_xlsx) %>%
+# ============ 1) Datos ============
+df <- readxl::read_excel(ruta_xlsx) %>%
   mutate(
     p40 = str_to_title(trimws(as.character(p40))),
     p40 = ifelse(p40 %in% c("Hombre","Mujer"), p40, NA_character_),
@@ -25,81 +26,113 @@ df <- read_excel(ruta_xlsx) %>%
   ) %>%
   filter(!is.na(p40), !is.na(p19comuna), !is.na(tiempo_total))
 
-# resumen por comuna y sexo (evita n() fuera de contexto usando dplyr::n())
+# --- Diagnóstico de cobertura por comuna ---
+df %>% count(p19comuna, sort = TRUE) %>% print(n=Inf)
+
+# --- Nos quedamos SOLO con comunas 1..16 (evita NA / corregimientos) ---
+df <- df %>% filter(p19comuna %in% 1:16)
+
 agg <- df %>%
   group_by(p19comuna, p40) %>%
   summarise(
-    n = dplyr::n(),
+    n         = n(),
     mean_time = mean(tiempo_total, na.rm = TRUE),
-    .groups = "drop"
+    .groups   = "drop"
   )
 
-# === 2) Comunas de Medellín (solo Medellín) desde FeatureServer (layer 3) ===
-# Fuente: Estaciones_mallavial_comunas_de_Medellin / Admin_Comunas (3)
-# GeoJSON de consulta con todos los campos (4326)
-url_comunas_geojson <- paste0(
-  "https://services1.arcgis.com/Qrk4Z5vQ94JXkdYM/arcgis/rest/services/",
-  "Estaciones_mallavial_comunas_de_Medellin/FeatureServer/3/query?",
-  "where=1%3D1&outFields=*&outSR=4326&f=geojson"
-)
+# ============ 2) Shape (limpieza → 16 comunas urbanas) ============
+shape_med <- sf::st_read(ruta_shp, quiet = TRUE)
 
-shape_med <- st_read(url_comunas_geojson, quiet = TRUE)
+# Si no trae CRS, asigno WGS84 y paso a metros (3116) para áreas
+if (is.na(st_crs(shape_med))) shape_med <- st_set_crs(shape_med, 4326)
+shape_m <- st_transform(shape_med, 3116)
 
-# Detecta campo de comuna (casi siempre "COMUNA" o similar). Extrae dígitos 1..16
-cand <- names(shape_med)[grepl("comun", names(shape_med), ignore.case = TRUE)]
-if (length(cand) == 0) stop("No encontré un campo de 'comuna' en el layer de Medellín.")
-
-# toma la primera candidata y parsea a entero
-col_comuna <- cand[1]
-shape_med <- shape_med %>%
+# Exploto multipolígonos, valido, quito islitas pequeñas
+polys <- shape_m %>%
+  st_make_valid() %>%
+  st_cast("POLYGON", warn = FALSE) %>%
   mutate(
-    comuna_chr = as.character(.data[[col_comuna]]),
-    comuna_num = suppressWarnings(as.integer(str_extract(comuna_chr, "\\d+")))
+    area_m2 = as.numeric(st_area(geometry)),
+    # centroides en grados para filtrar por valle urbano
+    cx = st_coordinates(st_centroid(st_transform(geometry, 4326)))[,1],
+    cy = st_coordinates(st_centroid(st_transform(geometry, 4326)))[,2]
   ) %>%
-  filter(!is.na(comuna_num), comuna_num %in% 1:16) %>%
-  group_by(comuna_num) %>%                      # por si el layer trae sub-polígonos
-  summarise(geometry = st_union(geometry), .groups = "drop") %>%
-  arrange(comuna_num)
+  filter(area_m2 >= 5e5)   # fuera islitas (<0.5 km2)
 
-# === 3) Repetimos geometría para H/M y unimos promedios ===
-sex_levels <- c("Hombre","Mujer")
-shape_sex  <- shape_med[rep(1:nrow(shape_med), each = length(sex_levels)), ]
-shape_sex$p40 <- factor(rep(sex_levels, times = nrow(shape_med)), levels = sex_levels)
+# BBox urbano amplio (sin corregimientos) y 16 más grandes
+comunas_sf_m <- polys %>%
+  filter(
+    cx > -75.635, cx < -75.520,   # longitudes valle
+    cy >   6.200,  cy <   6.340   # latitudes valle
+  ) %>%
+  slice_max(order_by = area_m2, n = 16, with_ties = FALSE) %>%
+  mutate(comuna_join_num = row_number()) %>%
+  dplyr::select(-area_m2, -cx, -cy)
 
-shape_join <- shape_sex %>%
-  left_join(agg, by = c("comuna_num" = "p19comuna", "p40" = "p40"))
+# Regreso a 4326 para dibujar
+comunas_sf <- st_transform(comunas_sf_m, 4326)
 
-# === 4) Mapa facetado con una sola escala de color (viridis) ===
+# ============ 3) Join ============
+shape_join <- comunas_sf %>%
+  left_join(agg, by = c("comuna_join_num" = "p19comuna"))
+
+# ============ 4) Parámetros ============
 lims <- range(shape_join$mean_time, na.rm = TRUE)
+mid  <- mean(shape_join$mean_time, na.rm = TRUE)
+compass_brown <- "#6F3E2B"
 
+arrow_compass <- function(color = "#6F3E2B", txt = 0.85, lwd = 1.8, alen = 0.08){
+  grobTree(
+    segmentsGrob(x0 = 0.5, y0 = 0.20, x1 = 0.5, y1 = 0.80,
+                 gp = gpar(col = color, lwd = lwd),
+                 arrow = arrow(type = "closed", ends = "both", length = unit(alen, "npc"))),
+    segmentsGrob(x0 = 0.20, y0 = 0.5, x1 = 0.80, y1 = 0.5,
+                 gp = gpar(col = color, lwd = lwd),
+                 arrow = arrow(type = "closed", ends = "both", length = unit(alen, "npc"))),
+    textGrob("N", x = 0.50, y = 0.96, gp = gpar(col = color, cex = txt, fontface = "bold")),
+    textGrob("S", x = 0.50, y = 0.04, gp = gpar(col = color, cex = txt, fontface = "bold")),
+    textGrob("E", x = 0.96, y = 0.50, gp = gpar(col = color, cex = txt, fontface = "bold")),
+    textGrob("W", x = 0.04, y = 0.50, gp = gpar(col = color, cex = txt, fontface = "bold"))
+  )
+}
+
+# ============ 5) Brújula ============
+bb <- st_bbox(shape_join)
+xspan <- as.numeric(bb["xmax"] - bb["xmin"])
+yspan <- as.numeric(bb["ymax"] - bb["ymin"])
+bxmin <- as.numeric(bb["xmin"]) + 0.82 * xspan
+bxmax <- as.numeric(bb["xmin"]) + 0.92 * xspan
+bymin <- as.numeric(bb["ymin"]) + 0.78 * yspan
+bymax <- as.numeric(bb["ymin"]) + 0.94 * yspan
+
+# ============ 6) Plot ============
 p <- ggplot(shape_join) +
-  geom_sf(aes(fill = mean_time), color = "white", linewidth = 0.4) +
-  geom_sf_text(aes(label = comuna_num), size = 3.8, fontface = "bold", color = "white") +
-  scale_fill_viridis_c(
+  geom_sf(aes(fill = mean_time), color = "grey70", linewidth = 0.25) +
+  scale_fill_gradient2(
     name = "Tiempo promedio (min)",
-    limits = lims,           # misma escala en H/M
-    direction = -1,
-    na.value = "grey90"
+    limits = lims, midpoint = mid,
+    low = "#2E7D32", mid = "#F4D03F", high = "#C62828",
+    na.value = "grey90",
+    guide = guide_colorbar(barheight = grid::unit(60, "pt"))
   ) +
-  facet_wrap(~ p40, nrow = 1, drop = FALSE) +
-  labs(
-    title = "Medellín • Tiempo promedio de viaje (min) por comuna",
-    subtitle = "Variable continua: tiempo_total • Facetas por sexo (p40)"
-  ) +
+  facet_wrap(~ p40, nrow = 1) +
+  labs(title = "Medellín • Tiempo promedio de viaje (min) por comuna") +
+  coord_sf(clip = "off", expand = FALSE) +
   theme_minimal(base_size = 12) +
   theme(
-    panel.grid.major = element_line(color = "grey85", linewidth = 0.2),
-    panel.grid.minor = element_blank(),
-    axis.title = element_blank(),
-    legend.position = "right"
+    panel.grid  = element_blank(),
+    axis.title  = element_blank(),
+    axis.text   = element_blank(),
+    axis.ticks  = element_blank(),
+    legend.position  = "right",
+    strip.background = element_rect(fill = "grey95", color = NA),
+    strip.text       = element_text(colour = "grey20", face = "bold")
+  ) +
+  annotation_custom(
+    grob = arrow_compass(color = compass_brown, txt = 0.80, lwd = 1.6, alen = 0.08),
+    xmin = bxmin, xmax = bxmax, ymin = bymin, ymax = bymax
   )
 
 ggsave("medellin_tiempo_continuo_facet.png", p,
-       width = 10, height = 6, dpi = 300, bg = "transparent")
-
-# --- Mensajes útiles
-cat("Campo usado como comuna en el layer:", col_comuna, "\n")
-cat("Comunas del layer (1..16):", paste(sort(unique(shape_med$comuna_num)), collapse = ", "), "\n")
-cat("Polígonos con datos después del join:", sum(!is.na(shape_join$mean_time)), "\n")
-
+       width = 10, height = 6, dpi = 300, bg = "white")
 
