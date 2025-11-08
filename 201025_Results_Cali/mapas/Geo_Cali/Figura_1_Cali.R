@@ -1,5 +1,5 @@
 ###########################################################
-## Figura 2: Georreferenciación de elección modal CALI   ##
+## Figura 1: Georreferenciación de elección modal CALI   ##
 ###########################################################
 
 library(readxl)
@@ -18,7 +18,7 @@ library(tidyr)
 library(treemapify)
 library(viridis)
 library(kableExtra)
-library(sf)           
+library(sf)
 library(RColorBrewer)
 library(memisc)
 library(assertthat)
@@ -26,6 +26,7 @@ library(sqldf)
 library(magrittr)
 library(scatterpie)
 library(maps)
+library(ggnewscale)   # para dos escalas de fill (estrato y pies)
 
 # -------------------------------------------------------------------
 # 1) Datos
@@ -35,23 +36,18 @@ dataset <- readxl::read_excel("input_famd_cali_29102025.xlsx")
 
 # La base real trae: id, medio y p19comuna (tipo "Comuna 14")
 dataset$id      <- as.character(dataset$id)
-dataset$medio   <- as.character(dataset$medio)   # YA está categorizada; NO recodificar
+dataset$medio   <- as.character(dataset$medio)   # YA categorizada; NO recodificar
 dataset$Comuna  <- as.integer(gsub("\\D", "", as.character(dataset$p19comuna)))
 
 data <- dataset
 
 # -------------------------------------------------------------------
-# [NUEVO] Estrato predominante por comuna (CATEGÓRICO: Alto/Medio/Bajo)
+# Estrato predominante por comuna (CATEGÓRICO: Alto/Medio/Bajo)
 # -------------------------------------------------------------------
-# Tolera ambos nombres que has mencionado en la conversación
 nombre_estrato <- if ("p9_estrato3" %in% names(data)) "p9_estrato3" else
   if ("p9_estratro3" %in% names(data)) "p9_estratro3" else NA
+if (is.na(nombre_estrato)) stop("No se encontró la columna de estrato (p9_estrato3 / p9_estratro3) en la base.")
 
-if (is.na(nombre_estrato)) {
-  stop("No se encontró la columna de estrato (p9_estrato3 / p9_estratro3) en la base.")
-}
-
-# Normalizar texto a Alto/Medio/Bajo y calcular la MODA por comuna
 tmp <- data.frame(
   Comuna = data$Comuna,
   estrato_cat = trimws(tolower(as.character(data[[nombre_estrato]]))),
@@ -78,29 +74,19 @@ estratos_comuna <- tmp %>%
 # -------------------------------------------------------------------
 data$zona <- NA_character_
 for (k in 1:nrow(data)) {
-  if (data$Comuna[k] %in% c(1, 2, 3, 9)) {
-    data$zona[k] <- "Noroccidente"
-  }
-  if (data$Comuna[k] %in% c(4, 5, 6, 7, 8)) {
-    data$zona[k] <- "Nororiente"
-  }
-  if (data$Comuna[k] %in% c(11, 12, 13, 14, 15, 16, 21)) {
-    data$zona[k] <- "Oriente-aguablanca"
-  }
-  if (data$Comuna[k] %in% c(10, 17, 18, 19, 20, 22)) {
-    data$zona[k] <- "Sur"
-  }
+  if (data$Comuna[k] %in% c(1, 2, 3, 9))        data$zona[k] <- "Noroccidente"
+  if (data$Comuna[k] %in% c(4, 5, 6, 7, 8))     data$zona[k] <- "Nororiente"
+  if (data$Comuna[k] %in% c(11,12,13,14,15,16,21)) data$zona[k] <- "Oriente-aguablanca"
+  if (data$Comuna[k] %in% c(10,17,18,19,20,22)) data$zona[k] <- "Sur"
 }
 data <- data[!is.na(data$zona), ]
-
-# Fijar orden de zonas para que las coordenadas por índice coincidan
 data$zona <- factor(
   data$zona,
   levels = c("Noroccidente", "Nororiente", "Oriente-aguablanca", "Sur")
 )
 
 # -------------------------------------------------------------------
-# 3) Tabla de conteos por zona y medio (manteniendo tu enfoque base::table)
+# 3) Tabla de conteos por zona y medio (manteniendo base::table)
 # -------------------------------------------------------------------
 table_data_mode <- table(data$zona, data$medio)
 table_data_mode <- as.data.frame.array(table_data_mode)
@@ -125,23 +111,30 @@ cols_pie <- colnames(table_data_mode)[
           match(c("zona","long","lat"), colnames(table_data_mode)))
 ]
 
-# -------------------------------------------------------------------
-# 4) Shape y mapa (con sf; sin rgdal/fortify)
-# -------------------------------------------------------------------
-# Lee el shapefile (asegúrate que .shp/.dbf/.shx estén juntos)
-shape <- sf::st_read("mc_comunas.shp", quiet = TRUE)
+# Posiciones para rótulos de macrozona (derivadas de los pies)
+coords_zona_lab <- table_data_mode[, c("zona","long","lat")]
+coords_zona_lab$lat <- coords_zona_lab$lat + 1800  # pequeño desplazamiento
 
-# Detectar columna de comuna en el shape y unir el estrato
+# -------------------------------------------------------------------
+# 4) Shape y unión con estrato
+# -------------------------------------------------------------------
+shape <- sf::st_read("mc_comunas.shp", quiet = TRUE)
 columna_comuna_shape <- names(shape)[grepl("comuna", names(shape), ignore.case = TRUE)][1]
-if (is.na(columna_comuna_shape)) {
-  stop("No se detectó ninguna columna con 'comuna' en el shapefile.")
-}
+if (is.na(columna_comuna_shape)) stop("No se detectó ninguna columna con 'comuna' en el shapefile.")
 shape$Comuna <- as.integer(gsub("\\D","", as.character(shape[[columna_comuna_shape]])))
 shape <- dplyr::left_join(shape, estratos_comuna, by = "Comuna")
 
-palette <- brewer.pal(n = 4, name = "Greys")
+# -------------------------------------------------------------------
+# 5) Colores
+# -------------------------------------------------------------------
+# Estrato (relleno del polígono) — tonos grises claros
+colores_estrato <- c(
+  "Bajo"  = "#F2F2F2",
+  "Medio" = "#DDDDDD",
+  "Alto"  = "#C8C8C8"
+)
 
-# Colores para los medios y renombre de leyenda
+# Medios (pies)
 colores_medio <- c(
   "Auto privado"        = "#E4572E",
   "Modo activo"         = "#F3A712",
@@ -151,40 +144,61 @@ colores_medio <- c(
   "Transporte público"  = "#665191"
 )
 
+# -------------------------------------------------------------------
+# 6) Mapa final (estrato gris + pies + rótulos de macrozonas)
+# -------------------------------------------------------------------
 map.cali <- ggplot() +
-  geom_sf(data = shape, color = "black", fill = NA, linewidth = 0.3) +
+  # Polígonos por estrato (grises suaves para no competir con los pies)
+  geom_sf(
+    data = shape,
+    aes(fill = categoria),
+    color = "#6E6E6E",   # borde gris medio
+    linewidth = 0.25,
+    alpha = 0.95
+  ) +
+  scale_fill_manual(
+    name   = "Estrato predominante",
+    values = colores_estrato,
+    na.value = "#F7F7F7"
+  ) +
   coord_sf() +
+  # Nueva escala de fill para los pies
+  ggnewscale::new_scale_fill() +
   geom_scatterpie(
     data = table_data_mode,
     aes(x = long, y = lat, group = zona, r = 190*6),
     cols = cols_pie
   ) +
   scale_fill_manual(
-    name   = "Medio de transporte",      # (1) renombre de la leyenda
+    name   = "Medio de transporte",
     values = colores_medio,
     breaks = cols_pie
   ) +
-  # (3) Etiqueta de estrato predominante en el centroide de cada comuna
+  # Rótulos de macrozonas
   geom_text(
-    data = {cent <- st_centroid(shape); cbind(cent, st_coordinates(cent))},
-    aes(X, Y, label = categoria),
-    color = "black", size = 4, fontface = "bold"
+    data = coords_zona_lab,
+    aes(long, lat, label = zona),
+    color = "grey15", size = 4.5, fontface = "bold"
   ) +
   theme_minimal(base_size = 12) +
   labs(
     x = NULL, y = NULL,
     title = "Elección modal por zona - Cali"
   ) +
-  theme(panel.grid = element_blank())
+  theme(
+    panel.grid = element_blank(),
+    legend.box = "vertical",
+    legend.position = "right"
+  )
 
 ggsave(
   plot = map.cali,
   filename = "map.cali.png",
-  width = 9, height = 7, dpi = 300, bg = "transparent"
+  width = 10, height = 8, dpi = 300, bg = "transparent"
 )
 
 # -------------------------------------------------------------------
-# 5) Chequeo de coordenadas (debug)
+# 7) Chequeo de coordenadas (debug opcional)
 # -------------------------------------------------------------------
 ggplot() +
   geom_sf(data = shape, color = "black", fill = NA, linewidth = 0.3) +
@@ -194,5 +208,3 @@ ggplot() +
   geom_point(aes(x = 1060000 - 300,  y = 875000 - 1050), colour = "yellow") +
   theme_minimal() +
   labs(title = "Chequeo de coordenadas de los pies", x = NULL, y = NULL)
-
-

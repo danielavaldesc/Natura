@@ -1,5 +1,5 @@
 #############################################################################
-## Figura 2: Georreferenciación de elección modal CALI x estrato x edad    ##
+## Figura 3: Georreferenciación de elección modal CALI x estrato x edad    ##
 #############################################################################
 
 library(readxl)
@@ -26,6 +26,7 @@ library(sqldf)
 library(magrittr)
 library(scatterpie)
 library(maps)
+library(ggnewscale)   # <-- dos escalas de fill (estrato y pies)
 
 # -------------------------------------------------------------------
 # 1) Datos
@@ -81,13 +82,14 @@ data <- data[!is.na(data$zona), ]
 data$zona <- factor(data$zona,
                     levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"))
 
-# Coordenadas de los pies por ZONA (amarradas por nombre; robusto a filtros)
+# Coordenadas de los pies por ZONA + posiciones para rótulos
 coords_zona <- data.frame(
   zona = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"),
   long = c(1060000-300, 1065000-200, 1065000-600, 1059.28*1000),
   lat  = c(875000-1050, 875000+600, 870.5*1000, 866.4*1000),
   stringsAsFactors = FALSE
 )
+coords_zona_lab <- transform(coords_zona, lat = lat + 1800)
 
 # -------------------------------------------------------------------
 # 3) RANGO DE EDAD: usar edad_r2 con niveles dados
@@ -110,7 +112,7 @@ shape$Comuna <- as.integer(gsub("\\D","", as.character(shape[[columna_comuna_sha
 shape <- dplyr::left_join(shape, estratos_comuna, by = "Comuna")
 
 # -------------------------------------------------------------------
-# 5) Tabla de conteos por zona/medio **y** rango_edad (para scatterpie + facet)
+# 5) Conteos por rango_edad-zona-medio (wide para scatterpie)
 # -------------------------------------------------------------------
 df_counts <- data %>%
   dplyr::group_by(rango_edad, zona, medio) %>%
@@ -121,8 +123,15 @@ df_counts <- data %>%
 cols_pie <- setdiff(names(df_counts), c("rango_edad","zona","long","lat"))
 
 # -------------------------------------------------------------------
-# 6) Mapa facetado por rango de edad
+# 6) Colores
 # -------------------------------------------------------------------
+# Estrato (relleno del polígono) — **grises claros**
+colores_estrato <- c(
+  "Bajo"  = "#F2F2F2",
+  "Medio" = "#DDDDDD",
+  "Alto"  = "#C8C8C8"
+)
+# Medios (pies)
 colores_medio <- c(
   "Auto privado"        = "#E4572E",
   "Modo activo"         = "#F3A712",
@@ -131,10 +140,28 @@ colores_medio <- c(
   "Transporte informal" = "#A23B72",
   "Transporte público"  = "#665191"
 )
+breaks_medios <- intersect(names(colores_medio), cols_pie)
 
+# -------------------------------------------------------------------
+# 7) Mapa facetado por rango de edad (estrato gris + pies + rótulos)
+# -------------------------------------------------------------------
 map.cali.edad <- ggplot() +
-  geom_sf(data = shape, color = "black", fill = NA, linewidth = 0.3) +
+  # Polígonos por estrato (grises suaves; se repiten por faceta)
+  geom_sf(
+    data = shape,
+    aes(fill = categoria),
+    color = "#6E6E6E",
+    linewidth = 0.25,
+    alpha = 0.95
+  ) +
+  scale_fill_manual(
+    name   = "Estrato predominante",
+    values = colores_estrato,
+    na.value = "#F7F7F7"
+  ) +
   coord_sf() +
+  # Nueva escala de fill para los pies
+  ggnewscale::new_scale_fill() +
   geom_scatterpie(
     data = df_counts,
     aes(x = long, y = lat, group = zona, r = 190*6),
@@ -143,20 +170,25 @@ map.cali.edad <- ggplot() +
   scale_fill_manual(
     name   = "Medio de transporte",
     values = colores_medio,
-    breaks = cols_pie
+    breaks = breaks_medios
   ) +
+  # Rótulos de macrozonas
   geom_text(
-    data = {cent <- st_centroid(shape); cbind(cent, st_coordinates(cent))},
-    aes(X, Y, label = categoria),
-    color = "black", size = 4, fontface = "bold"
+    data = coords_zona_lab,
+    aes(long, lat, label = zona),
+    color = "grey15", size = 4.5, fontface = "bold"
   ) +
-  facet_wrap(~ rango_edad, ncol = 3) +  # un panel por cada rango
+  facet_wrap(~ rango_edad, ncol = 3) +
   theme_minimal(base_size = 12) +
   labs(x = NULL, y = NULL, title = "Elección modal por zona - Cali (por rango de edad)") +
-  theme(panel.grid = element_blank())
+  theme(
+    panel.grid = element_blank(),
+    legend.box = "vertical",
+    legend.position = "right"
+  )
 
 ggsave(
   plot = map.cali.edad,
   filename = "map.cali_por_edad.png",
-  width = 12, height = 8, dpi = 300, bg = "transparent"
+  width = 14, height = 8, dpi = 300, bg = "transparent"
 )
