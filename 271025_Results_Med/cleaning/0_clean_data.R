@@ -4,6 +4,7 @@
 
 library(tidyverse)
 library(labelled)
+library(tibble)
 
 # --- Cargar tu base limpia ya existente ---
 dataset <- readxl::read_excel("input\\BD Base Movilidad Medellin 2025_Cliente.xlsx") %>%
@@ -129,7 +130,7 @@ diccionario <- tribble(
   "p47longitude", "Longitud", 
   "p47altitude", "Altitud",
   "p47accuracy", "Accuracy"
-  )
+)
 
 
 # 1. Coincidencias válidas

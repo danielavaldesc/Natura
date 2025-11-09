@@ -7,7 +7,7 @@
 #########################################
 #########################################
 
-setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\")
+setwd("C:/Users/Portatil/Desktop/Natura/271025_Results_Med/")
 
 # Cargar librerías
 library(readxl)
@@ -18,7 +18,7 @@ library(gmodels)
 library(mvnormtest)
 
 # Cargar base de datos
-dataset = readxl::read_excel("output\\clean_med_dataset_27102025.xlsx")
+dataset = readxl::read_excel("output/clean_med_dataset_27102025.xlsx")
 N = nrow(dataset)
 
 #-----------------------------------------------#

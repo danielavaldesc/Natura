@@ -10,9 +10,9 @@
 ## 0. Cargar entorno y configuración inicial
 ## ============================================================================
 
-setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\")
+setwd("C:\\Users\\Portatil\\Desktop\\Natura\\271025_Results_Med\\")
 
-source("cleaning/m3_clean_data.R")
+source("cleaning/m3_clean_data.R", encoding = "UTF-8")
 
 mod_vbg <- diccionario_clasificado %>%
   filter(modulo == "Módulo 4: Experiencias de acoso, inseguridad y VBG")
@@ -129,5 +129,4 @@ diccionario_clasificado <- diccionario_clasificado %>%
 
 writexl::write_xlsx(dataset, "output/clean_med_dataset_27102025.xlsx")
 writexl::write_xlsx(diccionario_clasificado, "output/diccionario_med.xlsx")
-
 
