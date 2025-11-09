@@ -1,51 +1,42 @@
 #############################################################################
-## Figura 4: Georreferenciación de elección modal CALI x estrato x edad    ##
+## Figura 4: Georreferenciación de elección modal MED x estrato x edad     ##
 #############################################################################
 
+
+# Paquetes
 library(readxl)
-library(ggplot2)
 library(dplyr)
-library(reshape2)
-library(ggpubr)
-library(plyr)
-library(rlang)
-library(knitr)
-library(haven)
-library(foreign)
-library(stringi)
-library(labelled)
-library(tidyr)
-library(treemapify)
-library(viridis)
-library(kableExtra)
+library(ggplot2)
 library(sf)
-library(RColorBrewer)
-library(memisc)
-library(assertthat)
-library(sqldf)
-library(magrittr)
+library(stringr)
+library(tidyr)
 library(scatterpie)
-library(maps)
 library(ggnewscale)
 library(grid)
+library(units)
 
 # -------------------------------------------------------------------
 # 1) Datos
 # -------------------------------------------------------------------
-setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
-dataset <- read_excel("input_famd_cali_29102025.xlsx")
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\mapas\\Geo_AMVA\\")
+ruta_xlsx <- "input_famd_med_29102025.xlsx"
+ruta_shp  <- "LimiteComunaCorregimiento_2014.shp"
+
+dataset <- readxl::read_excel(ruta_xlsx)
 
 dataset$id      <- as.character(dataset$id)
 dataset$medio   <- as.character(dataset$medio)
-dataset$Comuna  <- as.integer(gsub("\\D", "", as.character(dataset$p19comuna)))
-data <- dataset
+dataset$Comuna  <- suppressWarnings(as.integer(str_extract(as.character(dataset$p19comuna), "\\d+")))
+
+data <- dataset %>%
+  filter(!is.na(medio), !is.na(Comuna), Comuna %in% 1:16)
 
 # -------------------------------------------------------------------
-# Estrato predominante por comuna (CATEGÓRICO: Alto/Medio/Bajo)
+# Estrato predominante por comuna (Bajo/Medio/Alto)
 # -------------------------------------------------------------------
 nombre_estrato <- if ("p9_estrato3" %in% names(data)) "p9_estrato3" else
   if ("p9_estratro3" %in% names(data)) "p9_estratro3" else NA
-if (is.na(nombre_estrato)) stop("No se encontró la columna de estrato (p9_estrato3 / p9_estratro3) en la base.")
+if (is.na(nombre_estrato)) stop("No se encontró la columna de estrato (p9_estrato3 / p9_estratro3).")
 
 tmp <- data.frame(
   Comuna = data$Comuna,
@@ -61,37 +52,15 @@ niveles_em <- c("Bajo","Medio","Alto")
 tmp$estrato_cat <- factor(tmp$estrato_cat, levels = niveles_em, ordered = TRUE)
 
 estratos_comuna <- tmp %>%
-  dplyr::group_by(Comuna, estrato_cat) %>%
-  dplyr::summarise(n = dplyr::n(), .groups = "drop_last") %>%
-  dplyr::arrange(dplyr::desc(n), estrato_cat) %>%
-  dplyr::slice(1) %>%
-  dplyr::ungroup() %>%
-  dplyr::transmute(Comuna, categoria = as.character(estrato_cat))
+  group_by(Comuna, estrato_cat) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  arrange(desc(n), estrato_cat) %>%
+  slice(1) %>%
+  ungroup() %>%
+  transmute(Comuna, categoria = as.character(estrato_cat))
 
 # -------------------------------------------------------------------
-# 2) Zonas a partir de Comuna (para ubicar PIES; no rotulamos)
-# -------------------------------------------------------------------
-data$zona <- NA_character_
-for (k in 1:nrow(data)) {
-  if (data$Comuna[k] %in% c(1, 2, 3, 9))                data$zona[k] <- "Noroccidente"
-  if (data$Comuna[k] %in% c(4, 5, 6, 7, 8))             data$zona[k] <- "Nororiente"
-  if (data$Comuna[k] %in% c(11,12,13,14,15,16,21))      data$zona[k] <- "Oriente-aguablanca"
-  if (data$Comuna[k] %in% c(10,17,18,19,20,22))         data$zona[k] <- "Sur"
-}
-data <- data[!is.na(data$zona), ]
-data$zona <- factor(data$zona,
-                    levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"))
-
-# Coordenadas (se mantienen EXACTAS)
-coords_zona <- data.frame(
-  zona = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"),
-  long = c(1060000-300, 1065000-200, 1065000-600, 1059.28*1000),
-  lat  = c(875000-1050, 875000+600, 870.5*1000, 866.4*1000),
-  stringsAsFactors = FALSE
-)
-
-# -------------------------------------------------------------------
-# 3) RANGO DE EDAD
+# 2) RANGO DE EDAD
 # -------------------------------------------------------------------
 if (!"edad_r2" %in% names(data)) stop("No se encontró la columna 'edad_r2'.")
 data$rango_edad <- factor(
@@ -102,27 +71,70 @@ data <- data[!is.na(data$rango_edad), ]
 data$rango_edad <- droplevels(data$rango_edad)
 
 # -------------------------------------------------------------------
-# 4) Shape + unión con estrato
+# 3) Shape Medellín → SOLO 16 comunas urbanas (robusto)
 # -------------------------------------------------------------------
-shape <- st_read("mc_comunas.shp", quiet = TRUE)
-columna_comuna_shape <- names(shape)[grepl("comuna", names(shape), ignore.case = TRUE)][1]
-if (is.na(columna_comuna_shape)) stop("No se detectó columna con 'comuna' en el shapefile.")
-shape$Comuna <- as.integer(gsub("\\D","", as.character(shape[[columna_comuna_shape]])))
-shape <- dplyr::left_join(shape, estratos_comuna, by = "Comuna")
+shape_med <- sf::st_read(ruta_shp, quiet = TRUE)
+if (is.na(st_crs(shape_med))) shape_med <- st_set_crs(shape_med, 4326)
+shape_m <- st_transform(shape_med, 3116)
+
+polys <- shape_m %>%
+  st_make_valid() %>%
+  st_cast("POLYGON", warn = FALSE) %>%
+  mutate(
+    area_m2 = as.numeric(st_area(geometry)),
+    cx = st_coordinates(st_centroid(st_transform(geometry, 4326)))[,1],
+    cy = st_coordinates(st_centroid(st_transform(geometry, 4326)))[,2]
+  ) %>%
+  filter(area_m2 >= 5e5)   # quita islitas
+
+comunas_sf_m <- polys %>%
+  filter(
+    cx > -75.635, cx < -75.520,   # valle urbano
+    cy >   6.200,  cy <   6.340
+  ) %>%
+  slice_max(order_by = area_m2, n = 16, with_ties = FALSE) %>%
+  mutate(Comuna = dplyr::row_number()) %>%
+  dplyr::select(-area_m2, -cx, -cy)
+
+shape <- st_transform(comunas_sf_m, 4326) %>%
+  left_join(estratos_comuna, by = "Comuna")
 
 # -------------------------------------------------------------------
-# 5) Conteos por rango_edad-zona-medio (wide para scatterpie)
+# 4) Pies: cuadrantes fijos del mapa (no se rotulan)
 # -------------------------------------------------------------------
+cent <- st_coordinates(st_centroid(shape))
+shape$cx <- cent[,1]; shape$cy <- cent[,2]
+bb <- st_bbox(shape)
+xmid <- (bb["xmin"] + bb["xmax"])/2
+ymid <- (bb["ymin"] + bb["ymax"])/2
+
+shape$cuadrante <- with(shape,
+                        ifelse(cy >= ymid & cx < xmid, "NW",
+                               ifelse(cy >= ymid & cx >= xmid, "NE",
+                                      ifelse(cy <  ymid & cx < xmid, "SW", "SE")))
+)
+
 df_counts <- data %>%
-  dplyr::group_by(rango_edad, zona, medio) %>%
-  dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
-  tidyr::pivot_wider(names_from = medio, values_from = n, values_fill = 0) %>%
-  dplyr::left_join(coords_zona, by = "zona")
+  inner_join(shape %>% st_drop_geometry() %>% dplyr::select(Comuna, cuadrante), by = "Comuna") %>%
+  count(rango_edad, cuadrante, medio, name = "n") %>%
+  pivot_wider(names_from = medio, values_from = n, values_fill = 0)
 
-cols_pie <- setdiff(names(df_counts), c("rango_edad","zona","long","lat"))
+cols_pie <- setdiff(names(df_counts), c("rango_edad","cuadrante"))
+
+# posiciones de los pies (centros de cuadrantes) y radio relativo
+pie_pos <- data.frame(
+  cuadrante = c("NW","NE","SW","SE"),
+  long = c((bb["xmin"]+xmid)/2, (xmid+bb["xmax"])/2, (bb["xmin"]+xmid)/2, (xmid+bb["xmax"])/2),
+  lat  = c((ymid+bb["ymax"])/2, (ymid+bb["ymax"])/2, (bb["ymin"]+ymid)/2, (bb["ymin"]+ymid)/2)
+)
+df_counts <- df_counts %>% left_join(pie_pos, by = "cuadrante")
+
+xspan <- as.numeric(bb["xmax"] - bb["xmin"])
+yspan <- as.numeric(bb["ymax"] - bb["ymin"])
+r_pie <- 0.060 * min(xspan, yspan)
 
 # -------------------------------------------------------------------
-# 6) Colores
+# 5) Paletas
 # -------------------------------------------------------------------
 colores_estrato <- c("Bajo"="#F2F2F2","Medio"="#DDDDDD","Alto"="#C8C8C8")
 colores_medio <- c(
@@ -136,7 +148,7 @@ colores_medio <- c(
 breaks_medios <- intersect(names(colores_medio), cols_pie)
 
 # -------------------------------------------------------------------
-# 7) Brújula con flechas (arriba-derecha)
+# 6) Brújula con flechas
 # -------------------------------------------------------------------
 compass_brown <- "#6F3E2B"
 arrow_compass <- function(color = "#6F3E2B", txt = 0.85, lwd = 1.8, alen = 0.08){
@@ -153,22 +165,17 @@ arrow_compass <- function(color = "#6F3E2B", txt = 0.85, lwd = 1.8, alen = 0.08)
     textGrob("W", x = 0.04, y = 0.50, gp = gpar(col = color, cex = txt, fontface = "bold"))
   )
 }
-
-# BBox para posicionar la brújula (no toca pies)
-bb    <- sf::st_bbox(shape)
-xspan <- as.numeric(bb["xmax"] - bb["xmin"])
-yspan <- as.numeric(bb["ymax"] - bb["ymin"])
 bxmin <- as.numeric(bb["xmin"]) + 0.82 * xspan
 bxmax <- as.numeric(bb["xmin"]) + 0.92 * xspan
 bymin <- as.numeric(bb["ymin"]) + 0.78 * yspan
 bymax <- as.numeric(bb["ymin"]) + 0.94 * yspan
 
 # -------------------------------------------------------------------
-# 8) Mapa facetado por RANGO DE EDAD (sin nombres de zona ni coordenadas)
+# 7) Mapa facetado por rango de edad (sin nombres de zona ni coordenadas)
 # -------------------------------------------------------------------
-map.cali.edad <- ggplot() +
+map.med.edad <- ggplot() +
   geom_sf(
-    data = shape,
+    data  = shape,
     aes(fill = categoria),
     color = "#6E6E6E",
     linewidth = 0.25,
@@ -183,7 +190,7 @@ map.cali.edad <- ggplot() +
   ggnewscale::new_scale_fill() +
   geom_scatterpie(
     data = df_counts,
-    aes(x = long, y = lat, group = zona, r = 190*6),  # ← NO se mueven
+    aes(x = long, y = lat, group = cuadrante, r = r_pie),
     cols = cols_pie,
     color = "white", linewidth = 0.25, alpha = 0.92
   ) +
@@ -194,7 +201,8 @@ map.cali.edad <- ggplot() +
     guide  = guide_legend(override.aes = list(alpha = 1))
   ) +
   facet_wrap(~ rango_edad, ncol = 3) +
-  labs(x = NULL, y = NULL, title = "Elección modal por comuna - Cali (por rango de edad)") +
+  labs(x = NULL, y = NULL,
+       title = "Elección modal por comuna - Medellín (por rango de edad)") +
   theme_minimal(base_size = 12) +
   theme(
     panel.grid.major = element_blank(),
@@ -202,8 +210,8 @@ map.cali.edad <- ggplot() +
     panel.background = element_rect(fill = "white", color = NA),
     plot.background  = element_rect(fill = "white", color = NA),
     legend.position  = "right",
-    axis.text        = element_blank(),   
-    axis.ticks       = element_blank()    
+    axis.text        = element_blank(),
+    axis.ticks       = element_blank()
   ) +
   annotation_custom(
     grob = arrow_compass(color = compass_brown, txt = 0.80, lwd = 1.6, alen = 0.08),
@@ -211,8 +219,7 @@ map.cali.edad <- ggplot() +
   )
 
 ggsave(
-  plot = map.cali.edad,
-  filename = "map.cali_por_edad.png",
+  plot = map.med.edad,
+  filename = "map.med_por_edad.png",
   width = 14, height = 8, dpi = 300, bg = "white"
 )
-
