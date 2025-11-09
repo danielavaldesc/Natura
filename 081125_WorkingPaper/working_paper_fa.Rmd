@@ -1,0 +1,179 @@
+---
+title: 'Anexo: Análisis de Correspondencia Múltiple (MCA)'
+author: "Proyecto Natura - Pontificia Universidad Javeriana Cali"
+date: '2025-11-07'
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE,echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Presentación
+
+El Análisis de Correspondencia Múltiple (ACM) es una técnica exploratoria para datos multivariados categóricos, es decir, conjuntos de datos con N individuos y Q variables categóricas. El ACM permite describir, resumir y visualizar las relaciones entre los individuos y las categorías en un espacio de menor dimensión. Esta técnica pueden entenderse simultáneamente como la extensión del análisis de correspondencias (CA) para más de dos variables, así como el análogo del análisis de componentes principales (PCA) para variables categóricas.
+
+Siguiendo a Husson & Josse (2014), el ACM cumple con tres fines: (i) producir una tipología sobre los individuos mediante el análisis de sus similitudes en un espacio multidimensional; (ii) evaluar las relaciones entre variables y las asociaciones entre categorías; y (iii) articular ambos niveles para caracterizar a los individuos con base en las categorías que mejor los describen. 
+
+En este anexo, se implementa el ACM a dos casos urbanos: Cali, Valle del Cauca (n = 435) y Medellín, Antioquia (n = 417). Los resultados presentan la inercia y la proporción de varianza explicada por cada dimensión, junto con su acumulado. La interpretación se apoya principalmente en la contribución, esto es, el aporte porcentual de cada variable a la inercia de una dimensión o eje. Adicionalmente, se presenta el mapa de variables y categorías en las dimensiones 1 y 2, así como el mapa de correlaciones entre variables y ejes (dimensiones 1 y 2). Finalmente, se presenta el mapa de los individuos, diferenciado por el medio de transporte principal, para las dimensiones 1 - 3. (Esta variable no se utiliza en la construcción de los ejes, sino únicamente como variable de segmentación).
+
+Generalmente, para determinar el número de dimensiones retenidas, se emplea el criterio de Kaiser (o criterio raíz latente). Sin embargo, la literatura ha mostrado señalado sus limitaciones, particularmente su tendencia a extraer más dimensiones de las necesarias (Velicer et al., 2000; Velicer & Jackson, 1990). Para subsanar estas limitaciones, en este anexo se emplea el análisis paralelo de Horn, un método recomendado por su extracción precisa de dimensiones a partir de iteraciones (Costello & Osborne, 2005). 
+
+# Inercia total y valores propios
+
+La **Figura 1** muestra la proporción de inercia explicada por cada dimensión a partir del gráfico de sedimentación. Como consecuencia de la alta dimensionalidad del problema, con un máximo de 92 dimensiones resultantes, la inercia total se distribuye en numerosos ejes. En el caso de Cali, la Dimensión 1 explica aproximadamente 5.7% de la inercia total, y la Dimensión 2 cerca del 5%. En conjunto, las primeras veinte dimensiones concentran alrededor del 50% de la varianza total. A partir de la Dimensión 30, las contribuciones individuales se estabilizan en torno al 1%, lo cual indica que el aporte de los ejes restantes es marginal. 
+
+Una estructura similar se observa en Medellín. La Dimensión 1 explica 5.1% de la inercia total, y la Dimensión 2 4.8%. El 50% acumulado se alcanza aproximadamente en la Dimensión 22. El gráfico de sedimentación muestra que el aporte, a partir de la Dimensión 30, es igualmente marginal. 
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/cali/varianza_mca.png}
+    \caption*{Figura 1a. Cali: inercia y varianza acumulada}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/medellin/varianza_mca.png}
+    \caption*{Figura 1b. Medellín: inercia y varianza acumulada}
+  \end{minipage}
+\end{figure}
+
+
+
+El  análisis se complementa mediante la implementación del análisis paralelo de Horn, que corrige la sobreestimación del número de dimensiones retenidas al ajustar los autovalores observados (**Tablas 1 y 2**). Los resultados muestran que, para Cali, se deben retener aproximadamente 30 dimensiones, las cuales explican en conjunto cerca del 63% de la inercia total. En Medellín, el criterio sugiere retener 28 dimensiones, lo cual corresponde a aproximadamente el 60% de la inercia total.
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+
+library(readxl)
+library(knitr)
+library(kableExtra)
+
+paran.df1 <- readxl::read_excel("figures_wp/cali/paran.xlsx")
+paran.df2 <- readxl::read_excel("figures_wp/medellin/paran.xlsx")
+
+# Tabla 1: Cali
+kbl(
+  paran.df1,
+  format = "latex",
+  booktabs = TRUE,
+  caption = "(a) Resultados del análisis paralelo de Horn – Cali",
+  align = "c"
+) %>%
+  kable_styling(
+    latex_options = c("striped", "hold_position", "scale_down"),
+    position = "center",
+    font_size = 7
+  )
+
+# Tabla 2: Medellín
+kbl(
+  paran.df2,
+  format = "latex",
+  booktabs = TRUE,
+  caption = "(b) Resultados del análisis paralelo de Horn – Medellín",
+  align = "c"
+) %>%
+  kable_styling(
+    latex_options = c("striped", "hold_position", "scale_down"),
+    position = "center",
+    font_size = 7
+  )
+
+
+
+```
+
+# Representación y contribución de las variables
+
+Las Figuras 2 y 3 presentan la representación bidimensional de las variables originales y el grado de asociación de cada una con la Dimensión 1 y 2 del ACM para las ciudades de Cali y Medellín. En ambas ciudades se muestran únicamente las veinte variables con mayor contribución, según su participación en la inercia total.
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/cali/mca_cor.png}
+    \caption*{Figura 2a. Cali: Representación de variables}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/medellin/mca_cor.png}
+    \caption*{Figura 2b. Medellín: Representación de variables}
+  \end{minipage}
+\end{figure}
+
+En el caso de Cali, las Dimensiones 1 y 2 están fuertemente asociadas con las variables relacionadas con la importancia asignada a distintos atributos del transporte: riesgo de robo, siniestralidad, comodidad, costo de uso, emisiones, riesgo de acoso, costo de compra, tiempo y discriminación. Las variables representadas en este plano reflejan la manera en que los individuos jerarquizan los factores percibidos como determinantes en su experiencia de movilidad. La Dimensión 1 capta principalmente el gradiente de importancia general otorgado a dichos factores, mientras que la Dimensión 2 distingue a los individuos según su nivel educativo y grado de satisfacción con el medio de transporte. 
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/cali/mca_var.png}
+    \caption*{Figura 3a. Cali: Representación de variables}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/medellin/mca_var.png}
+    \caption*{Figura 3b. Medellín: Representación de variables}
+  \end{minipage}
+\end{figure}
+
+En Medellín, la estructura factorial es más dispersa. Aunque las variables que capturan la importancia otorgada por los usuarios a diferentes atributos (nivel de siniestralidad, costo de compra, emisiones, riesgo de acoso y discriminación), las dimensiones 1 y 2 también capturan la influencia de factores sociales y demográficos; por ejemplo, la edad, el nivel educativa, el propósito de su viaje frecuente y la importancia otorgada a la opinión de amigos y familia. Un rasgo distintivo es la asociación marcada de la Dimensión 2 con las variables p13 y p14, correspondientes al conocimiento para conducir y la posesión de licencia de conducción, respectivamente. Esto sugiere que, en Medellín, las percepciones sobre la movilidad están más entrelazadas con la experiencia directa de conducción y la estructura socioeconómica.
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/cali/mca_contrib_panel.png}
+    \caption*{Figura 3a. Cali: Contribución}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/medellin/mca_contrib_panel.png}
+    \caption*{Figura 3b. Medellín: Contribución}
+  \end{minipage}
+\end{figure}
+
+El análisis de las contribuciones confirma estos patrones. En Cali, la Dimensión 1 está definida por categorías asociadas a una neutralidad o valoración media (3 en una escala de Likert de 5 puntos) frente a atributos de movilidad (tiempo, costo de uso, emisiones, riesgo de acoso, comodidad, discriminación y siniestralidad). En contraste, la Dimensión 2 se asocia con una baja importancia atribuida a estos mismos factores, combinada con menor nivel educativo y menor satisfacción con el medio de transporte. Así, la primera dimensión puede interpretarse como un eje de percepción general de importancia en la movilidad, y la segunda representa un eje de desapego o falta de importancia asignada a los atributos de movilidad y menor nivel educativo.
+
+En Medellín, las contribuciones revelan diferencias significativas. La Dimensión 1 está orientada hacia la alta valoración de un rango amplio de factores (discriminación, riesgo de acoso, emisiones, siniestralidad y riesgo de robo), mientras que la Dimensión 2 se asocia con categorías relacionadas con no saber conducir (p13 = “No”), trabajo doméstico no remunerado, educación primaria o inferior, además de una alta importancia del tiempo y la influencia social de amigos. Ciertamente, este patrón sugiere una estructura más compleja donde la percepción sobre los principales atributos de los medios de transporte está terciada por condiciones sociales.
+
+
+# Representación de los individuos
+
+La Figura 3 muestra la representación de los individuos en un espacio de dos dimensiones. En términos generales, se observa una dispersión moderada entre grupos, lo que sugiere cierta superposición en los perfiles de movilidad. Los usuarios de transporte público y transporte informal presentan una mayor dispersión, lo cual indica una heterogeneidad interna en las percepciones y condiciones socioeconómicas. En cambio, los grupos que utilizan vehículos privados (auto y motocicleta) aparecen más concentrados y hacia el lado derecho del plano. Los usuarios de modos activos (caminar o bicicleta) y de taxi/plataforma se ubican más próximos al centro, con perfiles intermedios entre ambos extremos. 
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/cali/mca_ind_medio.png}
+    \caption*{Figura 3a. Cali: Representación de los individuos}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/medellin/mca_ind_medio.png}
+    \caption*{Figura 3b. Medellín: Representación de los individuos}
+  \end{minipage}
+\end{figure}
+
+A diferencia de Cali, en Medellín las elipses presentan una mayor superposición, lo que sugiere perfiles de movilidad más homogéneos entre los usuarios de distintos modos, especialmente entre quienes utilizan transporte público, taxi/plataforma y modo activo (caminar o bicicleta). Se observan, no obstante, algunos contrastes: los usuarios de auto privado se agrupan hacia el cuadrante derecho, mientras que quienes usan moto privada se concentran en la zona inferior. Los individuos vinculados al transporte público y taxi/plataforma tienden a ocupar el centro del plano, lo cual indica un perfil intermedio. El gráfico sugiere que en Medellín las diferencias entre grupos modales no son tan pronunciadas como en Cali, aunque se mantiene un gradiente estructural a lo largo de la dimensión 1, relacionado con autonomía y capacidad de elección modal, y un eje 2 que parece capturar la diversidad de experiencias y percepciones dentro de cada grupo de transporte. 
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}{0.8\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/cali/mca_ind_medio_3d.png}
+    \caption*{Figura 4a. Cali: Representación de los individuos (Dimensiones 1 - 3)}
+  \end{minipage}\hfill
+  \begin{minipage}{0.8\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures_wp/medellin/mca_ind_medio_3d.png}
+    \caption*{Figura 4b. Medellín: Representación de los individuos (Dimensiones 1 - 3)}
+  \end{minipage}
+\end{figure}
+
