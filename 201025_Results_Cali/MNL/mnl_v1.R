@@ -82,7 +82,6 @@ modelo_multinomial <- multinom(
     p36_influencia_amigos +
     p37_influencia_familia +
     tiempo_total +
-    p1edad +
     
     # ------------------ CATEGÓRICAS (bases omitidas) ------------------
     
@@ -146,11 +145,7 @@ modelo_multinomial <- multinom(
     `p23_agregado_Otro` +
     
     # p38p38_i  (BASE: No; dummy_0) 
-    `p38p38_dummy_1`+
-    
-    # p39_lugaragregado_mod (NA (NO LE SUCEDIÓ))
-    `p39_lugar_agregado_mod_En otro lugar` + 
-    `p39_lugar_agregado_mod_En su modo de transporte`
+    `p38p38_dummy_1`
   ,
   data  = dataset,
   trace = FALSE

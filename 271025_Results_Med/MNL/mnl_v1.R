@@ -1,11 +1,10 @@
 # ================================
-  # Multinomial Logit (Medellín)
+#  Multinomial Logit (Medellín)
 # ================================
 
 #############
 # Librerias #
 #############
-
 library(dplyr)
 library(nnet)
 library(readxl)
@@ -14,15 +13,37 @@ library(ggplot2)
 library(GGally)
 library(stargazer)
 library(writexl)
-
+library(tidyr)
+library(tibble)
 
 ############
 # Base de  #
 #   Datos  #
 ############
-
 dataset <- read_excel("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\output\\input_famd_med_29102025.xlsx")
 
+# -----------------------------
+# RECODIFICACIONES SOLICITADAS
+# -----------------------------
+
+# 1) Quitar "Otro" en p7_agregado -> reubicar en "Desocupado o inactivo"
+if ("p7_agregado" %in% names(dataset)) {
+  dataset$p7_agregado <- as.character(dataset$p7_agregado)
+  dataset$p7_agregado[dataset$p7_agregado == "Otro"] <- "Desocupado o inactivo"
+  dataset$p7_agregado <- factor(dataset$p7_agregado)
+}
+
+# 2) Unificar todas las variantes de "Cuidado y familia (...)" en "Cuidado y familia"
+if ("p23_agregado" %in% names(dataset)) {
+  dataset$p23_agregado <- as.character(dataset$p23_agregado)
+  dataset$p23_agregado[grepl("^Cuidado y familia", dataset$p23_agregado)] <- "Cuidado y familia"
+  dataset$p23_agregado <- factor(dataset$p23_agregado)
+}
+
+# 3) Eliminar categorías de género poco útiles (mantén solo Hombre/Mujer)
+if ("p40" %in% names(dataset)) {
+  dataset <- subset(dataset, !(p40 %in% c("Otro", "Prefiere no responder", "Otras identidades de género")))
+}
 
 ## --- Función dummies (robusta) ---
 columna_dummy <- function(df, columna) {
@@ -37,18 +58,17 @@ columna_dummy <- function(df, columna) {
     )
 }
 
-# Eliminar categorías de genero
-dataset <- subset(dataset, !(p40 %in% c("Otro", "Prefiere no responder", "Otras identidades de género")))
-
-# Recodificación 
+# -----------------------------
+# Lista de variables para dummies
+# (p39 *eliminada* como pediste)
+# -----------------------------
 vars_dummy <- c(
   "edad_r2","p3_agregado","p5_agregado","p7_agregado","p9_estrato3",
   "p12_dificultad_binaria",
-  "p40","p13","p14","p15_autos_agregado","p16_motos_agregado",
+  "p40","p15_autos_agregado","p16_motos_agregado",
   "p19comuna","p22","p23_agregado",
-  "p38p38_dummy", "p39_lugar_agregado_mod"
+  "p38p38_dummy"
 )
-
 
 # --- Aplicar función columna_dummy  ---
 for (v in vars_dummy) {
@@ -62,7 +82,9 @@ for (v in vars_dummy) {
 
 if ("id" %in% names(dataset)) dataset <- subset(dataset, select = -id)
 
-# --- Modelo ---
+# -----------------------------
+# Outcome y categoría de referencia
+# -----------------------------
 dataset$medio <- relevel(factor(dataset$medio), ref = "Moto privada")
 
 library(nnet)
@@ -71,7 +93,9 @@ library(nnet)
 # Modelos multinomiales
 # ===========================
 
-# --- CON COMUNAS (se mantiene el nombre para que tu script abajo funcione igual) ---
+# --- CON COMUNAS ---
+# (Se removieron las dummies de p39 y p7_agregado_Otro
+#  y se reemplazaron los múltiples "Cuidado y familia (...)" por "Cuidado y familia")
 modelo_multinomial <- multinom(
   medio ~ 
     # ------------------ CONTINUAS ------------------
@@ -92,9 +116,9 @@ modelo_multinomial <- multinom(
     p1edad +
     
     # ------------------ CATEGÓRICAS ------------------
-    
-    # edad_r2  (BASE: 35 - 54 años)
-    `edad_r2_18 - 34 años` + `edad_r2_55 - 80 años` +
+  
+  # edad_r2  (BASE: 35 - 54 años)
+  `edad_r2_18 - 34 años` + `edad_r2_55 - 80 años` +
     
     # p3_agregado  (BASE: Ninguna)
     `p3_agregado_Población afrodescendiente` +
@@ -106,11 +130,10 @@ modelo_multinomial <- multinom(
     `p5_agregado_Primaria o menos` +
     `p5_agregado_Técnico / Tecnológico` +
     
-    # p7_agregado  (BASE: Ocupado/a)
+    # p7_agregado  (BASE: Ocupado/a)   # (SIN "Otro")
     `p7_agregado_Trabajo doméstico no remunerado` +
     `p7_agregado_Desocupado o inactivo` +
     `p7_agregado_Estudiante` +
-    `p7_agregado_Otro` +
     
     # p9_estrato3  (BASE: Alto)
     `p9_estrato3_Medio` + `p9_estrato3_Bajo` +
@@ -136,19 +159,10 @@ modelo_multinomial <- multinom(
     `p23_agregado_Compras y trámites` +
     `p23_agregado_Estudio` +
     `p23_agregado_Visitas sociales` +
-    `p23_agregado_Cuidado y familia (escuela, niñas/os)` +
-    `p23_agregado_Cuidado y familia (recreación, niñas/os)` +
-    `p23_agregado_Cuidado y familia (salud, niñas/os)` +
-    `p23_agregado_Cuidado y familia (persona enferma)` +
-    `p23_agregado_Otro` +
-    `p23_agregado_Cuidado y familia (persona con discapacidad)` +
+    `p23_agregado_Cuidado y familia` +
     
-    # p38p38_i  (BASE: No; dummy_0) 
-    `p38p38_dummy_1`+
-    
-    # p39_lugaragregado_mod (NA (NO LE SUCEDIÓ))
-    `p39_lugar_agregado_mod_En otro lugar` + 
-    `p39_lugar_agregado_mod_En su modo de transporte` +
+    # p38p38_i  (BASE: 0) 
+    `p38p38_dummy_1` +
     
     # p19comuna  (BASE: Comuna 16 - Belén)
     `p19comuna_Comuna 13 - San Javier` +
@@ -189,14 +203,12 @@ modelo_multinomial_sin <- multinom(
     p36_influencia_amigos +
     p37_influencia_familia +
     tiempo_total +
-    p1edad +
     
     # ------------------ CATEGÓRICAS ------------------
-    
-    `edad_r2_18 - 34 años` + `edad_r2_55 - 80 años` +
+  `edad_r2_18 - 34 años` + `edad_r2_55 - 80 años` +
     `p3_agregado_Población afrodescendiente` + `p3_agregado_Sin respuesta` + `p3_agregado_Pueblos indígenas` +
     `p5_agregado_Secundaria` + `p5_agregado_Primaria o menos` + `p5_agregado_Técnico / Tecnológico` +
-    `p7_agregado_Trabajo doméstico no remunerado` + `p7_agregado_Desocupado o inactivo` + `p7_agregado_Estudiante` + `p7_agregado_Otro` +
+    `p7_agregado_Trabajo doméstico no remunerado` + `p7_agregado_Desocupado o inactivo` + `p7_agregado_Estudiante` +
     `p9_estrato3_Medio` + `p9_estrato3_Bajo` +
     `p12_dificultad_binaria_Con alguna dificultad` +
     `p40_Mujer` +
@@ -204,13 +216,8 @@ modelo_multinomial_sin <- multinom(
     `p16_motos_agregado_Sin motocicletas` + `p16_motos_agregado_1 motocicleta` +
     `p22_Entre 16 y 20 km` + `p22_Entre 11 y 15 km` + `p22_Entre 6 y 10 km` + `p22_Menos de 5 km` +
     `p23_agregado_Recreación, salud y actividades personales` + `p23_agregado_Compras y trámites` + `p23_agregado_Estudio` +
-    `p23_agregado_Visitas sociales` + `p23_agregado_Cuidado y familia (escuela, niñas/os)` +
-    `p23_agregado_Cuidado y familia (recreación, niñas/os)` + `p23_agregado_Cuidado y familia (salud, niñas/os)` +
-    `p23_agregado_Cuidado y familia (persona enferma)` + `p23_agregado_Otro` +
-    `p23_agregado_Cuidado y familia (persona con discapacidad)` +
-    `p38p38_dummy_1`+
-    `p39_lugar_agregado_mod_En otro lugar` + 
-    `p39_lugar_agregado_mod_En su modo de transporte`
+    `p23_agregado_Visitas sociales` + `p23_agregado_Cuidado y familia` +
+    `p38p38_dummy_1`
   ,
   data = dataset,
   trace = FALSE
@@ -225,8 +232,6 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 # ===========================
 # a) Tablas con stargazer
 # ===========================
-
-# --- CON COMUNAS ---
 stargazer(
   modelo_multinomial,
   type = "html",
@@ -235,7 +240,6 @@ stargazer(
   na.replace = "",
   out = file.path(out_dir, "mnl_med_concomunas_stargazer.html")
 )
-
 stargazer(
   modelo_multinomial,
   type = "text",
@@ -254,7 +258,6 @@ stargazer(
   na.replace = "",
   out = file.path(out_dir, "mnl_med_sincomunas_stargazer.html")
 )
-
 stargazer(
   modelo_multinomial_sin,
   type = "text",
@@ -367,4 +370,5 @@ cat("\n✅ Archivos guardados en:\n", normalizePath(out_dir), "\n",
     "- mnl_med_sincomunas_stargazer.html\n",
     "- mnl_med_sincomunas_stargazer.txt\n",
     "- mnl_med_sincomunas_OR.xlsx\n", sep = "")
+
 
