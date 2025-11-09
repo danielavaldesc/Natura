@@ -115,12 +115,6 @@ modelo_multinomial <- multinom(
     # p40  (BASE: Hombre)
     `p40_Mujer` +
     
-    # p13  (BASE: Sí, auto y motocicleta)
-    `p13_No` + `p13_Sí, motocicleta` + `p13_Sí, auto` +
-    
-    # p14  (BASE: Si de auto y motocicleta)
-    `p14_No` + `p14_Si, motocicleta` + `p14_Si, auto` +
-    
     # p15_autos_agregado  (BASE: Sin autos)
     `p15_autos_agregado_1 auto` +
     `p15_autos_agregado_2 o más autos` +
@@ -191,8 +185,6 @@ modelo_multinomial_sin <- multinom(
     `p9_estrato3_Bajo` + `p9_estrato3_Medio` +
     `p12_dificultad_binaria_Con alguna dificultad` +
     `p40_Mujer` +
-    `p13_No` + `p13_Sí, motocicleta` + `p13_Sí, auto` +
-    `p14_No` + `p14_Si, motocicleta` + `p14_Si, auto` +
     `p15_autos_agregado_1 auto` + `p15_autos_agregado_2 o más autos` +
     `p16_motos_agregado_Sin motocicletas` + `p16_motos_agregado_1 motocicleta` +
     `p22_Entre 4 y 7 km` + `p22_Entre 8 y 12 km` + `p22_Entre 1 y 3 km` + `p22_Menos de 1 km` +
