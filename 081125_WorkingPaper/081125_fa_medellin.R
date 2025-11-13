@@ -335,4 +335,70 @@ webshot2::webshot(
   vwidth = 1400, vheight = 1000
 )
 
+# 6) Gráfico interactivo para diferenciar entre hombres y mujeres
+library(plotly)
+library(RColorBrewer)
+library(htmlwidgets)
+library(dplyr)
+
+setwd("C:\\Users\\Portatil\\Desktop\\Natura\\081125_WorkingPaper\\")
+
+coords <- as.data.frame(res_mca$ind$coord[, 1:3])
+names(coords) <- c("Dim1","Dim2","Dim3")
+coords$medio  <- mca_data$medio
+coords$genero <- mca_data$p40
+
+coords_h <- coords %>% filter(genero == "Hombre")
+coords_m <- coords %>% filter(genero == "Mujer")
+
+fig_h <- plot_ly(
+  data = coords_h,
+  x = ~Dim1, y = ~Dim2, z = ~Dim3,
+  color = ~medio, colors = pal,
+  type = "scatter3d", mode = "markers",
+  marker = list(size = 3, opacity = 0.75)
+) %>%
+  layout(
+    title = "MCA — Individuos por 'medio' (D1 - D3) — Hombres",
+    scene = list(
+      xaxis = list(title = ax1, zeroline = TRUE),
+      yaxis = list(title = ax2, zeroline = TRUE),
+      zaxis = list(title = ax3, zeroline = TRUE),
+      aspectmode = "data"
+    ),
+    legend = list(orientation = "h", y = -0.1)
+  )
+
+# Guardar
+saveWidget(
+  as_widget(fig_h),
+  "figures_wp/medellin/mca_ind_medio_3d_hombres.html",
+  selfcontained = TRUE
+)
+
+fig_m <- plot_ly(
+  data = coords_m,
+  x = ~Dim1, y = ~Dim2, z = ~Dim3,
+  color = ~medio, colors = pal,
+  type = "scatter3d", mode = "markers",
+  marker = list(size = 3, opacity = 0.75)
+) %>%
+  layout(
+    title = "MCA — Individuos por 'medio' (D1 - D3) — Mujeres",
+    scene = list(
+      xaxis = list(title = ax1, zeroline = TRUE),
+      yaxis = list(title = ax2, zeroline = TRUE),
+      zaxis = list(title = ax3, zeroline = TRUE),
+      aspectmode = "data"
+    ),
+    legend = list(orientation = "h", y = -0.1)
+  )
+
+# Guardar
+saveWidget(
+  as_widget(fig_m),
+  "figures_wp/medellin/mca_ind_medio_3d_mujeres.html",
+  selfcontained = TRUE
+)
+
 
