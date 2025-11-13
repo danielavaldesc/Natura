@@ -221,7 +221,25 @@ ggsave("figures_wp/medellin/mca_cor.png", mca_cor_fancy, width = 8.5, height = 7
 library(patchwork)
 library(purrr)
 
-res_mca <- MCA(mca_data %>% dplyr::select(-c("p23_agregado", "id", "medio")), ncp = 9, graph = FALSE)
+res_mca <- MCA(mca_data %>% dplyr::select(-c("p23_agregado", "id", "medio")), ncp = 9, 
+               graph = FALSE)
+
+# Guardar los resultados del MCA
+save_with_rownames <- function(x, file, name = "name"){
+  x %>%
+    as.data.frame() %>%
+    rownames_to_column(var = name) %>%
+    write_xlsx(path = file)
+}
+
+save_with_rownames(res_mca$ind$coord,   "figures_wp/medellin/mca_ind_coord.xlsx",   name = "id_ind")
+save_with_rownames(res_mca$ind$contrib, "figures_wp/medellin/mca_ind_contrib.xlsx", name = "id_ind")
+save_with_rownames(res_mca$ind$cos2,    "figures_wp/medellin/mca_ind_cos2.xlsx",    name = "id_ind")
+save_with_rownames(res_mca$var$coord,   "figures_wp/medellin/mca_var_coord.xlsx",   name = "var")
+save_with_rownames(res_mca$var$contrib, "figures_wp/medellin/mca_var_contrib.xlsx", name = "var")
+save_with_rownames(res_mca$var$cos2,    "figures_wp/medellin/mca_var_cos2.xlsx",    name = "var")
+save_with_rownames(res_mca$var$eta2,    "figures_wp/medellin/mca_var_eta2.xlsx",    name = "var")
+
 
 max_axes <- ncol(res_mca$var$coord) 
 dims <- seq_len(min(9, max_axes))
