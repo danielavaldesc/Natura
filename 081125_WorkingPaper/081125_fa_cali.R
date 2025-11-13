@@ -193,7 +193,6 @@ ggsave(filename = "figures_wp/cali/mca_var.png", plot = mca_var, height = 12/1.5
        width = 12/1.5)
 
 
-
 # Opción A: dejar que fviz filtre por cos2 (umbral)
 mca_cor_fancy = fviz_mca_var(res_mca, choice = "mca.cor", 
                              repel = TRUE, # Avoid text overlapping (slow)
@@ -206,7 +205,24 @@ ggsave("figures_wp/cali/mca_cor.png", mca_cor_fancy, width = 8.5, height = 7, dp
 library(patchwork)
 library(purrr)
 
-res_mca <- MCA(mca_data %>% select(-c("p23_agregado", "id", "medio")), ncp = 9, graph = FALSE)
+res_mca <- MCA(mca_data %>% dplyr::select(-c("p23_agregado", "id", "medio")),
+               ncp = 9, graph = FALSE)
+
+# Guardar los resultados del MCA
+save_with_rownames <- function(x, file, name = "name"){
+  x %>%
+    as.data.frame() %>%
+    rownames_to_column(var = name) %>%
+    write_xlsx(path = file)
+}
+
+save_with_rownames(res_mca$ind$coord,   "figures_wp/cali/mca_ind_coord.xlsx",   name = "id_ind")
+save_with_rownames(res_mca$ind$contrib, "figures_wp/cali/mca_ind_contrib.xlsx", name = "id_ind")
+save_with_rownames(res_mca$ind$cos2,    "figures_wp/cali/mca_ind_cos2.xlsx",    name = "id_ind")
+save_with_rownames(res_mca$var$coord,   "figures_wp/cali/mca_var_coord.xlsx",   name = "var")
+save_with_rownames(res_mca$var$contrib, "figures_wp/cali/mca_var_contrib.xlsx", name = "var")
+save_with_rownames(res_mca$var$cos2,    "figures_wp/cali/mca_var_cos2.xlsx",    name = "var")
+save_with_rownames(res_mca$var$eta2,    "figures_wp/cali/mca_var_eta2.xlsx",    name = "var")
 
 max_axes <- ncol(res_mca$var$coord) 
 dims <- seq_len(min(9, max_axes))
@@ -266,8 +282,6 @@ mca_ind_medio <- fviz_mca_ind(
 # Guardar
 ggsave("figures_wp/cali/mca_ind_medio.png", mca_ind_medio, width = 8, height = 6, dpi = 300)
 
-
-
 library(plotly)
 library(dplyr)
 library(RColorBrewer)
@@ -313,12 +327,80 @@ fig <- plot_ly(
 
 
 # 5) Guardar interactivo (HTML)
-saveWidget(as_widget(fig), "figures_wp/cali/mca_ind_medio_3d.html", selfcontained = TRUE)
+saveWidget(as_widget(fig), "figures_wp/cali/mca_ind_medio_3d.html", 
+           selfcontained = TRUE)
 
 webshot2::webshot(
   "figures_wp/cali/mca_ind_medio_3d.html",
   "figures_wp/cali/mca_ind_medio_3d.png",
   vwidth = 1400, vheight = 1000
 )
+
+# 6) Gráfico interactivo para diferenciar entre hombres y mujeres
+library(plotly)
+library(RColorBrewer)
+library(htmlwidgets)
+library(dplyr)
+
+setwd("C:\\Users\\Portatil\\Desktop\\Natura\\081125_WorkingPaper\\")
+
+coords <- as.data.frame(res_mca$ind$coord[, 1:3])
+names(coords) <- c("Dim1","Dim2","Dim3")
+coords$medio  <- mca_data$medio
+coords$genero <- mca_data$p40
+
+coords_h <- coords %>% filter(genero == "Hombre")
+coords_m <- coords %>% filter(genero == "Mujer")
+
+fig_h <- plot_ly(
+  data = coords_h,
+  x = ~Dim1, y = ~Dim2, z = ~Dim3,
+  color = ~medio, colors = pal,
+  type = "scatter3d", mode = "markers",
+  marker = list(size = 3, opacity = 0.75)
+) %>%
+  layout(
+    title = "MCA — Individuos por 'medio' (D1 - D3) — Hombres",
+    scene = list(
+      xaxis = list(title = ax1, zeroline = TRUE),
+      yaxis = list(title = ax2, zeroline = TRUE),
+      zaxis = list(title = ax3, zeroline = TRUE),
+      aspectmode = "data"
+    ),
+    legend = list(orientation = "h", y = -0.1)
+  )
+
+# Guardar
+saveWidget(
+  as_widget(fig_h),
+  "figures_wp/cali/mca_ind_medio_3d_hombres.html",
+  selfcontained = TRUE
+)
+
+fig_m <- plot_ly(
+  data = coords_m,
+  x = ~Dim1, y = ~Dim2, z = ~Dim3,
+  color = ~medio, colors = pal,
+  type = "scatter3d", mode = "markers",
+  marker = list(size = 3, opacity = 0.75)
+) %>%
+  layout(
+    title = "MCA — Individuos por 'medio' (D1 - D3) — Mujeres",
+    scene = list(
+      xaxis = list(title = ax1, zeroline = TRUE),
+      yaxis = list(title = ax2, zeroline = TRUE),
+      zaxis = list(title = ax3, zeroline = TRUE),
+      aspectmode = "data"
+    ),
+    legend = list(orientation = "h", y = -0.1)
+  )
+
+# Guardar
+saveWidget(
+  as_widget(fig_m),
+  "figures_wp/cali/mca_ind_medio_3d_mujeres.html",
+  selfcontained = TRUE
+)
+
 
 
