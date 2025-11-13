@@ -104,10 +104,10 @@ df.mnl <- df.mnl %>%
 # Situación laboral
 df.mnl <- df.mnl %>%
   mutate(
-    sitlab = case_when(
+    sitlab = dplyr::case_when(
       p7_agregado == "Ocupado/a" ~ "Asalariado o independiente",
       p7_agregado == "Trabajo doméstico no remunerado" ~ "Trabajo doméstico no remunerado",
-      p7_agregado == "Desocupado o inactivo" ~ "Desocupado o inactivo",
+      p7_agregado %in% c("Desocupado o inactivo","Estudiante") ~ "Desocupado o inactivo",
       TRUE ~ NA_character_
     ),
     sitlab = factor(sitlab,

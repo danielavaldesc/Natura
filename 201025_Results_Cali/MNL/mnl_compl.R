@@ -1,7 +1,6 @@
 ##############################################
-## MNL Cali – Especificación final           ##
-## Modelos: con comunas / sin comunas        ##
-## Fecha: 09/11/2025                         ##
+## MNL Cali – Especificación Completa       ##
+## Modelos: con comunas / sin comunas       ##
 ##############################################
 
 # --------- Librerías ----------
@@ -139,6 +138,19 @@ df.mnl <- df.mnl %>%
     dist_recod = factor(dist_recod, levels = c("Menos de 3 km","Entre 4 y 12 km","Más de 12 km"))
   )
 
+# --------- p13 y p14: binarios (auto/moto) ----------
+df.mnl <- df.mnl %>%
+  mutate(
+    p13_auto = ifelse(p13 %in% c("Sí, auto","Sí, auto y motocicleta"), 1L, 0L),
+    p13_moto = ifelse(p13 %in% c("Sí, motocicleta","Sí, auto y motocicleta"), 1L, 0L),
+    p14_auto = ifelse(p14 %in% c("Sí, auto","Sí, auto y motocicleta","Sí de auto y motocicleta"), 1L, 0L),
+    p14_moto = ifelse(p14 %in% c("Sí, motocicleta","Sí, auto y motocicleta","Sí de auto y motocicleta"), 1L, 0L),
+    p13_auto = factor(p13_auto, levels = c(0,1)),
+    p13_moto = factor(p13_moto, levels = c(0,1)),
+    p14_auto = factor(p14_auto, levels = c(0,1)),
+    p14_moto = factor(p14_moto, levels = c(0,1))
+  )
+
 # --------- Outcome ---------
 df.mnl$medio <- relevel(factor(df.mnl$medio), ref = "Moto privada")
 
@@ -150,7 +162,9 @@ form_base <- as.formula(
     p28_importancia_riesgo_acoso + p28_importancia_discriminacion +
     p28_importancia_emisiones + p28_importancia_siniestralidad +
     tiempo_total +
-    edad_r2 + aut_rec_etnico + educ_3cat + sitlab + p40 + p38p38_dummy
+    edad_r2 + aut_rec_etnico + educ_3cat + sitlab + p40 + p38p38_dummy + ten_autos +                     
+    ten_motos + dist_recod + p23_agr5 + p13_auto + p13_moto + p9_estrato3 +
+    p15_autos_agregado + p16_motos_agregado
 )
 
 form_con <- update(form_base, . ~ . + p19comuna)  
@@ -195,11 +209,11 @@ if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 stargazer(mnl.ctrl2_con, type = "html",
           title = "MNL (mnl.ctrl2) – CON comunas (Cali)",
           single.row = TRUE, na.replace = "",
-          out = file.path(out_dir, "mnl_ctrl2_CONcomunas_Cali_stargazer.html"))
+          out = file.path(out_dir, "mnl_compl_CONcomunas_Cali_stargazer.html"))
 stargazer(mnl.ctrl2_sin, type = "html",
           title = "MNL (mnl.ctrl2) – SIN comunas (Cali)",
           single.row = TRUE, na.replace = "",
-          out = file.path(out_dir, "mnl_ctrl2_SINcomunas_Cali_stargazer.html"))
+          out = file.path(out_dir, "mnl_compl_SINcomunas_Cali_stargazer.html"))
 
 # Excel OR
 writexl::write_xlsx(
@@ -209,10 +223,10 @@ writexl::write_xlsx(
     "SIN_OR_largo"   = or_sin$long,
     "SIN_OR_matriz"  = or_sin$matrix
   ),
-  path = file.path(out_dir, "mnl_ctrl2_OR_CONySIN_Cali.xlsx")
+  path = file.path(out_dir, "mnl_compl_OR_CONySIN_Cali.xlsx")
 )
 
 cat("\n✅ Resultados guardados en:\n", normalizePath(out_dir), "\n",
-    "- mnl_ctrl2_CONcomunas_Cali_stargazer.html\n",
-    "- mnl_ctrl2_SINcomunas_Cali_stargazer.html\n",
-    "- mnl_ctrl2_OR_CONySIN_Cali.xlsx\n", sep = "")
+    "- mnl_compl_CONcomunas_Cali_stargazer.html\n",
+    "- mnl_compl_SINcomunas_Cali_stargazer.html\n",
+    "- mnl_compl_OR_CONySIN_Cali.xlsx\n", sep = "")
