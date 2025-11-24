@@ -28,7 +28,10 @@ dataset <- readxl::read_excel(ruta_xlsx)
 
 dataset$id      <- as.character(dataset$id)
 dataset$medio   <- as.character(dataset$medio)
-dataset$Comuna  <- suppressWarnings(as.integer(str_extract(as.character(dataset$p19comuna), "\\d+")))
+dataset$Comuna  <- suppressWarnings(
+  as.integer(str_extract(as.character(dataset$p19comuna), "\\d+"))
+)
+
 data <- dataset %>%
   filter(!is.na(medio), !is.na(Comuna), Comuna %in% 1:16)
 
@@ -44,6 +47,7 @@ tmp <- data.frame(
   estrato_cat = trimws(tolower(as.character(data[[nombre_estrato]]))),
   stringsAsFactors = FALSE
 )
+
 tmp$estrato_cat[tmp$estrato_cat %in% c("alto","alta")]   <- "Alto"
 tmp$estrato_cat[tmp$estrato_cat %in% c("medio","media")] <- "Medio"
 tmp$estrato_cat[tmp$estrato_cat %in% c("bajo","baja")]   <- "Bajo"
@@ -52,85 +56,101 @@ tmp <- tmp[!is.na(tmp$estrato_cat) & tmp$estrato_cat != "", ]
 niveles <- c("Bajo","Medio","Alto")
 tmp$estrato_cat <- factor(tmp$estrato_cat, levels = niveles, ordered = TRUE)
 
-estratos_comuna <- tmp %>%
-  group_by(Comuna, estrato_cat) %>%
-  summarise(n = n(), .groups = "drop_last") %>%
-  arrange(desc(n), estrato_cat) %>%
-  slice(1) %>%
-  ungroup() %>%
-  transmute(Comuna, categoria = as.character(estrato_cat))
+lista_por_comuna <- split(tmp$estrato_cat, tmp$Comuna)
+
+estratos_comuna_list <- lapply(names(lista_por_comuna), function(cc) {
+  tb <- table(lista_por_comuna[[cc]])
+  tb <- sort(tb, decreasing = TRUE)  # estrato más frecuente primero
+  
+  data.frame(
+    Comuna    = as.integer(cc),
+    categoria = names(tb)[1],
+    stringsAsFactors = FALSE
+  )
+})
+
+estratos_comuna <- do.call(rbind, estratos_comuna_list)
 
 # ------------------------------------------------------------
-# 3) Shape Medellín → SOLO 16 comunas urbanas
+# 3) Shape Medellín → 16 comunas urbanas con CÓDIGO real
 # ------------------------------------------------------------
 shape_med <- sf::st_read(ruta_shp, quiet = TRUE)
-if (is.na(st_crs(shape_med))) shape_med <- st_set_crs(shape_med, 4326)
-shape_m <- st_transform(shape_med, 3116)
 
-polys <- shape_m %>%
-  st_make_valid() %>%
-  st_cast("POLYGON", warn = FALSE) %>%
-  mutate(
-    area_m2 = as.numeric(st_area(geometry)),
-    cx = st_coordinates(st_centroid(st_transform(geometry, 4326)))[,1],
-    cy = st_coordinates(st_centroid(st_transform(geometry, 4326)))[,2]
-  ) %>%
-  filter(area_m2 >= 5e5)
+# El CRS ya viene en MAGNA-SIRGAS zona Bogotá (3116); lo aceptamos:
+if (is.na(st_crs(shape_med))) {
+  shape_med <- st_set_crs(shape_med, 3116)
+}
 
-comunas_sf_m <- polys %>%
-  filter(
-    cx > -75.635, cx < -75.520,
-    cy >   6.200,  cy <   6.340
-  ) %>%
-  slice_max(order_by = area_m2, n = 16, with_ties = FALSE) %>%
-  mutate(Comuna = row_number()) %>%
-  dplyr::select(-area_m2, -cx, -cy)
+# Nos quedamos solo con las comunas urbanas 1–16
+# CODIGO = "01", "02", ..., "16"
+shape_comunas <- shape_med %>%
+  filter(IDENTIFICA %in% paste("Comuna", 1:16)) %>%
+  mutate(Comuna = as.integer(CODIGO)) %>%   #  "01" -> 1, "02" -> 2, ...
+  arrange(Comuna)
 
-# Volver a 4326 para dibujar
-shape <- st_transform(comunas_sf_m, 4326) %>%
+# Pasamos a WGS84 para dibujar y unimos el estrato
+shape <- shape_comunas %>%
+  st_transform(4326) %>%
   left_join(estratos_comuna, by = "Comuna")
+
+# (si quieres comprobar:)
+# shape %>% st_drop_geometry() %>% select(Comuna, NOMBRE, IDENTIFICA, categoria) %>% arrange(Comuna)
 
 # ------------------------------------------------------------
 # 4) Pies por “cuadrantes” automáticos (NW/NE/SW/SE)
-#    - No mostramos texto de zonas; sólo usamos cuadrantes
-#      para ubicar y agrupar los pies.
 # ------------------------------------------------------------
 # Centroides de comunas para asignar cuadrante
 cent <- st_coordinates(st_centroid(shape))
-shape$cx <- cent[,1]; shape$cy <- cent[,2]
+shape$cx <- cent[,1]
+shape$cy <- cent[,2]
 
-bb <- st_bbox(shape)
+bb   <- st_bbox(shape)
 xmid <- (bb["xmin"] + bb["xmax"])/2
 ymid <- (bb["ymin"] + bb["ymax"])/2
 
-shape$cuadrante <- with(shape,
-                        ifelse(cy >= ymid & cx < xmid, "NW",
-                               ifelse(cy >= ymid & cx >= xmid, "NE",
-                                      ifelse(cy <  ymid & cx < xmid, "SW", "SE")))
+shape$cuadrante <- ifelse(
+  shape$cy >= ymid & shape$cx <  xmid, "NW",
+  ifelse(
+    shape$cy >= ymid & shape$cx >= xmid, "NE",
+    ifelse(
+      shape$cy <  ymid & shape$cx <  xmid, "SW",
+      "SE"
+    )
+  )
 )
 
 # Tabla de modos por cuadrante
 table_data_mode <- data %>%
   mutate(Comuna = as.integer(Comuna)) %>%
-  inner_join(shape %>% st_drop_geometry() %>% dplyr::select(Comuna, cuadrante), by = "Comuna") %>%
-  count(cuadrante, medio, name = "n") %>%
-  tidyr::pivot_wider(names_from = medio, values_from = n, values_fill = 0)
+  inner_join(
+    shape %>% st_drop_geometry() %>% dplyr::select(Comuna, cuadrante),
+    by = "Comuna"
+  ) %>%
+  dplyr::count(cuadrante, medio) %>%
+  tidyr::pivot_wider(
+    names_from  = medio,
+    values_from = n,
+    values_fill = 0
+  )
 
 cols_pie <- setdiff(names(table_data_mode), "cuadrante")
 
 # Coordenadas fijas de los pies (centros de cada cuadrante del bbox)
+xspan <- as.numeric(bb["xmax"] - bb["xmin"])
+yspan <- as.numeric(bb["ymax"] - bb["ymin"])
+
 pie_pos <- data.frame(
   cuadrante = c("NW","NE","SW","SE"),
-  long = c((bb["xmin"]+xmid)/2, (xmid+bb["xmax"])/2, (bb["xmin"]+xmid)/2, (xmid+bb["xmax"])/2),
-  lat  = c((ymid+bb["ymax"])/2, (ymid+bb["ymax"])/2, (bb["ymin"]+ymid)/2, (bb["ymin"]+ymid)/2)
+  long = c((bb["xmin"]+xmid)/2, (xmid+bb["xmax"])/2,
+           (bb["xmin"]+xmid)/2, (xmid+bb["xmax"])/2),
+  lat  = c((ymid+bb["ymax"])/2, (ymid+bb["ymax"])/2,
+           (bb["ymin"]+ymid)/2, (bb["ymin"]+ymid)/2)
 )
 
 table_data_mode <- table_data_mode %>%
   left_join(pie_pos, by = "cuadrante")
 
 # Radio de los pies relativo al tamaño del mapa
-xspan <- as.numeric(bb["xmax"] - bb["xmin"])
-yspan <- as.numeric(bb["ymax"] - bb["ymin"])
 r_pie <- 0.060 * min(xspan, yspan)   # tamaño legible (ajustable)
 
 # ------------------------------------------------------------
@@ -172,7 +192,7 @@ bymin <- as.numeric(bb["ymin"]) + 0.78 * yspan
 bymax <- as.numeric(bb["ymin"]) + 0.94 * yspan
 
 # ------------------------------------------------------------
-# 7) Mapa final (sin números de ejes ni rótulos de zonas)
+# 7) Mapa final
 # ------------------------------------------------------------
 map.med.modal <- ggplot() +
   geom_sf(data = shape, aes(fill = categoria), color = "#BFBFBF", linewidth = 0.25) +

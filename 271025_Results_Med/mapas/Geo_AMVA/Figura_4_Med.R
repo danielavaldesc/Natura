@@ -1,11 +1,11 @@
 #############################################################################
-## Figura 3: Georreferenciación de elección modal MED x estrato x sexo     ##
+## Figura 5: Georreferenciación de elección modal MED x estrato x motivo   ##
 #############################################################################
 
 # Paquetes
 library(readxl)
-library(ggplot2)
 library(dplyr)
+library(ggplot2)
 library(sf)
 library(stringr)
 library(tidyr)
@@ -13,6 +13,7 @@ library(scatterpie)
 library(ggnewscale)
 library(grid)
 library(units)
+library(forcats)   # <- para fct_collapse
 
 # -------------------------------------------------------------------
 # 1) Datos
@@ -22,9 +23,11 @@ ruta_xlsx <- "input_famd_med_29102025.xlsx"
 ruta_shp  <- "LimiteComunaCorregimiento_2014.shp"
 
 dataset <- readxl::read_excel(ruta_xlsx)
+
 dataset$id      <- as.character(dataset$id)
 dataset$medio   <- as.character(dataset$medio)
 dataset$Comuna  <- suppressWarnings(as.integer(str_extract(as.character(dataset$p19comuna), "\\d+")))
+
 data <- dataset %>%
   filter(!is.na(medio), !is.na(Comuna), Comuna %in% 1:16)
 
@@ -57,14 +60,46 @@ estratos_comuna <- tmp %>%
   transmute(Comuna, categoria = as.character(estrato_cat))
 
 # -------------------------------------------------------------------
-# 2) Normalizar p40 -> sexo (Hombre/Mujer) para facetas
+# 2) Unificación propósito (p23_agr5) a partir de p23_agregado
 # -------------------------------------------------------------------
-if (!"p40" %in% names(data)) stop("No se encontró la columna p40 en la base.")
-sexo_raw <- tolower(trimws(as.character(data$p40)))
-data$sexo <- NA_character_
-data$sexo[sexo_raw %in% c("hombre","masculino","male","m","1")] <- "Hombre"
-data$sexo[sexo_raw %in% c("mujer","femenino","female","f","2")] <- "Mujer"
-data <- data[!is.na(data$sexo), ]
+if (!"p23_agregado" %in% names(data)) {
+  stop("No se encontró la columna 'p23_agregado'.")
+}
+
+data <- data %>%
+  mutate(
+    p23_agregado = trimws(as.character(p23_agregado)),
+    p23_agr5 = fct_collapse(
+      p23_agregado,
+      "Trabajo"          = c("Trabajo"),
+      "Compras/Trámites" = c("Compras y trámites","Compras y tr\u00e1mites"),
+      "Tiempo personal"  = c("Recreación, salud y actividades personales",
+                             "Recreaci\u00f3n, salud y actividades personales",
+                             "Visitas sociales"),
+      "Estudio"          = "Estudio",
+      "Cuidado"          = c(
+        "Cuidado y familia (centro educativo, niños/as o jóvenes)",
+        "Cuidado y familia (otro lugar, niños/as o jóvenes)",
+        "Cuidado y familia (escuela, ni niños)",
+        "Cuidado y familia (persona con discapacidad)",
+        "Cuidado y familia (persona enferma)",
+        "Cuidado y familia (recreación, niños)",
+        "Cuidado y familia (salud, niños)",
+        "Cuidado y familia (salud, ni\u00f1as/os)",
+        "Cuidado y familia (recreaci\u00f3n, ni\u00f1as/os)",
+        "Cuidado y familia (escuela, ni\u00f1as/os)"
+      ),
+      "Otros"            = "Otro"
+    ) %>% fct_drop()
+  ) %>%
+  filter(!is.na(p23_agr5), p23_agr5 != "Otros") %>%
+  mutate(p23_agr5 = factor(as.character(p23_agr5)))
+
+# usamos p23_agr5 como "motivo" para facetear
+data$motivo <- factor(
+  as.character(data$p23_agr5),
+  levels = c("Trabajo","Estudio","Compras/Trámites","Tiempo personal","Cuidado")
+)
 
 # -------------------------------------------------------------------
 # 3) Shape Medellín → SOLO 16 comunas urbanas 
@@ -89,7 +124,7 @@ shape <- shape_comunas %>%
   left_join(estratos_comuna, by = "Comuna")
 
 # -------------------------------------------------------------------
-# 4) Pies: agrupación automática por cuadrantes (sin rotular)
+# 4) Pies: cuadrantes fijos del mapa (no se rotulan)
 # -------------------------------------------------------------------
 cent <- st_coordinates(st_centroid(shape))
 shape$cx <- cent[,1]; shape$cy <- cent[,2]
@@ -105,12 +140,12 @@ shape$cuadrante <- with(shape,
 
 df_counts <- data %>%
   inner_join(shape %>% st_drop_geometry() %>% dplyr::select(Comuna, cuadrante), by = "Comuna") %>%
-  dplyr::count(sexo, cuadrante, medio, name = "n") %>%
-  pivot_wider(names_from = medio, values_from = n, values_fill = 0)
+  dplyr::count(motivo, cuadrante, medio, name = "n") %>%
+  tidyr::pivot_wider(names_from = medio, values_from = n, values_fill = 0)
 
-cols_pie <- setdiff(names(df_counts), c("sexo","cuadrante"))
+cols_pie <- setdiff(names(df_counts), c("motivo","cuadrante"))
 
-# Posición fija de los pies (centros de cada cuadrante)
+# posiciones de los pies (centros de cuadrantes) y radio relativo
 pie_pos <- data.frame(
   cuadrante = c("NW","NE","SW","SE"),
   long = c((bb["xmin"]+xmid)/2, (xmid+bb["xmax"])/2, (bb["xmin"]+xmid)/2, (xmid+bb["xmax"])/2),
@@ -118,13 +153,12 @@ pie_pos <- data.frame(
 )
 df_counts <- df_counts %>% left_join(pie_pos, by = "cuadrante")
 
-# Radio relativo al tamaño del mapa (no se mueven)
 xspan <- as.numeric(bb["xmax"] - bb["xmin"])
 yspan <- as.numeric(bb["ymax"] - bb["ymin"])
 r_pie <- 0.060 * min(xspan, yspan)
 
 # -------------------------------------------------------------------
-# 5) Paletas de color
+# 5) Paletas
 # -------------------------------------------------------------------
 colores_estrato <- c("Bajo"="#F2F2F2","Medio"="#DDDDDD","Alto"="#C8C8C8")
 colores_medio <- c(
@@ -138,7 +172,7 @@ colores_medio <- c(
 breaks_medios <- intersect(names(colores_medio), cols_pie)
 
 # -------------------------------------------------------------------
-# 6) Brújula con flechas (arriba-derecha, fuera de pies)
+# 6) Brújula con flechas
 # -------------------------------------------------------------------
 compass_brown <- "#6F3E2B"
 arrow_compass <- function(color = "#6F3E2B", txt = 0.85, lwd = 1.8, alen = 0.08){
@@ -161,11 +195,11 @@ bymin <- as.numeric(bb["ymin"]) + 0.78 * yspan
 bymax <- as.numeric(bb["ymin"]) + 0.94 * yspan
 
 # -------------------------------------------------------------------
-# 7) Mapa facetado por SEXO (sin rótulos de zonas ni coordenadas)
+# 7) Mapa facetado por MOTIVO (p23_agr5)
 # -------------------------------------------------------------------
-map.med.sexo <- ggplot() +
+map.med.motivo <- ggplot() +
   geom_sf(
-    data = shape,
+    data  = shape,
     aes(fill = categoria),
     color = "#6E6E6E",
     linewidth = 0.25,
@@ -190,9 +224,11 @@ map.med.sexo <- ggplot() +
     breaks = breaks_medios,
     guide  = guide_legend(override.aes = list(alpha = 1))
   ) +
-  facet_wrap(~ sexo) +
-  labs(x = NULL, y = NULL,
-       title = "Elección modal por comuna - Medellín (Hombres vs. Mujeres)") +
+  facet_wrap(~ motivo, ncol = 3) +
+  labs(
+    x = NULL, y = NULL,
+    title = "Elección modal por comuna - Medellín (por motivo de viaje)"
+  ) +
   theme_minimal(base_size = 12) +
   theme(
     panel.grid.major = element_blank(),
@@ -209,7 +245,7 @@ map.med.sexo <- ggplot() +
   )
 
 ggsave(
-  plot = map.med.sexo,
-  filename = "map.med_sexo_facet.png",
-  width = 12, height = 8, dpi = 300, bg = "white"
+  plot = map.med.motivo,
+  filename = "map.med_por_motivo_p23_agr5.png",
+  width = 14, height = 8, dpi = 300, bg = "white"
 )

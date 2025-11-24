@@ -53,7 +53,7 @@ tmp$estrato_cat <- factor(tmp$estrato_cat, levels = niveles_em, ordered = TRUE)
 
 estratos_comuna <- tmp %>%
   group_by(Comuna, estrato_cat) %>%
-  summarise(n = n(), .groups = "drop_last") %>%
+  dplyr::summarise(n = dplyr::n(), .groups = "drop_last") %>%
   arrange(desc(n), estrato_cat) %>%
   slice(1) %>%
   ungroup() %>%
@@ -71,32 +71,25 @@ data <- data[!is.na(data$rango_edad), ]
 data$rango_edad <- droplevels(data$rango_edad)
 
 # -------------------------------------------------------------------
-# 3) Shape Medellín → SOLO 16 comunas urbanas (robusto)
+# 3) Shape Medellín → SOLO 16 comunas urbanas 
 # -------------------------------------------------------------------
 shape_med <- sf::st_read(ruta_shp, quiet = TRUE)
-if (is.na(st_crs(shape_med))) shape_med <- st_set_crs(shape_med, 4326)
-shape_m <- st_transform(shape_med, 3116)
 
-polys <- shape_m %>%
-  st_make_valid() %>%
-  st_cast("POLYGON", warn = FALSE) %>%
-  mutate(
-    area_m2 = as.numeric(st_area(geometry)),
-    cx = st_coordinates(st_centroid(st_transform(geometry, 4326)))[,1],
-    cy = st_coordinates(st_centroid(st_transform(geometry, 4326)))[,2]
-  ) %>%
-  filter(area_m2 >= 5e5)   # quita islitas
+# Asegurar CRS correcto (3116 viene en el shapefile)
+if (is.na(st_crs(shape_med))) {
+  shape_med <- st_set_crs(shape_med, 3116)
+}
 
-comunas_sf_m <- polys %>%
-  filter(
-    cx > -75.635, cx < -75.520,   # valle urbano
-    cy >   6.200,  cy <   6.340
-  ) %>%
-  slice_max(order_by = area_m2, n = 16, with_ties = FALSE) %>%
-  mutate(Comuna = dplyr::row_number()) %>%
-  dplyr::select(-area_m2, -cx, -cy)
+# Filtrar SOLO COMUNAS 1–16 usando IDENTIFICA ("Comuna 1", ..., "Comuna 16")
+# y extraer número real con CODIGO ("01","02",..., "16")
+shape_comunas <- shape_med %>%
+  filter(IDENTIFICA %in% paste("Comuna", 1:16)) %>%
+  mutate(Comuna = as.integer(CODIGO)) %>%   # ← CÓDIGO REAL
+  arrange(Comuna)
 
-shape <- st_transform(comunas_sf_m, 4326) %>%
+# Transformar a WGS84 y unir estrato predominante
+shape <- shape_comunas %>%
+  st_transform(4326) %>%
   left_join(estratos_comuna, by = "Comuna")
 
 # -------------------------------------------------------------------
@@ -116,7 +109,7 @@ shape$cuadrante <- with(shape,
 
 df_counts <- data %>%
   inner_join(shape %>% st_drop_geometry() %>% dplyr::select(Comuna, cuadrante), by = "Comuna") %>%
-  count(rango_edad, cuadrante, medio, name = "n") %>%
+  dplyr::count(rango_edad, cuadrante, medio, name = "n") %>%
   pivot_wider(names_from = medio, values_from = n, values_fill = 0)
 
 cols_pie <- setdiff(names(df_counts), c("rango_edad","cuadrante"))

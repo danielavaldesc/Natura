@@ -36,7 +36,7 @@ continuas <- c(
 
 # --------- Ensamble base categórica ----------
 categoricas <- setdiff(names(input), c(continuas, "id", "medio"))
-df.cat <- input %>% select(any_of(categoricas)) %>% mutate(across(everything(), as.factor))
+df.cat <- input %>% dplyr::select(any_of(categoricas)) %>% mutate(across(everything(), as.factor))
 df.mnl <- cbind(df.cat, input[c("id","medio",continuas)])
 
 # --------- Unificación propósito (p23_agr5) ----------
