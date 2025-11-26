@@ -1,10 +1,30 @@
 ---
 title: 'Anexo: Análisis de Correspondencia Múltiple (MCA)'
-author: "Proyecto Natura - Pontificia Universidad Javeriana Cali"
-date: '2025-11-07'
+date: '2025-11-26'
 output:
-  pdf_document: default
-  word_document: default
+  pdf_document:
+    citation_package: natbib
+fontsize: 12pt
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{caption}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+- \usepackage{amsmath}
+- \usepackage{amssymb}
+- \usepackage{natbib}
+- \setcitestyle{authoryear,open={(},close={)}}
 ---
 
 ```{r setup, include=FALSE,echo=FALSE}
@@ -90,7 +110,7 @@ kbl(
 
 # Representación y contribución de las variables
 
-Las Figuras 2 y 3 presentan la representación bidimensional de las variables originales y el grado de asociación de cada una con la Dimensión 1 y 2 del ACM para las ciudades de Cali y Medellín. En ambas ciudades se muestran únicamente las veinte variables con mayor contribución, según su participación en la inercia total.
+Las **Figuras 2** y **3** presentan la representación bidimensional de las variables originales y el grado de asociación de cada una con la Dimensión 1 y 2 del ACM para las ciudades de Cali y Medellín. En ambas ciudades se muestran únicamente las veinte variables con mayor contribución, según su participación en la inercia total.
 
 \begin{figure}[ht]
   \centering
@@ -161,7 +181,7 @@ La Figura 3 muestra la representación de los individuos en un espacio de dos di
   \end{minipage}
 \end{figure}
 
-A diferencia de Cali, en Medellín las elipses presentan una mayor superposición, lo que sugiere perfiles de movilidad más homogéneos entre los usuarios de distintos modos, especialmente entre quienes utilizan transporte público, taxi/plataforma y modo activo (caminar o bicicleta). Se observan, no obstante, algunos contrastes: los usuarios de auto privado se agrupan hacia el cuadrante derecho, mientras que quienes usan moto privada se concentran en la zona inferior. Los individuos vinculados al transporte público y taxi/plataforma tienden a ocupar el centro del plano, lo cual indica un perfil intermedio. El gráfico sugiere que en Medellín las diferencias entre grupos modales no son tan pronunciadas como en Cali, aunque se mantiene un gradiente estructural a lo largo de la dimensión 1, relacionado con autonomía y capacidad de elección modal, y un eje 2 que parece capturar la diversidad de experiencias y percepciones dentro de cada grupo de transporte. 
+A diferencia de Cali, en Medellín las elipses presentan una mayor superposición, lo que sugiere perfiles de movilidad más homogéneos entre los usuarios de distintos modos, especialmente entre quienes utilizan transporte público, taxi/plataforma y modo activo (caminar o bicicleta). Se observan, no obstante, algunos contrastes: los usuarios de auto privado se agrupan hacia el cuadrante derecho, mientras que quienes usan moto privada se concentran en la zona inferior. Los individuos vinculados al transporte público y taxi/plataforma tienden a ocupar el centro del plano, lo cual indica un perfil intermedio. El gráfico sugiere que en Medellín las diferencias entre grupos modales no son tan pronunciadas como en Cali, aunque se mantiene un gradiente estructural a lo largo de la Dimensión 1, relacionado con autonomía y capacidad de elección modal, y un eje 2 que parece capturar la diversidad de experiencias y percepciones dentro de cada grupo de transporte. 
 
 \begin{figure}[ht]
   \centering
@@ -176,4 +196,14 @@ A diferencia de Cali, en Medellín las elipses presentan una mayor superposició
     \caption*{Figura 4b. Medellín: Representación de los individuos (Dimensiones 1 - 3)}
   \end{minipage}
 \end{figure}
+
+
+\clearpage
+
+---
+
+
+
+> **Documento elaborado por la Pontificia Universidad Javeriana Cali**  
+> Convenio 0839-25: “Estudio de caso comparativo entre dos ciudades de Colombia en el que se identifique la influencia que tienen las relaciones de género, desde una mirada interseccional, en los motivos de viaje y en el uso de los diferentes modos de transporte terrestre urbano (Categoría INGEI 1A3B), contrastando la movilidad por combustión con la movilidad activa y brindar recomendaciones sobre la incorporación del enfoque de género en el inventario nacional de GEI en Colombia”
 
