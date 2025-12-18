@@ -1,0 +1,212 @@
+---
+title: "Indicador 2. Presión económica de la movilidad"
+author: "Equipo de análisis – FPE"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r set knitr options, echo = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r setup, echo = FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(scales)
+```
+
+```{r, echo = FALSE}
+base_dir <- "C:/Users/danie/OneDrive/Escritorio/Natura/FPE"
+
+input_dir <- file.path(base_dir, "Input")
+output_dir <- file.path(base_dir, "Indicador 2/Cali")
+
+dir.create(output_dir, showWarnings = FALSE)
+
+```
+
+
+# 1. Introducción
+
+Este indicador mide la presión económica de la movilidad, entendida como la carga monetaria que representa el transporte cotidiano para las personas.
+Desde la Ecología Política Feminista (FPE), el costo del transporte no es un factor neutral, sino un mecanismo de inclusión o exclusión, mediado por la economía política urbana (Sundberg, 2017; Resurrección, 2017).
+
+# 2. Base de datos
+
+```{r}
+dataset <- readxl::read_excel(
+  file.path(input_dir, "BD Base Movilidad Cali 2025_V01_Cliente.xlsx")
+)
+
+head(dataset, 10)
+```
+
+
+# 3. Preparación de variables
+
+## 3.1 Género
+```{r, echo = FALSE}
+dataset <- dataset %>%
+mutate(
+genero_agregado = case_when(
+p40 == "Hombre" ~ "Hombre",
+p40 == "Mujer" ~ "Mujer",
+p40 %in% c("Otras identidades de género", "Prefiere no responder") ~ "Otros / No responde",
+TRUE ~ NA_character_
+)
+)
+
+```
+
+
+## 3.2 Estrato socioeconómico
+```{r, echo = FALSE}
+dataset <- dataset %>%
+mutate(
+p9_estrato3 = case_when(
+p9Estrato %in% c("Estrato 1", "Estrato 2") ~ "Bajo",
+p9Estrato %in% c("Estrato 3", "Estrato 4") ~ "Medio",
+p9Estrato %in% c("Estrato 5", "Estrato 6") ~ "Alto",
+TRUE ~ NA_character_
+)
+)
+```
+
+## 3.3 Gasto en transporte
+
+```{r, echo=FALSE}
+niveles_p10 <- c(
+  "Menos de 100 mil pesos",
+  "Entre 100 y 300 mil pesos",
+  "Entre 300 mil y 500 mil pesos",
+  "Más de 500 mil pesos"
+)
+
+dataset <- dataset %>%
+  mutate(
+    p10_limpio = na_if(p10, "No sabe/no responde"),
+    p10_ordinal = factor(p10_limpio, levels = niveles_p10, ordered = TRUE)
+  )
+```
+
+# 4. Construcción del indicador
+
+## 4.1 Distribución general del gasto (P10)
+```{r, echo=FALSE}
+tabla_gasto <- dataset %>%
+  filter(!is.na(p10_ordinal)) %>%
+  count(p10_ordinal) %>%
+  mutate(porcentaje = n / sum(n))
+
+tabla_gasto
+```
+
+
+```{r, echo=FALSE}
+ggplot(tabla_gasto, aes(x = p10_ordinal, y = porcentaje)) +
+  geom_col() +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    x = "Gasto mensual en transporte",
+    y = "Porcentaje",
+    title = "Distribución del gasto mensual en transporte"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1))
+```
+
+Los resultados muestran que la gran mayoría de las personas encuestadas reporta un gasto mensual en transporte inferior a 300 mil pesos, concentrándose principalmente en los rangos de menos de 100 mil pesos y entre 100 y 300 mil pesos. Esta distribución sugiere que la movilidad cotidiana en Cali se sostiene mayoritariamente en estrategias de bajo costo.
+
+Desde la Ecología Política Feminista, este patrón no debe interpretarse como una preferencia individual por modos de transporte más económicos, sino como una expresión de restricciones estructurales. Siguiendo a Sundberg (2017), el acceso a los recursos —en este caso, a la movilidad urbana— está mediado por la economía política y por la distribución desigual de recursos materiales. El bajo gasto promedio indica que amplios sectores de la población organizan su movilidad bajo condiciones de escasez, donde el margen de elección es limitado.
+
+## 4.2 Presión económica por estrato 
+```{r}
+tabla_estrato <- dataset %>%
+  filter(!is.na(p10_ordinal), !is.na(p9_estrato3)) %>%
+  count(p9_estrato3, p10_ordinal) %>%
+  group_by(p9_estrato3) %>%
+  mutate(porcentaje = n / sum(n)) %>%
+  ungroup()
+
+tabla_estrato
+```
+
+
+```{r}
+ggplot(tabla_estrato, aes(x = p9_estrato3, y = porcentaje, fill = p10_ordinal)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    x = "Estrato socioeconómico",
+    y = "Distribución porcentual",
+    fill = "Gasto",
+    title = "Distribución del gasto en transporte por estrato"
+  ) +
+  theme_minimal()
+```
+
+Al desagregar el gasto en transporte por estrato socioeconómico, se observan diferencias claras en la distribución ordinal del gasto. En los estratos bajos, la mayor proporción de personas se concentra en el rango de menos de 100 mil pesos, mientras que la presencia en rangos de gasto más altos es marginal. Este patrón sugiere que el costo del transporte opera como una restricción significativa para estos grupos.
+
+Desde la FPE, este resultado evidencia que el gasto en movilidad no tiene el mismo significado para todos los estratos. En los estratos bajos, el bajo gasto refleja una movilidad condicionada por la capacidad económica, donde el costo del transporte puede limitar el acceso efectivo a oportunidades urbanas como el trabajo, la educación o la salud. En contraste, en los estratos altos se observa una mayor presencia en rangos de gasto superiores, lo que sugiere una mayor capacidad de absorber el costo de la movilidad sin que este funcione como una barrera estructural (Resurrección, 2017).
+
+### 4.3 Presión económica por género
+
+```{r}
+tabla_genero <- dataset %>%
+  filter(!is.na(p10_ordinal), !is.na(genero_agregado)) %>%
+  count(genero_agregado, p10_ordinal) %>%
+  group_by(genero_agregado) %>%
+  mutate(porcentaje = n / sum(n)) %>%
+  ungroup()
+
+tabla_genero
+```
+
+```{r}
+ggplot(tabla_genero, aes(x = genero_agregado, y = porcentaje, fill = p10_ordinal)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    x = "Género",
+    y = "Distribución porcentual",
+    fill = "Gasto",
+    title = "Distribución del gasto en transporte por género"
+  ) +
+  theme_minimal()
+```
+
+El análisis por género muestra que hombres y mujeres presentan distribuciones similares del gasto mensual en transporte. A primera vista, este resultado podría interpretarse como una ausencia de desigualdad de género en términos de gasto monetario. Sin embargo, desde una perspectiva de Ecología Política Feminista, esta lectura sería incompleta.
+
+La FPE plantea que el género no siempre se manifiesta como una diferencia directa en el monto gastado, sino en la forma en que esa presión económica se experimenta y se gestiona en la vida cotidiana. Aunque hombres y mujeres gasten montos similares, ello no implica que enfrenten las mismas condiciones de movilidad, ya que las mujeres suelen combinar desplazamientos productivos con trayectos asociados al cuidado, el acompañamiento y otras responsabilidades cotidianas. Por tanto, el gasto monetario debe leerse como una dimensión parcial de la desigualdad de género en la movilidad.
+
+## 4.4 Cruce estrato x género
+
+```{r}
+tabla_estrato_genero <- dataset %>%
+  filter(!is.na(p10_ordinal), !is.na(p9_estrato3), !is.na(genero_agregado)) %>%
+  count(p9_estrato3, genero_agregado, p10_ordinal) %>%
+  group_by(p9_estrato3, genero_agregado) %>%
+  mutate(porcentaje = n / sum(n)) %>%
+  ungroup()
+
+tabla_estrato_genero
+```
+
+```{r}
+ggplot(tabla_estrato_genero,
+       aes(x = p9_estrato3, y = porcentaje, fill = p10_ordinal)) +
+  geom_col(position = "fill") +
+  facet_wrap(~ genero_agregado) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    x = "Estrato socioeconómico",
+    y = "Distribución porcentual",
+    fill = "Gasto mensual en transporte (P10)",
+    title = "Presión económica de la movilidad por estrato y género"
+  ) +
+  theme_minimal()
+```
+
+El cruce entre estrato socioeconómico y género permite profundizar en una lectura interseccional, central para la Ecología Política Feminista. En los estratos bajos, tanto hombres como mujeres concentran su gasto en los rangos más bajos; sin embargo, se observan diferencias sutiles que sugieren una mayor presión económica para las mujeres, coherente con la literatura feminista que señala cargas diferenciadas de cuidado y movilidad fragmentada.
+
+En los estratos altos, las diferencias por género tienden a reducirse, lo que refuerza la idea de que el género opera en interacción con la clase social y no de manera aislada. Este hallazgo es consistente con la FPE, que enfatiza que las desigualdades ambientales y urbanas se producen a partir de la combinación de múltiples relaciones de poder, y no de un solo eje explicativo.
