@@ -1,15 +1,15 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.11.8)  9 NOV 2025 02:31
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.11.26)  26 NOV 2025 12:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **working_paper_fa.tex
 (./working_paper_fa.tex
 LaTeX2e <2025-11-01>
-L3 programming layer <2025-10-24>
+L3 programming layer <2025-11-14>
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
-(c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/size10.clo
-File: size10.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
+(c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/size12.clo
+File: size12.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
 )
 \c@part=\count275
 \c@section=\count276
@@ -315,29 +315,46 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \@thisruleclass=\count313
 \@lastruleclass=\count314
 \@thisrulewidth=\dimen184
+) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/caption/caption.sty
+Package: caption 2023/08/05 v3.6o Customizing captions (AR)
+(c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/caption/caption3.sty
+Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
+\caption@tempdima=\dimen185
+\captionmargin=\dimen186
+\caption@leftmargin=\dimen187
+\caption@rightmargin=\dimen188
+\caption@width=\dimen189
+\caption@indent=\dimen190
+\caption@parindent=\dimen191
+\caption@hangindent=\dimen192
+Package caption Info: Standard document class detected.
+)
+\c@caption@flags=\count315
+\c@continuedfloat=\count316
+Package caption Info: hyperref package is loaded.
 ) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/tools/longtable.sty
 Package: longtable 2025-10-13 v4.24 Multi-page Table package (DPC)
 \LTleft=\skip55
 \LTright=\skip56
 \LTpre=\skip57
 \LTpost=\skip58
-\LTchunksize=\count315
-\LTcapwidth=\dimen185
+\LTchunksize=\count317
+\LTcapwidth=\dimen193
 \LT@head=\box55
 \LT@firsthead=\box56
 \LT@foot=\box57
 \LT@lastfoot=\box58
 \LT@gbox=\box59
-\LT@cols=\count316
-\LT@rows=\count317
-\c@LT@tables=\count318
-\c@LT@chunks=\count319
+\LT@cols=\count318
+\LT@rows=\count319
+\c@LT@tables=\count320
+\c@LT@chunks=\count321
 \LT@p@ftn=\toks26
 ) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/tools/array.sty
 Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
-\col@sep=\dimen186
+\col@sep=\dimen194
 \ar@mcellbox=\box60
-\extrarowheight=\dimen187
+\extrarowheight=\dimen195
 \NC@list=\toks27
 \extratabsurround=\skip59
 \backup@length=\skip60
@@ -345,19 +362,19 @@ Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
 ) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/multirow/multirow.sty
 Package: multirow 2024/11/12 v2.9 Span multiple rows of a table
 \multirow@colwidth=\skip61
-\multirow@cntb=\count320
+\multirow@cntb=\count322
 \multirow@dima=\skip62
-\bigstrutjot=\dimen188
+\bigstrutjot=\dimen196
 ) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/wrapfig/wrapfig.sty
-\wrapoverhang=\dimen189
-\WF@size=\dimen190
-\c@WF@wrappedlines=\count321
+\wrapoverhang=\dimen197
+\WF@size=\dimen198
+\c@WF@wrappedlines=\count323
 \WF@box=\box62
 \WF@everypar=\toks28
 Package: wrapfig 2003/01/31  v 3.6
 ) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/float/float.sty
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
-\c@float@type=\count322
+\c@float@type=\count324
 \float@exts=\toks29
 \float@box=\box63
 \@float@everytoks=\toks30
@@ -366,7 +383,7 @@ Package: float 2001/11/08 v1.3d Float enhancements (AL)
 Package: colortbl 2024/10/29 v1.0k Color table columns (DPC)
 \everycr=\toks31
 \minrowclearance=\skip63
-\rownum=\count323
+\rownum=\count325
 ) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/pdflscape/pdflscape.sty
 Package: pdflscape 2025-06-23 v0.14 Display of landscape pages in PDF
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/pdflscape/pdflscape-nometadata.sty
@@ -380,26 +397,26 @@ Package: tabu 2019/01/11 v2.9 - flexible LaTeX tabulars (FC+tabu-fixed)
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/varwidth/varwidth.sty
 Package: varwidth 2009/03/30 ver 0.92;  Variable-width minipages
 \@vwid@box=\box65
-\sift@deathcycles=\count324
-\@vwid@loff=\dimen191
-\@vwid@roff=\dimen192
+\sift@deathcycles=\count326
+\@vwid@loff=\dimen199
+\@vwid@roff=\dimen256
 )
 ==> First Aid for varwidth.sty applied!
-\c@taburow=\count325
-\tabu@nbcols=\count326
-\tabu@cnt=\count327
-\tabu@Xcol=\count328
-\tabu@alloc=\count329
-\tabu@nested=\count330
-\tabu@target=\dimen193
-\tabu@spreadtarget=\dimen194
-\tabu@naturalX=\dimen195
-\tabucolX=\dimen196
-\tabu@Xsum=\dimen197
-\extrarowdepth=\dimen198
-\abovetabulinesep=\dimen199
-\belowtabulinesep=\dimen256
-\tabustrutrule=\dimen257
+\c@taburow=\count327
+\tabu@nbcols=\count328
+\tabu@cnt=\count329
+\tabu@Xcol=\count330
+\tabu@alloc=\count331
+\tabu@nested=\count332
+\tabu@target=\dimen257
+\tabu@spreadtarget=\dimen258
+\tabu@naturalX=\dimen259
+\tabucolX=\dimen260
+\tabu@Xsum=\dimen261
+\extrarowdepth=\dimen262
+\abovetabulinesep=\dimen263
+\belowtabulinesep=\dimen264
+\tabustrutrule=\dimen265
 \tabu@thebody=\toks32
 \tabu@footnotes=\toks33
 \tabu@box=\box66
@@ -423,20 +440,26 @@ Package: trimspaces 2009/09/17 v1.1 Trim spaces around a token list
 \UL@hyphenbox=\box72
 \UL@skip=\skip66
 \UL@hook=\toks34
-\UL@height=\dimen258
-\UL@pe=\count331
-\UL@pixel=\dimen259
+\UL@height=\dimen266
+\UL@pe=\count333
+\UL@pixel=\dimen267
 \ULC@box=\box73
 Package: ulem 2019/11/18
-\ULdepth=\dimen260
+\ULdepth=\dimen268
 ) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/makecell/makecell.sty
 Package: makecell 2009/08/03 V0.1e Managing of Tab Column Heads and Cells
-\rotheadsize=\dimen261
-\c@nlinenum=\count332
+\rotheadsize=\dimen269
+\c@nlinenum=\count334
 \TeXr@lab=\toks35
+) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/natbib/natbib.sty
+Package: natbib 2010/09/13 8.31b (PWD, AO)
+\bibhang=\skip67
+\bibsep=\skip68
+LaTeX Info: Redefining \cite on input line 694.
+\c@NAT@ctr=\count335
 ) (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count333
+\l__color_backend_stack_int=\count336
 ) (./working_paper_fa.aux
 
 LaTeX Warning: Label `tab:unnamed-chunk-1' multiply defined.
@@ -444,31 +467,31 @@ LaTeX Warning: Label `tab:unnamed-chunk-1' multiply defined.
 )
 \openout1 = `working_paper_fa.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 84.
-LaTeX Font Info:    ... okay on input line 84.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 84.
-LaTeX Font Info:    ... okay on input line 84.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 84.
-LaTeX Font Info:    ... okay on input line 84.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 84.
-LaTeX Font Info:    ... okay on input line 84.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 84.
-LaTeX Font Info:    ... okay on input line 84.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 84.
-LaTeX Font Info:    ... okay on input line 84.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 84.
-LaTeX Font Info:    ... okay on input line 84.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 84.
-LaTeX Font Info:    ... okay on input line 84.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 84.
-LaTeX Font Info:    ... okay on input line 84.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
-Package hyperref Info: Link coloring OFF on input line 84.
+Package hyperref Info: Link coloring OFF on input line 105.
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -488,12 +511,12 @@ Package hyperref Info: Link coloring OFF on input line 84.
 * \topmargin=-37.0pt
 * \headheight=12.0pt
 * \headsep=25.0pt
-* \topskip=10.0pt
+* \topskip=12.0pt
 * \footskip=30.0pt
-* \marginparwidth=65.0pt
-* \marginparsep=11.0pt
+* \marginparwidth=44.0pt
+* \marginparsep=10.0pt
 * \columnsep=10.0pt
-* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
+* \skip\footins=10.8pt plus 4.0pt minus 2.0pt
 * \hoffset=0.0pt
 * \voffset=0.0pt
 * \mag=1000
@@ -503,205 +526,147 @@ Package hyperref Info: Link coloring OFF on input line 84.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 86.
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: float package is loaded.
+Package caption Info: longtable package is loaded.
+(c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/caption/ltcaption.sty
+Package: ltcaption 2021/01/08 v1.4c longtable captions (AR)
+)
+Package caption Info: threeparttable package is loaded.
+Package caption Info: wrapfig package is loaded.
+Package caption Info: End \AtBeginDocument code.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 107.
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 86.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 107.
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 86.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 107.
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 86.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 107.
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 86.
+(Font)              <14.4> on input line 107.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 86.
+(Font)              <10> on input line 107.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 86.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 86.
+(Font)              <7> on input line 107.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 107.
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 86.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 107.
 (c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-<figures_wp/cali/varianza_mca.png, id=4, 867.24pt x 867.24pt>
-File: figures_wp/cali/varianza_mca.png Graphic file (type png)
-<use figures_wp/cali/varianza_mca.png>
-Package pdftex.def Info: figures_wp/cali/varianza_mca.png  used on input line 153.
-(pdftex.def)             Requested size: 225.47708pt x 225.47708pt.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 155.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 155.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 155.
-<figures_wp/medellin/varianza_mca.png, id=5, 867.24pt x 867.24pt>
-File: figures_wp/medellin/varianza_mca.png Graphic file (type png)
-<use figures_wp/medellin/varianza_mca.png>
-Package pdftex.def Info: figures_wp/medellin/varianza_mca.png  used on input line 158.
-(pdftex.def)             Requested size: 225.47708pt x 225.47708pt.
-[1
+) [1
 
 {c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}]
+<figures_wp/cali/varianza_mca.png, id=16, 867.24pt x 867.24pt>
+File: figures_wp/cali/varianza_mca.png Graphic file (type png)
+<use figures_wp/cali/varianza_mca.png>
+Package pdftex.def Info: figures_wp/cali/varianza_mca.png  used on input line 174.
+(pdftex.def)             Requested size: 225.47708pt x 225.47708pt.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <12> on input line 176.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <8> on input line 176.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <6> on input line 176.
+<figures_wp/medellin/varianza_mca.png, id=17, 867.24pt x 867.24pt>
+File: figures_wp/medellin/varianza_mca.png Graphic file (type png)
+<use figures_wp/medellin/varianza_mca.png>
+Package pdftex.def Info: figures_wp/medellin/varianza_mca.png  used on input line 179.
+(pdftex.def)             Requested size: 225.47708pt x 225.47708pt.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 239.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<figures_wp/cali/mca_cor.png, id=20, 614.295pt x 505.89pt>
+<figures_wp/cali/mca_cor.png, id=18, 614.295pt x 505.89pt>
 File: figures_wp/cali/mca_cor.png Graphic file (type png)
 <use figures_wp/cali/mca_cor.png>
-Package pdftex.def Info: figures_wp/cali/mca_cor.png  used on input line 282.
+Package pdftex.def Info: figures_wp/cali/mca_cor.png  used on input line 303.
 (pdftex.def)             Requested size: 225.47652pt x 185.68654pt.
-<figures_wp/medellin/mca_cor.png, id=21, 614.295pt x 505.89pt>
+<figures_wp/medellin/mca_cor.png, id=19, 614.295pt x 505.89pt>
 File: figures_wp/medellin/mca_cor.png Graphic file (type png)
 <use figures_wp/medellin/mca_cor.png>
-Package pdftex.def Info: figures_wp/medellin/mca_cor.png  used on input line 287.
+Package pdftex.def Info: figures_wp/medellin/mca_cor.png  used on input line 308.
 (pdftex.def)             Requested size: 225.47652pt x 185.68654pt.
-<figures_wp/cali/mca_var.png, id=22, 578.16pt x 578.16pt>
+[2 <./figures_wp/cali/varianza_mca.png> <./figures_wp/medellin/varianza_mca.png>]
+<figures_wp/cali/mca_var.png, id=27, 578.16pt x 578.16pt>
 File: figures_wp/cali/mca_var.png Graphic file (type png)
 <use figures_wp/cali/mca_var.png>
-Package pdftex.def Info: figures_wp/cali/mca_var.png  used on input line 307.
+Package pdftex.def Info: figures_wp/cali/mca_var.png  used on input line 328.
 (pdftex.def)             Requested size: 225.47267pt x 225.47267pt.
-<figures_wp/medellin/mca_var.png, id=23, 578.16pt x 578.16pt>
+<figures_wp/medellin/mca_var.png, id=28, 578.16pt x 578.16pt>
 File: figures_wp/medellin/mca_var.png Graphic file (type png)
 <use figures_wp/medellin/mca_var.png>
-Package pdftex.def Info: figures_wp/medellin/mca_var.png  used on input line 312.
+Package pdftex.def Info: figures_wp/medellin/mca_var.png  used on input line 333.
 (pdftex.def)             Requested size: 225.47267pt x 225.47267pt.
-<figures_wp/cali/mca_contrib_panel.png, id=24, 867.24pt x 1011.78pt>
+<figures_wp/cali/mca_contrib_panel.png, id=29, 867.24pt x 1011.78pt>
 File: figures_wp/cali/mca_contrib_panel.png Graphic file (type png)
 <use figures_wp/cali/mca_contrib_panel.png>
-Package pdftex.def Info: figures_wp/cali/mca_contrib_panel.png  used on input line 334.
+Package pdftex.def Info: figures_wp/cali/mca_contrib_panel.png  used on input line 355.
 (pdftex.def)             Requested size: 225.47708pt x 263.0566pt.
-<figures_wp/medellin/mca_contrib_panel.png, id=25, 867.24pt x 1011.78pt>
+<figures_wp/medellin/mca_contrib_panel.png, id=30, 867.24pt x 1011.78pt>
 File: figures_wp/medellin/mca_contrib_panel.png Graphic file (type png)
 <use figures_wp/medellin/mca_contrib_panel.png>
-Package pdftex.def Info: figures_wp/medellin/mca_contrib_panel.png  used on input line 339.
+Package pdftex.def Info: figures_wp/medellin/mca_contrib_panel.png  used on input line 360.
 (pdftex.def)             Requested size: 225.47708pt x 263.0566pt.
-[2
-pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.355 
-      
-pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.355 
-       <./figures_wp/cali/varianza_mca.png> <./figures_wp/medellin/varianza_mca.png>]
-<figures_wp/cali/mca_ind_medio.png, id=34, 578.16pt x 433.62pt>
+[3] [4]
+<figures_wp/cali/mca_ind_medio.png, id=43, 578.16pt x 433.62pt>
 File: figures_wp/cali/mca_ind_medio.png Graphic file (type png)
 <use figures_wp/cali/mca_ind_medio.png>
-Package pdftex.def Info: figures_wp/cali/mca_ind_medio.png  used on input line 387.
+Package pdftex.def Info: figures_wp/cali/mca_ind_medio.png  used on input line 408.
 (pdftex.def)             Requested size: 225.47267pt x 169.10449pt.
-<figures_wp/medellin/mca_ind_medio.png, id=35, 578.16pt x 433.62pt>
+<figures_wp/medellin/mca_ind_medio.png, id=44, 578.16pt x 433.62pt>
 File: figures_wp/medellin/mca_ind_medio.png Graphic file (type png)
 <use figures_wp/medellin/mca_ind_medio.png>
-Package pdftex.def Info: figures_wp/medellin/mca_ind_medio.png  used on input line 392.
+Package pdftex.def Info: figures_wp/medellin/mca_ind_medio.png  used on input line 413.
 (pdftex.def)             Requested size: 225.47267pt x 169.10449pt.
-[3
-pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.395 \end{figure}
-                  ]
-<figures_wp/cali/mca_ind_medio_3d.png, id=44, 1405.25pt x 1003.75pt>
+<figures_wp/cali/mca_ind_medio_3d.png, id=45, 1405.25pt x 1003.75pt>
 File: figures_wp/cali/mca_ind_medio_3d.png Graphic file (type png)
 <use figures_wp/cali/mca_ind_medio_3d.png>
-Package pdftex.def Info: figures_wp/cali/mca_ind_medio_3d.png  used on input line 416.
+Package pdftex.def Info: figures_wp/cali/mca_ind_medio_3d.png  used on input line 437.
 (pdftex.def)             Requested size: 375.79881pt x 268.42772pt.
-<figures_wp/medellin/mca_ind_medio_3d.png, id=45, 1405.25pt x 1003.75pt>
+<figures_wp/medellin/mca_ind_medio_3d.png, id=46, 1405.25pt x 1003.75pt>
 File: figures_wp/medellin/mca_ind_medio_3d.png Graphic file (type png)
 <use figures_wp/medellin/mca_ind_medio_3d.png>
-Package pdftex.def Info: figures_wp/medellin/mca_ind_medio_3d.png  used on input line 421.
+Package pdftex.def Info: figures_wp/medellin/mca_ind_medio_3d.png  used on input line 442.
 (pdftex.def)             Requested size: 375.79881pt x 268.42772pt.
-[4
-pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                    ] [5
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                    
-pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                    
-pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                    
-pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                     <./figures_wp/cali/mca_cor.png> <./figures_wp/medellin/mca_cor.png> <./figures_wp/cali/mca_var.png> <./figures_wp/medellin/mca_var.png>] [6
-pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                    
-pdfTeX warning (ext4): destination with the same identifier (name{figure.8}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                    
-pdfTeX warning (ext4): destination with the same identifier (name{figure.9}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                    
-pdfTeX warning (ext4): destination with the same identifier (name{figure.10}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                     <./figures_wp/cali/mca_contrib_panel.png> <./figures_wp/medellin/mca_contrib_panel.png> <./figures_wp/cali/mca_ind_medio.png> <./figures_wp/medellin/mca_ind_medio.png>] [7
-pdfTeX warning (ext4): destination with the same identifier (name{figure.11}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                    
-pdfTeX warning (ext4): destination with the same identifier (name{figure.12}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.426 \end{document}
-                     <./figures_wp/cali/mca_ind_medio_3d.png (PNG copy)> <./figures_wp/medellin/mca_ind_medio_3d.png (PNG copy)>] (./working_paper_fa.aux)
+[5 <./figures_wp/cali/mca_cor.png> <./figures_wp/medellin/mca_cor.png>] [6 <./figures_wp/cali/mca_var.png> <./figures_wp/medellin/mca_var.png> <./figures_wp/cali/mca_contrib_panel.png> <./figures_wp/medellin/mca_contrib_panel.png>] [7 <./figures_wp/cali/mca_ind_medio.png> <./figures_wp/medellin/mca_ind_medio.png>] [8 <./figures_wp/cali/mca_ind_medio_3d.png (PNG copy)> <./figures_wp/medellin/mca_ind_medio_3d.png (PNG copy)>] [9
+
+] (./working_paper_fa.aux)
  ***********
 LaTeX2e <2025-11-01>
-L3 programming layer <2025-10-24>
+L3 programming layer <2025-11-14>
  ***********
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 12818 strings out of 469518
- 201724 string characters out of 5467959
- 642864 words of memory out of 5000000
- 41218 multiletter control sequences out of 15000+600000
- 673106 words of font info for 79 fonts, out of 8000000 for 9000
+ 14486 strings out of 469518
+ 232408 string characters out of 5467958
+ 669771 words of memory out of 5000000
+ 42879 multiletter control sequences out of 15000+600000
+ 677449 words of font info for 85 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 89i,10n,93p,634b,479s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb>
-Output written on working_paper_fa.pdf (7 pages, 3985765 bytes).
+ 89i,10n,93p,634b,452s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/Portatil/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb>
+Output written on working_paper_fa.pdf (9 pages, 3938068 bytes).
 PDF statistics:
- 122 PDF objects out of 1000 (max. 8388607)
- 88 compressed objects within 1 object stream
- 30 named destinations out of 1000 (max. 500000)
+ 114 PDF objects out of 1000 (max. 8388607)
+ 82 compressed objects within 1 object stream
+ 26 named destinations out of 1000 (max. 500000)
  93 words of extra memory for PDF output out of 10000 (max. 10000000)
 
