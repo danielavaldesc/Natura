@@ -1,6 +1,6 @@
 ---
 title: "Indicador 2. Presión económica de la movilidad"
-author: "Cali – FPE"
+author: "Medellín – FPE"
 date: "`r Sys.Date()`"
 output:
   pdf_document: default
@@ -19,7 +19,7 @@ library(scales)
 base_dir <- "C:/Users/danie/OneDrive/Escritorio/Natura/FPE"
 
 input_dir <- file.path(base_dir, "Input")
-output_dir <- file.path(base_dir, "Indicador 2/Cali")
+output_dir <- file.path(base_dir, "Indicador 2/Medellin")
 
 dir.create(output_dir, showWarnings = FALSE)
 
@@ -115,9 +115,9 @@ ggplot(tabla_gasto, aes(x = p10_ordinal, y = porcentaje)) +
   theme(axis.text.x = element_text(angle = 25, hjust = 1))
 ```
 
-Los resultados muestran que la gran mayoría de las personas encuestadas reporta un gasto mensual en transporte inferior a 300 mil pesos, concentrándose principalmente en los rangos de menos de 100 mil pesos y entre 100 y 300 mil pesos. Esta distribución sugiere que la movilidad cotidiana en Cali se sostiene mayoritariamente en estrategias de bajo costo.
+Los resultados para Medellín muestran que el gasto mensual en transporte se concentra mayoritariamente en los rangos más bajos. Aproximadamente el 85\% de las personas encuestadas reporta un gasto inferior a 300 mil pesos mensuales, distribuyéndose principalmente entre menos de 100 mil pesos (40,8\%) y entre 100 y 300 mil pesos (44,1 \%). Los rangos de gasto superiores a 300 mil pesos representan una proporción minoritaria de la población.
 
-Desde la Ecología Política Feminista, este patrón no debe interpretarse como una preferencia individual por modos de transporte más económicos, sino como una expresión de restricciones estructurales. Siguiendo a Sundberg (2017), el acceso a los recursos —en este caso, a la movilidad urbana— está mediado por la economía política y por la distribución desigual de recursos materiales. El bajo gasto promedio indica que amplios sectores de la población organizan su movilidad bajo condiciones de escasez, donde el margen de elección es limitado.
+Desde la Ecología Política Feminista, esta distribución sugiere que la movilidad cotidiana en Medellín se organiza predominantemente bajo restricciones económicas. El bajo nivel de gasto agregado no debe interpretarse como una preferencia generalizada por opciones de movilidad de bajo costo, sino como una señal de los límites materiales que estructuran el acceso a la ciudad y condicionan las prácticas de desplazamiento (Sundberg, 2017).
 
 ## 4.2 Presión económica por estrato 
 ```{r}
@@ -145,9 +145,9 @@ ggplot(tabla_estrato, aes(x = p9_estrato3, y = porcentaje, fill = p10_ordinal)) 
   theme_minimal()
 ```
 
-Al desagregar el gasto en transporte por estrato socioeconómico, se observan diferencias claras en la distribución ordinal del gasto. En los estratos bajos, la mayor proporción de personas se concentra en el rango de menos de 100 mil pesos, mientras que la presencia en rangos de gasto más altos es marginal. Este patrón sugiere que el costo del transporte opera como una restricción significativa para estos grupos.
+Al analizar el gasto en transporte por estrato socioeconómico, se observan diferencias claras en la forma en que se distribuye la presión económica de la movilidad. En el estrato bajo, casi la mitad de las personas (49,7 \%) se concentra en el rango de menos de 100 mil pesos, y más de un tercio adicional en entre 100 y 300 mil pesos. Esto indica que la movilidad en estos grupos está fuertemente condicionada por la capacidad económica, con una presencia muy limitada en los rangos de gasto más altos.
 
-Desde la FPE, este resultado evidencia que el gasto en movilidad no tiene el mismo significado para todos los estratos. En los estratos bajos, el bajo gasto refleja una movilidad condicionada por la capacidad económica, donde el costo del transporte puede limitar el acceso efectivo a oportunidades urbanas como el trabajo, la educación o la salud. En contraste, en los estratos altos se observa una mayor presencia en rangos de gasto superiores, lo que sugiere una mayor capacidad de absorber el costo de la movilidad sin que este funcione como una barrera estructural (Resurrección, 2017).
+En contraste, en el estrato alto la mayor proporción de personas se ubica en el rango de entre 100 y 300 mil pesos (56,2 \%), y se observa una mayor participación relativa en los rangos de gasto superiores, incluyendo entre 300 y 500 mil pesos y más de 500 mil pesos. Desde la FPE, este patrón sugiere que el costo del transporte no opera de la misma manera para todos los grupos sociales: mientras que en los estratos bajos el gasto actúa como una restricción estructural, en los estratos altos existe una mayor capacidad de absorción del costo, reduciendo su efecto excluyente (Resurrección, 2017).
 
 ### 4.3 Presión económica por género
 
@@ -175,9 +175,9 @@ ggplot(tabla_genero, aes(x = genero_agregado, y = porcentaje, fill = p10_ordinal
   theme_minimal()
 ```
 
-El análisis por género muestra que hombres y mujeres presentan distribuciones similares del gasto mensual en transporte. A primera vista, este resultado podría interpretarse como una ausencia de desigualdad de género en términos de gasto monetario. Sin embargo, desde una perspectiva de Ecología Política Feminista, esta lectura sería incompleta.
+El análisis por género muestra distribuciones muy similares del gasto mensual en transporte entre hombres y mujeres. En ambos grupos, el gasto se concentra mayoritariamente en los rangos inferiores a 300 mil pesos, con proporciones prácticamente equivalentes en menos de 100 mil pesos y entre 100 y 300 mil pesos. Los rangos de gasto más elevados representan una fracción reducida tanto para hombres como para mujeres.
 
-La FPE plantea que el género no siempre se manifiesta como una diferencia directa en el monto gastado, sino en la forma en que esa presión económica se experimenta y se gestiona en la vida cotidiana. Aunque hombres y mujeres gasten montos similares, ello no implica que enfrenten las mismas condiciones de movilidad, ya que las mujeres suelen combinar desplazamientos productivos con trayectos asociados al cuidado, el acompañamiento y otras responsabilidades cotidianas. Por tanto, el gasto monetario debe leerse como una dimensión parcial de la desigualdad de género en la movilidad.
+Desde una perspectiva de Ecología Política Feminista, la similitud en el gasto monetario no debe interpretarse como ausencia de desigualdad de género en la movilidad. La FPE advierte que el género no siempre se expresa en diferencias directas de gasto, sino en la forma en que esa presión económica se articula con otras dimensiones de la vida cotidiana, como la organización del tiempo, las responsabilidades de cuidado y la exposición a riesgos. En este sentido, el indicador muestra que el gasto por sí solo no captura todas las desigualdades de género asociadas a la movilidad.
 
 ## 4.4 Cruce estrato x género
 
@@ -207,6 +207,6 @@ ggplot(tabla_estrato_genero,
   theme_minimal()
 ```
 
-El cruce entre estrato socioeconómico y género permite profundizar en una lectura interseccional, central para la Ecología Política Feminista. En los estratos bajos, tanto hombres como mujeres concentran su gasto en los rangos más bajos; sin embargo, se observan diferencias sutiles que sugieren una mayor presión económica para las mujeres, coherente con la literatura feminista que señala cargas diferenciadas de cuidado y movilidad fragmentada.
+El cruce entre estrato socioeconómico y género permite una lectura interseccional más fina de la presión económica de la movilidad en Medellín. En el estrato bajo, tanto hombres como mujeres concentran su gasto en los rangos más bajos, particularmente en menos de 100 mil pesos, lo que evidencia que las restricciones económicas estructurales afectan a ambos grupos. Sin embargo, se observan ligeras variaciones en la distribución interna que sugieren diferencias en la forma en que la presión económica se experimenta dentro del mismo estrato.
 
-En los estratos altos, las diferencias por género tienden a reducirse, lo que refuerza la idea de que el género opera en interacción con la clase social y no de manera aislada. Este hallazgo es consistente con la FPE, que enfatiza que las desigualdades ambientales y urbanas se producen a partir de la combinación de múltiples relaciones de poder, y no de un solo eje explicativo.
+En el estrato alto, las distribuciones por género son muy similares, con una mayor concentración en entre 100 y 300 mil pesos y una presencia comparable en los rangos superiores. Este patrón refuerza una lectura central de la FPE: el género opera en interacción con la clase social, y sus efectos sobre la movilidad se intensifican o atenúan según la posición socioeconómica. Las desigualdades no responden a un solo eje, sino a la combinación de múltiples relaciones de poder.

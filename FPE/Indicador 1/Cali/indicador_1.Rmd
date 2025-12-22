@@ -1,0 +1,142 @@
+---
+title: "Indicador 1. Carga total de tiempo de movilidad"
+author: "Cali – FPE"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r set knitr options, echo = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r setup, echo = FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(scales)
+```
+
+```{r, echo = FALSE}
+base_dir <- "C:/Users/danie/OneDrive/Escritorio/Natura"
+
+input_dir <- file.path(base_dir, "\\201025_Results_Cali\\output\\input_famd_cali_29102025.xlsx")
+output_dir <- file.path(base_dir, "FPE/Indicador 1/Cali")
+
+dir.create(output_dir, showWarnings = FALSE)
+
+```
+
+
+# 1. Introducción
+
+Este indicador mide la carga total de tiempo de movilidad, entendida como el tiempo total invertido en la movilidad cotidiana.
+
+Preguntas utilizadas: p18, p18.1, p18.2, p18.4.
+Metodología de cálculo: se construye sumando los minutos dedicados a caminar hacia el transporte, el tiempo de espera, el tiempo del trayecto principal y la caminata final hasta el destino. El resultado es el tiempo total invertido en movilidad cotidiana.
+
+Intuición FPE: siguiendo a Sundberg (2017) y Rocheleau (2002), la movilidad se entiende como un recurso cuyo acceso es socialmente diferenciado. Este indicador permite evidenciar brechas de acceso al tiempo urbano entre grupos sociales.
+
+```{r, echo = FALSE}
+dataset <- readxl::read_excel(input_dir)
+
+# Ajuste de género 
+dataset <- dataset %>%
+  mutate(
+    genero_2 = case_when(
+      p40 == "Hombre" ~ "Hombre",
+      p40 == "Mujer"  ~ "Mujer",
+      TRUE            ~ NA_character_
+    )
+  )
+
+# Vista rápida
+glimpse(dataset)
+
+```
+
+# 2. Construcción del indicador
+
+## 2.1 Distribución general del tiempo total (tiempo_total)
+
+```{r, echo = FALSE}
+tabla_tiempo_general <- dataset %>%
+filter(!is.na(tiempo_total)) %>%
+summarise(
+n = n(),
+promedio = mean(tiempo_total),
+mediana = median(tiempo_total),
+p25 = quantile(tiempo_total, 0.25),
+p75 = quantile(tiempo_total, 0.75),
+p90 = quantile(tiempo_total, 0.90)
+)
+
+tabla_tiempo_general
+
+```
+
+```{r, echo = FALSE}
+ggplot(dataset %>% filter(!is.na(tiempo_total)),
+aes(x = tiempo_total)) +
+geom_histogram(bins = 30) +
+labs(
+x = "Tiempo total de movilidad (minutos)",
+y = "Frecuencia",
+title = "Distribución del tiempo total de movilidad"
+) +
+theme_minimal()
+
+```
+
+La distribución del tiempo total de movilidad en Cali muestra una alta dispersión en la carga temporal asociada a los desplazamientos cotidianos. El tiempo promedio de movilidad es de 53,1 minutos, mientras que la mediana se sitúa en 30 minutos, lo que indica una distribución asimétrica, con una proporción significativa de personas que enfrentan tiempos de viaje considerablemente más altos. Los percentiles refuerzan esta lectura: mientras el 25 \% de la población invierte 20 minutos o menos, el 25 \% con mayor carga supera los 69 minutos, y el percentil 90 alcanza los 120 minutos.
+
+Desde la Ecología Política Feminista, este resultado sugiere que el tiempo dedicado a la movilidad no se distribuye de manera homogénea, sino que opera como un recurso urbano diferencialmente accesible. Siguiendo a Sundberg (2017) y Rocheleau (2002), el tiempo de desplazamiento puede entenderse como una dimensión material de la desigualdad urbana: para ciertos grupos sociales, moverse por la ciudad implica una inversión de tiempo sustancialmente mayor, lo que reduce el tiempo disponible para otras actividades fundamentales como el trabajo, el cuidado, el descanso o la participación social.
+
+
+```{r, echo = FALSE}
+ggplot(dataset %>% filter(!is.na(tiempo_total)),
+aes(y = tiempo_total)) +
+geom_boxplot() +
+labs(
+x = "",
+y = "Tiempo total de movilidad (minutos)",
+title = "Resumen (boxplot) del tiempo total de movilidad"
+) +
+theme_minimal()
+```
+
+## 4.2 Carga total de tiempo por género
+
+```{r, echo = FALSE}
+tabla_genero <- dataset %>%
+  filter(!is.na(genero_2), !is.na(tiempo_total)) %>%
+  group_by(genero_2) %>%
+  summarise(
+    n = n(),
+    promedio = mean(tiempo_total, na.rm = TRUE),
+    mediana  = median(tiempo_total, na.rm = TRUE),
+    p25      = quantile(tiempo_total, 0.25, na.rm = TRUE),
+    p75      = quantile(tiempo_total, 0.75, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+tabla_genero
+```
+
+```{r, echo = FALSE}
+ggplot(
+  dataset %>% filter(!is.na(genero_2), !is.na(tiempo_total)),
+  aes(x = genero_2, y = tiempo_total)
+) +
+  geom_boxplot() +
+  labs(
+    x = "Género",
+    y = "Tiempo total de movilidad (minutos)",
+    title = "Tiempo total de movilidad por género (solo Hombre/Mujer)"
+  ) +
+  theme_minimal()
+```
+
+Al desagregar el tiempo total de movilidad por género (considerando únicamente las categorías de hombre y mujer, debido al tamaño muestral) se observan diferencias claras en la carga temporal asociada a la movilidad cotidiana. Las mujeres presentan un tiempo promedio de movilidad de 58,2 minutos, superior al de los hombres, cuyo promedio es de 48,1 minutos. Asimismo, la mediana del tiempo total es mayor para las mujeres (40 minutos) que para los hombres (30 minutos), y el rango intercuartílico muestra una mayor dispersión en el caso femenino.
+
+Desde la Ecología Política Feminista, estas diferencias no deben interpretarse únicamente como una cuestión de trayectos más largos, sino como expresión de una organización socialmente diferenciada de la movilidad. Tal como plantean Sundberg (2017) y Rocheleau (2002), el acceso a los recursos —incluido el tiempo urbano— está mediado por relaciones de poder y por la posición social de las personas. En este sentido, una mayor carga temporal de movilidad para las mujeres puede reflejar desplazamientos más fragmentados, mayores tiempos de espera o combinaciones de trayectos asociados tanto a actividades productivas como reproductivas.
+
+

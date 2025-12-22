@@ -1,0 +1,139 @@
+---
+title: "Indicador 1. Carga total de tiempo de movilidad"
+author: "Medellín – FPE"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r set knitr options, echo = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r setup, echo = FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(scales)
+```
+
+```{r, echo = FALSE}
+base_dir <- "C:/Users/danie/OneDrive/Escritorio/Natura"
+
+input_dir <- file.path(base_dir, "\\271025_Results_Med\\output\\input_famd_med_29102025.xlsx")
+output_dir <- file.path(base_dir, "FPE/Indicador 1/Cali")
+
+dir.create(output_dir, showWarnings = FALSE)
+
+```
+
+
+# 1. Introducción
+
+Este indicador mide la carga total de tiempo de movilidad, entendida como el tiempo total invertido en la movilidad cotidiana.
+
+Preguntas utilizadas: p18, p18.1, p18.2, p18.4.
+Metodología de cálculo: se construye sumando los minutos dedicados a caminar hacia el transporte, el tiempo de espera, el tiempo del trayecto principal y la caminata final hasta el destino. El resultado es el tiempo total invertido en movilidad cotidiana.
+
+Intuición FPE: siguiendo a Sundberg (2017) y Rocheleau (2002), la movilidad se entiende como un recurso cuyo acceso es socialmente diferenciado. Este indicador permite evidenciar brechas de acceso al tiempo urbano entre grupos sociales.
+
+```{r, echo = FALSE}
+dataset <- readxl::read_excel(input_dir)
+
+# Ajuste de género 
+dataset <- dataset %>%
+  mutate(
+    genero_2 = case_when(
+      p40 == "Hombre" ~ "Hombre",
+      p40 == "Mujer"  ~ "Mujer",
+      TRUE            ~ NA_character_
+    )
+  )
+
+# Vista rápida
+glimpse(dataset)
+
+```
+
+# 2. Construcción del indicador
+
+## 2.1 Distribución general del tiempo total (tiempo_total)
+
+```{r, echo = FALSE}
+tabla_tiempo_general <- dataset %>%
+filter(!is.na(tiempo_total)) %>%
+summarise(
+n = n(),
+promedio = mean(tiempo_total),
+mediana = median(tiempo_total),
+p25 = quantile(tiempo_total, 0.25),
+p75 = quantile(tiempo_total, 0.75),
+p90 = quantile(tiempo_total, 0.90)
+)
+
+tabla_tiempo_general
+
+```
+
+```{r, echo = FALSE}
+ggplot(dataset %>% filter(!is.na(tiempo_total)),
+aes(x = tiempo_total)) +
+geom_histogram(bins = 30) +
+labs(
+x = "Tiempo total de movilidad (minutos)",
+y = "Frecuencia",
+title = "Distribución del tiempo total de movilidad"
+) +
+theme_minimal()
+
+```
+
+```{r, echo = FALSE}
+ggplot(dataset %>% filter(!is.na(tiempo_total)),
+aes(y = tiempo_total)) +
+geom_boxplot() +
+labs(
+x = "",
+y = "Tiempo total de movilidad (minutos)",
+title = "Resumen (boxplot) del tiempo total de movilidad"
+) +
+theme_minimal()
+```
+
+La distribución del tiempo total de movilidad en Medellín muestra una carga temporal moderada pero claramente desigual entre la población encuestada. El tiempo promedio de movilidad diaria es de 45,9 minutos, con una mediana de 41 minutos, lo que indica que al menos la mitad de las personas dedica más de cuarenta minutos diarios a desplazarse por la ciudad. Los percentiles refuerzan esta lectura: el 25 % de la población invierte 30 minutos o menos, mientras que el 25 % con mayor carga supera los 60 minutos, y el percentil 90 alcanza los 80 minutos.
+
+Desde la Ecología Política Feminista, estos resultados sugieren que el tiempo de movilidad opera como un recurso urbano distribuido de forma desigual, aunque con una dispersión menos extrema que en otros contextos urbanos. Siguiendo a Sundberg (2017) y Rocheleau (2002), el tiempo invertido en desplazamientos cotidianos debe entenderse como una dimensión material del acceso a la ciudad: para una fracción significativa de la población, moverse implica una inversión temporal que puede limitar la disponibilidad de tiempo para el trabajo, el cuidado, el descanso o la participación social.
+
+## 4.2 Carga total de tiempo por género
+
+```{r, echo = FALSE}
+tabla_genero <- dataset %>%
+  filter(!is.na(genero_2), !is.na(tiempo_total)) %>%
+  group_by(genero_2) %>%
+  summarise(
+    n = n(),
+    promedio = mean(tiempo_total, na.rm = TRUE),
+    mediana  = median(tiempo_total, na.rm = TRUE),
+    p25      = quantile(tiempo_total, 0.25, na.rm = TRUE),
+    p75      = quantile(tiempo_total, 0.75, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+tabla_genero
+```
+
+```{r, echo = FALSE}
+ggplot(
+  dataset %>% filter(!is.na(genero_2), !is.na(tiempo_total)),
+  aes(x = genero_2, y = tiempo_total)
+) +
+  geom_boxplot() +
+  labs(
+    x = "Género",
+    y = "Tiempo total de movilidad (minutos)",
+    title = "Tiempo total de movilidad por género (solo Hombre/Mujer)"
+  ) +
+  theme_minimal()
+```
+
+Al desagregar el tiempo total de movilidad por género, considerando únicamente las categorías de hombre y mujer, se observa que las diferencias son reducidas pero persistentes. Los hombres presentan un tiempo promedio de movilidad de 45,3 minutos, con una mediana de 44 minutos, mientras que las mujeres registran un promedio ligeramente superior de 46,4 minutos, con una mediana de 40,5 minutos. Los rangos intercuartílicos son similares en ambos casos, con valores entre 25–60 minutos para hombres y 30–60 minutos para mujeres.
+
+Desde una perspectiva de Ecología Política Feminista, esta relativa cercanía en los valores promedio no debe interpretarse como ausencia de desigualdad de género. Tal como plantea la FPE, el género no siempre se expresa en brechas cuantitativas amplias, sino en formas diferenciadas de experimentar y organizar la movilidad cotidiana. En este sentido, aunque hombres y mujeres en Medellín dediquen tiempos similares a desplazarse, ello no implica que enfrenten las mismas condiciones de movilidad ni que el tiempo invertido tenga el mismo significado en sus rutinas diarias.
