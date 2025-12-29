@@ -18,7 +18,7 @@ library(scales)
 ```{r, echo = FALSE}
 base_dir <- "C:/Users/danie/OneDrive/Escritorio/Natura"
 
-input_dir <- file.path(base_dir, "\\201025_Results_Cali\\output\\input_famd_cali_29102025.xlsx")
+input_dir <- file.path(base_dir, "201025_Results_Cali/output/clean_cali_dataset_21102025.xlsx")
 output_dir <- file.path(base_dir, "FPE/Indicador 4/Cali")
 
 dir.create(output_dir, showWarnings = FALSE)
