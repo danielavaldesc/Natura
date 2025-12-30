@@ -5,44 +5,37 @@
 library(readxl)
 library(ggplot2)
 library(dplyr)
-library(reshape2)
-library(ggpubr)
-library(plyr)
-library(rlang)
-library(knitr)
-library(haven)
-library(foreign)
-library(stringi)
-library(labelled)
+library(stringr)
+library(forcats)
 library(tidyr)
-library(treemapify)
-library(viridis)
-library(kableExtra)
 library(sf)
-library(RColorBrewer)
-library(memisc)
-library(assertthat)
-library(sqldf)
-library(magrittr)
 library(scatterpie)
-library(maps)
 library(ggnewscale)
+library(ggspatial)
 library(grid)
-library(forcats)   # <- para fct_collapse
+
+# -------------------------------------------------------------------
+# 0) Rutas
+# -------------------------------------------------------------------
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
+
+ruta_xlsx <- "input_famd_cali_29102025.xlsx"
+ruta_shp_comunas <- "mc_comunas.shp"
+ruta_shp_terminales <- "terminales\\terminales.shp"
+ruta_shp_paradas <- "Estaciones_de_Parada_2025\\Estaciones_de_Parada_2025.shp"
 
 # -------------------------------------------------------------------
 # 1) Datos
 # -------------------------------------------------------------------
-setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
-dataset <- read_excel("input_famd_cali_29102025.xlsx")
+dataset <- readxl::read_excel(ruta_xlsx)
 
-dataset$id      <- as.character(dataset$id)
-dataset$medio   <- as.character(dataset$medio)
-dataset$Comuna  <- as.integer(gsub("\\D", "", as.character(dataset$p19comuna)))
+dataset$id     <- as.character(dataset$id)
+dataset$medio  <- as.character(dataset$medio)
+dataset$Comuna <- as.integer(gsub("\\D", "", as.character(dataset$p19comuna)))
 data <- dataset
 
 # -------------------------------------------------------------------
-# Estrato predominante por comuna (CATEGÓRICO: Alto/Medio/Bajo)
+# 2) Estrato predominante por comuna (Bajo/Medio/Alto)
 # -------------------------------------------------------------------
 nombre_estrato <- if ("p9_estrato3" %in% names(data)) "p9_estrato3" else
   if ("p9_estratro3" %in% names(data)) "p9_estratro3" else NA
@@ -53,6 +46,7 @@ tmp <- data.frame(
   estrato_cat = trimws(tolower(as.character(data[[nombre_estrato]]))),
   stringsAsFactors = FALSE
 )
+
 tmp$estrato_cat[tmp$estrato_cat %in% c("alto","alta")]   <- "Alto"
 tmp$estrato_cat[tmp$estrato_cat %in% c("medio","media")] <- "Medio"
 tmp$estrato_cat[tmp$estrato_cat %in% c("bajo","baja")]   <- "Bajo"
@@ -62,15 +56,15 @@ niveles_em <- c("Bajo","Medio","Alto")
 tmp$estrato_cat <- factor(tmp$estrato_cat, levels = niveles_em, ordered = TRUE)
 
 estratos_comuna <- tmp %>%
-  dplyr::group_by(Comuna, estrato_cat) %>%
-  dplyr::summarise(n = dplyr::n(), .groups = "drop_last") %>%
-  dplyr::arrange(dplyr::desc(n), estrato_cat) %>%
-  dplyr::slice(1) %>%
-  dplyr::ungroup() %>%
-  dplyr::transmute(Comuna, categoria = as.character(estrato_cat))
+  group_by(Comuna, estrato_cat) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  arrange(desc(n), estrato_cat) %>%
+  slice(1) %>%
+  ungroup() %>%
+  transmute(Comuna, categoria = as.character(estrato_cat))
 
 # -------------------------------------------------------------------
-# 2) Zonas a partir de Comuna (para ubicar PIES; no rotulamos)
+# 3) Zonas (solo para ubicar pies; NO rotulamos)
 # -------------------------------------------------------------------
 data$zona <- NA_character_
 for (k in 1:nrow(data)) {
@@ -80,10 +74,12 @@ for (k in 1:nrow(data)) {
   if (data$Comuna[k] %in% c(10,17,18,19,20,22))         data$zona[k] <- "Sur"
 }
 data <- data[!is.na(data$zona), ]
-data$zona <- factor(data$zona,
-                    levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"))
+data$zona <- factor(
+  data$zona,
+  levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur")
+)
 
-# Coordenadas (se mantienen EXACTAS)
+# Coordenadas fijas (CRS original del shapefile: metros)
 coords_zona <- data.frame(
   zona = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"),
   long = c(1060000-300, 1065000-200, 1065000-600, 1059.28*1000),
@@ -92,23 +88,22 @@ coords_zona <- data.frame(
 )
 
 # -------------------------------------------------------------------
-# 3) Unificación propósito (p23_agr5) y definición de motivo
+# 4) Motivo (p23_agregado) INCLUYE "CUIDADO" y ELIMINA NA/OTROS
 # -------------------------------------------------------------------
-if (!"p23_agregado" %in% names(data)) {
-  stop("No se encontró la columna 'p23_agregado' en la base.")
-}
+if (!"p23_agregado" %in% names(data)) stop("No se encontró la columna 'p23_agregado' en la base.")
 
 data <- data %>%
   mutate(
     p23_agregado = trimws(as.character(p23_agregado)),
-    p23_agr5 = fct_collapse(
+    motivo = fct_collapse(
       p23_agregado,
       "Trabajo"          = c("Trabajo"),
-      "Compras/Trámites" = c("Compras y trámites","Compras y tr\u00e1mites"),
+      "Compras/Tramites" = c("Compras y trámites","Compras y tramites","Compras y tr\u00e1mites","Compras y tramites "),
       "Tiempo personal"  = c("Recreación, salud y actividades personales",
+                             "Recreacion, salud y actividades personales",
                              "Recreaci\u00f3n, salud y actividades personales",
                              "Visitas sociales"),
-      "Estudio"          = "Estudio",
+      "Estudio"          = c("Estudio"),
       "Cuidado"          = c(
         "Cuidado y familia (centro educativo, niños/as o jóvenes)",
         "Cuidado y familia (otro lugar, niños/as o jóvenes)",
@@ -116,45 +111,95 @@ data <- data %>%
         "Cuidado y familia (persona enferma)",
         "Cuidado y familia (recreación, niños)",
         "Cuidado y familia (salud, niños)",
+        "Cuidado y familia (recreacion, ninos)",
+        "Cuidado y familia (salud, ninos)",
         "Cuidado y familia (recreaci\u00f3n, ni\u00f1as/os)",
         "Cuidado y familia (salud, ni\u00f1as/os)"
       ),
-      "Otros"            = "Otro"
-    ) %>% fct_drop()
+      "Otros"            = c("Otro","Otros")
+    )
   ) %>%
-  filter(!is.na(p23_agr5), p23_agr5 != "Otros") %>%
-  mutate(p23_agr5 = factor(as.character(p23_agr5)))
+  filter(!is.na(motivo), motivo != "Otros")
 
-# usamos p23_agr5 como motivo (orden fijo para facets)
-data$motivo <- factor(
-  as.character(data$p23_agr5),
-  levels = c("Trabajo","Estudio","Compras/Trámites","Tiempo personal","Cuidado")
-)
+niv_motivo <- c("Trabajo","Estudio","Compras/Tramites","Tiempo personal","Cuidado")
+data <- data %>%
+  mutate(motivo = factor(as.character(motivo), levels = niv_motivo)) %>%
+  filter(!is.na(motivo)) %>%
+  droplevels()
 
 # -------------------------------------------------------------------
-# 4) Shape + unión con estrato
+# 5) Shapes: comunas + unión estrato
 # -------------------------------------------------------------------
-shape <- st_read("mc_comunas.shp", quiet = TRUE)
+shape <- sf::st_read(ruta_shp_comunas, quiet = TRUE)
 columna_comuna_shape <- names(shape)[grepl("comuna", names(shape), ignore.case = TRUE)][1]
 if (is.na(columna_comuna_shape)) stop("No se detectó columna con 'comuna' en el shapefile.")
 shape$Comuna <- as.integer(gsub("\\D","", as.character(shape[[columna_comuna_shape]])))
 shape <- dplyr::left_join(shape, estratos_comuna, by = "Comuna")
 
+# CRS base
+crs_src <- sf::st_crs(shape)
+if (is.na(crs_src)) stop("El shapefile de comunas no tiene CRS (defínelo antes de transformar).")
+
 # -------------------------------------------------------------------
-# 5) Conteos por motivo-zona-medio (wide para scatterpie)
+# 6) Paradas y terminales (MIO)
+# -------------------------------------------------------------------
+terminales <- sf::st_read(ruta_shp_terminales, quiet = TRUE)
+paradas    <- sf::st_read(ruta_shp_paradas, quiet = TRUE)
+
+if (is.na(sf::st_crs(paradas)))    sf::st_crs(paradas)    <- crs_src
+if (is.na(sf::st_crs(terminales))) sf::st_crs(terminales) <- crs_src
+
+# A WGS84 para grados + cuadro
+shape_4326      <- sf::st_transform(shape, 4326)
+paradas_4326    <- sf::st_transform(paradas, 4326)
+terminales_4326 <- sf::st_transform(terminales, 4326)
+
+paradas_4326$tipo    <- "Paradas MIO"
+terminales_4326$tipo <- "Terminales MIO"
+mio_4326 <- dplyr::bind_rows(paradas_4326, terminales_4326) %>%
+  mutate(tipo = factor(tipo, levels = c("Paradas MIO","Terminales MIO")))
+
+# -------------------------------------------------------------------
+# 7) Conteos por motivo-zona-medio (wide para scatterpie)
 # -------------------------------------------------------------------
 df_counts <- data %>%
-  dplyr::group_by(motivo, zona, medio) %>%
-  dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+  group_by(motivo, zona, medio) %>%
+  summarise(n = dplyr::n(), .groups = "drop") %>%
   tidyr::pivot_wider(names_from = medio, values_from = n, values_fill = 0) %>%
-  dplyr::left_join(coords_zona, by = "zona")
+  left_join(coords_zona, by = "zona")
 
-cols_pie <- setdiff(names(df_counts), c("motivo","zona","long","lat"))
+# --- FIX #1: definir cols_pie solo con columnas de medios reales (excluye todo lo demás) ---
+base_cols <- c("motivo","zona","long","lat")
+cols_pie <- setdiff(names(df_counts), base_cols)
+
+# --- FIX #2: forzar numéricos en df_counts (antes de convertir a sf) ---
+df_counts[cols_pie] <- lapply(df_counts[cols_pie], function(x) {
+  # por si viene labelled/character
+  x <- suppressWarnings(as.numeric(as.character(x)))
+  x[is.na(x)] <- 0
+  x
+})
+
+# Convertir coords de pies a sf y a WGS84
+pies_sf   <- sf::st_as_sf(df_counts, coords = c("long","lat"), crs = crs_src, remove = FALSE)
+pies_4326 <- sf::st_transform(pies_sf, 4326)
+
+# --- FIX #3 (EL CLAVE): scatterpie NO necesita sf. Pasamos data.frame “limpio” ---
+# Extraer coords ya transformadas y quedarnos con columnas numéricas + llaves
+pies_xy <- sf::st_coordinates(pies_4326)
+pies_df <- sf::st_drop_geometry(pies_4326)
+pies_df$long <- pies_xy[,1]
+pies_df$lat  <- pies_xy[,2]
+
+# --- FIX #4: recalcular cols_pie como SOLO numéricas en el objeto final ---
+cols_pie <- cols_pie[cols_pie %in% names(pies_df)]
+cols_pie <- cols_pie[sapply(pies_df[cols_pie], is.numeric)]
 
 # -------------------------------------------------------------------
-# 6) Colores
+# 8) Colores
 # -------------------------------------------------------------------
 colores_estrato <- c("Bajo"="#F2F2F2","Medio"="#DDDDDD","Alto"="#C8C8C8")
+
 colores_medio <- c(
   "Auto privado"        = "#C86A62",
   "Modo activo"         = "#D4B86A",
@@ -165,40 +210,27 @@ colores_medio <- c(
 )
 breaks_medios <- intersect(names(colores_medio), cols_pie)
 
-# -------------------------------------------------------------------
-# 7) Brújula con flechas (arriba-derecha)
-# -------------------------------------------------------------------
-compass_brown <- "#6F3E2B"
-arrow_compass <- function(color = "#6F3E2B", txt = 0.85, lwd = 1.8, alen = 0.08){
-  grobTree(
-    segmentsGrob(x0 = 0.5, y0 = 0.20, x1 = 0.5, y1 = 0.80,
-                 gp = gpar(col = color, lwd = lwd),
-                 arrow = arrow(type = "closed", ends = "both", length = unit(alen, "npc"))),
-    segmentsGrob(x0 = 0.20, y0 = 0.5, x1 = 0.80, y1 = 0.5,
-                 gp = gpar(col = color, lwd = lwd),
-                 arrow = arrow(type = "closed", ends = "both", length = unit(alen, "npc"))),
-    textGrob("N", x = 0.50, y = 0.96, gp = gpar(col = color, cex = txt, fontface = "bold")),
-    textGrob("S", x = 0.50, y = 0.04, gp = gpar(col = color, cex = txt, fontface = "bold")),
-    textGrob("E", x = 0.96, y = 0.50, gp = gpar(col = color, cex = txt, fontface = "bold")),
-    textGrob("W", x = 0.04, y = 0.50, gp = gpar(col = color, cex = txt, fontface = "bold"))
-  )
-}
+azul_paradas    <- "#6BAED6"
+azul_terminales <- "#08519C"
 
-# BBox para posicionar la brújula (no toca pies)
-bb    <- sf::st_bbox(shape)
+# -------------------------------------------------------------------
+# 9) Radio del pie (en grados) + recorte
+# -------------------------------------------------------------------
+bb <- sf::st_bbox(shape_4326)
 xspan <- as.numeric(bb["xmax"] - bb["xmin"])
 yspan <- as.numeric(bb["ymax"] - bb["ymin"])
-bxmin <- as.numeric(bb["xmin"]) + 0.82 * xspan
-bxmax <- as.numeric(bb["xmin"]) + 0.92 * xspan
-bymin <- as.numeric(bb["ymin"]) + 0.78 * yspan
-bymax <- as.numeric(bb["ymin"]) + 0.94 * yspan
+
+r_pie <- 0.070 * min(xspan, yspan)   # pies grandes
+
+xlim <- c(bb["xmin"] + 0.01*xspan, bb["xmax"] - 0.01*xspan)
+ylim <- c(bb["ymin"] + 0.01*yspan, bb["ymax"] - 0.01*yspan)
 
 # -------------------------------------------------------------------
-# 8) Mapa facetado por MOTIVO (p23_agr5) (sin nombres de zona ni coordenadas)
+# 10) Plot (cuadro + grados + brujula + escala) + facets
 # -------------------------------------------------------------------
 map.cali.motivo <- ggplot() +
   geom_sf(
-    data = shape,
+    data = shape_4326,
     aes(fill = categoria),
     color = "#6E6E6E",
     linewidth = 0.25,
@@ -207,15 +239,20 @@ map.cali.motivo <- ggplot() +
   scale_fill_manual(
     name   = "Estrato predominante",
     values = colores_estrato,
+    breaks = c("Bajo","Medio","Alto"),
     na.value = "#F7F7F7"
   ) +
-  coord_sf(clip = "off") +
+  coord_sf(xlim = xlim, ylim = ylim, clip = "on") +
   ggnewscale::new_scale_fill() +
+  
+  # ✅ scatterpie con data.frame limpio (ya NO falla rowSums)
   geom_scatterpie(
-    data = df_counts,
-    aes(x = long, y = lat, group = zona, r = 190*6),  # ← se mantiene igual
+    data = pies_df,
+    aes(x = long, y = lat, group = zona, r = r_pie),
     cols = cols_pie,
-    color = "white", linewidth = 0.25, alpha = 0.92
+    color = "white",
+    linewidth = 0.25,
+    alpha = 0.92
   ) +
   scale_fill_manual(
     name   = "Medio de transporte",
@@ -223,24 +260,52 @@ map.cali.motivo <- ggplot() +
     breaks = breaks_medios,
     guide  = guide_legend(override.aes = list(alpha = 1))
   ) +
-  facet_wrap(~ motivo, ncol = 3) +
-  labs(
-    x = NULL, y = NULL,
-    title = "Elección modal por comuna - Cali (por motivo de viaje)"
+  
+  # MIO: círculos y triángulos (leyenda con shape)
+  geom_sf(
+    data = mio_4326,
+    aes(shape = tipo, color = tipo),
+    size = 2.0,
+    alpha = 0.95,
+    stroke = 0.6
   ) +
+  scale_shape_manual(values = c("Paradas MIO" = 16, "Terminales MIO" = 17), name = NULL) +
+  scale_color_manual(values = c("Paradas MIO" = azul_paradas, "Terminales MIO" = azul_terminales), name = NULL) +
+  guides(shape = guide_legend(order = 3), color = "none") +
+  
+  # Brújula + escala (abajo-izq)
+  annotation_north_arrow(
+    location = "bl",
+    which_north = "true",
+    style  = north_arrow_fancy_orienteering,
+    height = unit(1.2, "cm"),
+    width  = unit(1.2, "cm"),
+    pad_x  = unit(0.2, "cm"),
+    pad_y  = unit(0.2, "cm")
+  ) +
+  annotation_scale(
+    location = "bl",
+    width_hint = 0.25,
+    pad_x = unit(1.6, "cm"),
+    pad_y = unit(0.2, "cm")
+  ) +
+  
+  facet_wrap(~ motivo, ncol = 3, drop = TRUE) +
+  labs(x = NULL, y = NULL, title = "Elección modal por comuna - Cali (por motivo de viaje)") +
+  
   theme_minimal(base_size = 12) +
   theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "grey20", fill = NA, linewidth = 0.8),
+    panel.grid.major = element_line(color = "grey88", linewidth = 0.35),
+    panel.grid.minor = element_line(color = "grey94", linewidth = 0.20),
+    axis.title       = element_blank(),
+    axis.text        = element_text(size = 9, color = "grey20"),
+    axis.ticks       = element_line(color = "grey20"),
     panel.background = element_rect(fill = "white", color = NA),
     plot.background  = element_rect(fill = "white", color = NA),
     legend.position  = "right",
-    axis.text        = element_blank(),
-    axis.ticks       = element_blank()
-  ) +
-  annotation_custom(
-    grob = arrow_compass(color = compass_brown, txt = 0.80, lwd = 1.6, alen = 0.08),
-    xmin = bxmin, xmax = bxmax, ymin = bymin, ymax = bymax
+    strip.background = element_rect(fill = "grey95", color = NA),
+    strip.text       = element_text(colour = "grey20", face = "bold")
   )
 
 ggsave(
@@ -248,3 +313,4 @@ ggsave(
   filename = "map.cali_por_motivo_p23_agr5.png",
   width = 14, height = 8, dpi = 300, bg = "white"
 )
+

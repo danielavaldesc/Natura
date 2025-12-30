@@ -2,7 +2,6 @@
 ## Figura 2: Georreferenciación de elección modal CALI   ##
 ###########################################################
 
-# Paquetes
 library(readxl)
 library(ggplot2)
 library(dplyr)
@@ -10,6 +9,7 @@ library(sf)
 library(stringr)
 library(scatterpie)
 library(ggnewscale)
+library(ggspatial)
 library(grid)
 
 # -------------------------------------------------------------------
@@ -18,13 +18,13 @@ library(grid)
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
 dataset <- readxl::read_excel("input_famd_cali_29102025.xlsx")
 
-dataset$id      <- as.character(dataset$id)
-dataset$medio   <- as.character(dataset$medio)
-dataset$Comuna  <- as.integer(gsub("\\D", "", as.character(dataset$p19comuna)))
+dataset$id     <- as.character(dataset$id)
+dataset$medio  <- as.character(dataset$medio)
+dataset$Comuna <- as.integer(gsub("\\D", "", as.character(dataset$p19comuna)))
 data <- dataset
 
 # -------------------------------------------------------------------
-# Estrato predominante por comuna (Bajo/Medio/Alto)
+# 2) Estrato predominante por comuna (Bajo/Medio/Alto)
 # -------------------------------------------------------------------
 nombre_estrato <- if ("p9_estrato3" %in% names(data)) "p9_estrato3" else
   if ("p9_estratro3" %in% names(data)) "p9_estratro3" else NA
@@ -52,7 +52,7 @@ estratos_comuna <- tmp %>%
   transmute(Comuna, categoria = as.character(estrato_cat))
 
 # -------------------------------------------------------------------
-# 2) Zonas por comuna
+# 3) Zonas por comuna
 # -------------------------------------------------------------------
 data$zona <- NA_character_
 for (k in 1:nrow(data)) {
@@ -62,16 +62,18 @@ for (k in 1:nrow(data)) {
   if (data$Comuna[k] %in% c(10,17,18,19,20,22))       data$zona[k] <- "Sur"
 }
 data <- data[!is.na(data$zona), ]
-data$zona <- factor(data$zona,
-                    levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"))
+data$zona <- factor(
+  data$zona,
+  levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur")
+)
 
 # -------------------------------------------------------------------
-# 3) Conteos por zona/medio + coordenadas de los pies
+# 4) Conteos por zona/medio + coordenadas de los pies (CRS local: metros)
 # -------------------------------------------------------------------
 table_data_mode <- as.data.frame.matrix(table(data$zona, data$medio))
 table_data_mode$zona <- rownames(table_data_mode)
 
-# Coordenadas (en el CRS del shapefile)
+# Coordenadas manuales EN METROS (CRS del shapefile de comunas)
 table_data_mode$long <- NA_real_
 table_data_mode$long[table_data_mode$zona == "Noroccidente"]       <- 1060000 - 300
 table_data_mode$long[table_data_mode$zona == "Nororiente"]         <- 1065000 - 200
@@ -84,21 +86,11 @@ table_data_mode$lat[table_data_mode$zona == "Nororiente"]         <- 875000 + 60
 table_data_mode$lat[table_data_mode$zona == "Oriente-aguablanca"] <- 870.5 * 1000
 table_data_mode$lat[table_data_mode$zona == "Sur"]                <- 866.4 * 1000
 
-cols_pie <- setdiff(names(table_data_mode), c("zona","long","lat"))
-
-# -------------------------------------------------------------------
-# 4) Shape + unión con estrato
-# -------------------------------------------------------------------
-shape <- sf::st_read("mc_comunas.shp", quiet = TRUE)
-columna_comuna_shape <- names(shape)[grepl("comuna", names(shape), ignore.case = TRUE)][1]
-if (is.na(columna_comuna_shape)) stop("No se detectó ninguna columna con 'comuna' en el shapefile.")
-shape$Comuna <- as.integer(gsub("\\D","", as.character(shape[[columna_comuna_shape]])))
-shape <- left_join(shape, estratos_comuna, by = "Comuna")
-
 # -------------------------------------------------------------------
 # 5) Paletas
 # -------------------------------------------------------------------
 colores_estrato <- c("Bajo"="#F4F4F4","Medio"="#E6E6E6","Alto"="#D6D6D6")
+
 colores_medio <- c(
   "Auto privado"        = "#C86A62",
   "Modo activo"         = "#D4B86A",
@@ -108,51 +100,95 @@ colores_medio <- c(
   "Transporte público"  = "#6C78A8"
 )
 
+azul_paradas    <- "#6BAED6"
+azul_terminales <- "#08519C"
+
 # -------------------------------------------------------------------
-# 6) Brújula con flechas 
+# 6) FIX scatterpie: cols_pie numéricos + filtrar a categorías conocidas
 # -------------------------------------------------------------------
-compass_brown <- "#6F3E2B"
-arrow_compass <- function(color = "#6F3E2B", txt = 0.85, lwd = 1.8, alen = 0.08){
-  grobTree(
-    segmentsGrob(x0 = 0.5, y0 = 0.20, x1 = 0.5, y1 = 0.80,
-                 gp = gpar(col = color, lwd = lwd),
-                 arrow = arrow(type = "closed", ends = "both", length = unit(alen, "npc"))),
-    segmentsGrob(x0 = 0.20, y0 = 0.5, x1 = 0.80, y1 = 0.5,
-                 gp = gpar(col = color, lwd = lwd),
-                 arrow = arrow(type = "closed", ends = "both", length = unit(alen, "npc"))),
-    textGrob("N", x = 0.50, y = 0.96, gp = gpar(col = color, cex = txt, fontface = "bold")),
-    textGrob("S", x = 0.50, y = 0.04, gp = gpar(col = color, cex = txt, fontface = "bold")),
-    textGrob("E", x = 0.96, y = 0.50, gp = gpar(col = color, cex = txt, fontface = "bold")),
-    textGrob("W", x = 0.04, y = 0.50, gp = gpar(col = color, cex = txt, fontface = "bold"))
-  )
+cols_cand <- setdiff(names(table_data_mode), c("zona","long","lat"))
+
+for (nm in cols_cand) {
+  table_data_mode[[nm]] <- suppressWarnings(as.numeric(table_data_mode[[nm]]))
+  table_data_mode[[nm]][is.na(table_data_mode[[nm]])] <- 0
 }
 
-# BBox para ubicar brújula y escalar tamaño de los pies
-bb    <- sf::st_bbox(shape)
+cols_pie <- intersect(cols_cand, names(colores_medio))
+if (length(cols_pie) == 0) {
+  stop("cols_pie quedó vacío: revisa niveles de 'medio' o actualiza colores_medio.")
+}
+
+# -------------------------------------------------------------------
+# 7) Shapes: comunas + MIO
+# -------------------------------------------------------------------
+shape <- sf::st_read("mc_comunas.shp", quiet = TRUE)
+columna_comuna_shape <- names(shape)[grepl("comuna", names(shape), ignore.case = TRUE)][1]
+if (is.na(columna_comuna_shape)) stop("No se detectó ninguna columna con 'comuna' en el shapefile.")
+shape$Comuna <- as.integer(gsub("\\D","", as.character(shape[[columna_comuna_shape]])))
+shape <- left_join(shape, estratos_comuna, by = "Comuna")
+
+terminales <- sf::st_read("terminales\\terminales.shp", quiet = TRUE)
+paradas    <- sf::st_read("Estaciones_de_Parada_2025\\Estaciones_de_Parada_2025.shp", quiet = TRUE)
+
+# -------------------------------------------------------------------
+# 8) CRS → WGS84 (grados) + pies a data.frame (NO sf) para scatterpie
+# -------------------------------------------------------------------
+crs_shape <- st_crs(shape)
+if (is.na(crs_shape)) stop("El shapefile de comunas no tiene CRS. Asigna st_crs(shape) (ej. 3116).")
+
+if (is.na(st_crs(paradas)))    st_crs(paradas)    <- crs_shape
+if (is.na(st_crs(terminales))) st_crs(terminales) <- crs_shape
+
+shape_4326      <- st_transform(shape, 4326)
+paradas_4326    <- st_transform(paradas, 4326)
+terminales_4326 <- st_transform(terminales, 4326)
+
+# Pies: sf solo para transformar coords, luego data.frame sin geometry
+pies_sf_m    <- st_as_sf(table_data_mode, coords = c("long","lat"), crs = crs_shape, remove = FALSE)
+pies_sf_4326 <- st_transform(pies_sf_m, 4326)
+
+pies_df <- st_drop_geometry(pies_sf_4326)
+xy <- st_coordinates(pies_sf_4326)
+pies_df$long <- xy[,1]
+pies_df$lat  <- xy[,2]
+
+for (nm in cols_pie) {
+  pies_df[[nm]] <- suppressWarnings(as.numeric(pies_df[[nm]]))
+  pies_df[[nm]][is.na(pies_df[[nm]])] <- 0
+}
+
+# -------------------------------------------------------------------
+# 9) Radio del pie en grados (MÁS GRANDE)
+# -------------------------------------------------------------------
+bb    <- sf::st_bbox(shape_4326)
 xspan <- as.numeric(bb["xmax"] - bb["xmin"])
 yspan <- as.numeric(bb["ymax"] - bb["ymin"])
-r_pie <- 0.060 * min(xspan, yspan)   # pies más grandes
 
-bxmin <- as.numeric(bb["xmin"]) + 0.82 * xspan
-bxmax <- as.numeric(bb["xmin"]) + 0.92 * xspan
-bymin <- as.numeric(bb["ymin"]) + 0.78 * yspan
-bymax <- as.numeric(bb["ymin"]) + 0.94 * yspan
+# antes: 0.03; ahora: más visible
+r_pie <- 0.08 * min(xspan, yspan)
 
 # -------------------------------------------------------------------
-# 7) Mapa final 
+# 10) Mapa final
 # -------------------------------------------------------------------
 map.cali <- ggplot() +
-  geom_sf(data = shape, aes(fill = categoria), color = "#BFBFBF", linewidth = 0.25) +
+  
+  # Estrato predominante
+  geom_sf(data = shape_4326, aes(fill = categoria), color = "#BFBFBF", linewidth = 0.25) +
   scale_fill_manual(
     name   = "Estrato predominante",
     values = colores_estrato,
     breaks = c("Bajo","Medio","Alto"),
     na.value = "#FAFAFA"
   ) +
-  coord_sf(clip = "off") +
+  
+  coord_sf(clip = "on") +
+  
+  # Nuevo fill para los pies
   ggnewscale::new_scale_fill() +
+  
+  # Pies elección modal (data.frame, no sf)
   geom_scatterpie(
-    data = table_data_mode,
+    data = pies_df,
     aes(x = long, y = lat, group = zona, r = r_pie),
     cols = cols_pie,
     color = "white", linewidth = 0.25, alpha = 0.92
@@ -163,27 +199,70 @@ map.cali <- ggplot() +
     breaks = cols_pie,
     guide  = guide_legend(override.aes = list(alpha = 1))
   ) +
-  labs(x = NULL, y = NULL, title = "Elección modal por comuna - Cali") +
+  
+  # MIO (triángulos reales)
+  geom_sf(
+    data = paradas_4326,
+    aes(color = "Paradas MIO"),
+    shape = 16,
+    size  = 1.8,
+    alpha = 0.95
+  ) +
+  geom_sf(
+    data = terminales_4326,
+    aes(color = "Terminales MIO"),
+    shape = 17,
+    size  = 3.0,
+    alpha = 0.98
+  ) +
+  scale_color_manual(
+    name = NULL,
+    values = c(
+      "Paradas MIO"    = azul_paradas,
+      "Terminales MIO" = azul_terminales
+    ),
+    breaks = c("Paradas MIO","Terminales MIO"),
+    guide = guide_legend(override.aes = list(shape = c(16, 17), size = c(3, 3)))
+  ) +
+  
+  # Brújula + escala
+  annotation_north_arrow(
+    location = "bl",
+    which_north = "true",
+    style  = north_arrow_fancy_orienteering,
+    height = unit(1.2, "cm"),
+    width  = unit(1.2, "cm"),
+    pad_x  = unit(0.2, "cm"),
+    pad_y  = unit(0.2, "cm")
+  ) +
+  annotation_scale(
+    location = "bl",
+    width_hint = 0.25,
+    pad_x = unit(1.6, "cm"),
+    pad_y = unit(0.2, "cm")
+  ) +
+  
+  labs(x = NULL, y = NULL, title = "Eleccion modal por comuna - Cali") +
+  
   theme_minimal(base_size = 12) +
   theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "grey20", fill = NA, linewidth = 0.8),
+    panel.grid.major = element_line(color = "grey88", linewidth = 0.35),
+    panel.grid.minor = element_line(color = "grey94", linewidth = 0.20),
+    axis.title       = element_blank(),
+    axis.text        = element_text(size = 9, color = "grey20"),
+    axis.ticks       = element_line(color = "grey20"),
     panel.background = element_rect(fill = "white", color = NA),
     plot.background  = element_rect(fill = "white", color = NA),
-    legend.position  = "right",
-    axis.text        = element_blank(),
-    axis.ticks       = element_blank(),
-    legend.title     = element_text(colour = "grey15"),
-    legend.text      = element_text(colour = "grey20")
-  ) +
-  annotation_custom(
-    grob = arrow_compass(color = compass_brown, txt = 0.80, lwd = 1.6, alen = 0.08),
-    xmin = bxmin, xmax = bxmax, ymin = bymin, ymax = bymax
+    legend.position  = "right"
   )
 
-ggsave("map.cali.png", map.cali, width = 10, height = 8, dpi = 300, bg = "white")
-
-
-
-
+ggsave(
+  "map.cali_modal.png",
+  map.cali,
+  width = 10,
+  height = 8,
+  dpi = 300,
+  bg = "white"
+)
 
