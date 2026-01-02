@@ -21,7 +21,10 @@ library(ggspatial)
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\mapas\\Geo_AMVA\\")
 ruta_xlsx  <- "input_famd_med_29102025.xlsx"
 ruta_shp   <- "LimiteComunaCorregimiento_2014.shp"
-ruta_metro <- "Lineas_Sistema_Metro_-OD\\Lineas_Sistema_Metro_-OD.shp"
+
+# ✅ CAMBIO: SITVA (vías + estaciones) + paleta nueva (como Figura 4/3)
+ruta_vias       <- "shapes_transportepublico\\vias_sitva_MED.shp"
+ruta_estaciones <- "shapes_transportepublico\\estaciones_sitva_MED.shp"
 
 # ------------------------------------------------------------
 # 1) Datos base
@@ -140,66 +143,108 @@ table_data_mode <- table_data_mode %>% left_join(pie_pos, by = "cuadrante")
 r_pie <- 0.060 * min(xspan, yspan)
 
 # ------------------------------------------------------------
-# 5) Metro: líneas con colores (tipo “BRT 1 / Metro A / …”)
+# 5) SITVA: vías (líneas) + estaciones + paleta nueva
 # ------------------------------------------------------------
-metro_ln <- st_read(ruta_metro, quiet = TRUE)
-if (is.na(st_crs(metro_ln))) metro_ln <- st_set_crs(metro_ln, 3116)
-metro_ln <- st_transform(metro_ln, 4326)
 
-cand <- names(metro_ln)[grepl("linea|línea|line|nombre|name|route|codigo|sigla|tipo|mode", names(metro_ln), ignore.case = TRUE)]
-if (length(cand) == 0) stop("No pude detectar la columna de línea en el SHP del Metro.")
-col_linea <- cand[1]
-
-codigo_raw <- str_squish(as.character(metro_ln[[col_linea]]))
-codigo_raw[is.na(codigo_raw) | codigo_raw == ""] <- "Sin nombre"
-
-codigo <- codigo_raw %>%
-  str_to_upper() %>%
-  str_replace_all("L[IÍ]NEA\\s*", "") %>%
-  str_replace_all("^LINE\\s*", "") %>%
-  str_replace_all("\\s+", " ") %>%
-  str_trim()
+# helpers (idénticos a Figura 4)
+pick_col <- function(x, patterns){
+  cand <- names(x)[grepl(paste(patterns, collapse="|"), names(x), ignore.case = TRUE)]
+  if (length(cand) == 0) return(NA_character_)
+  cand[1]
+}
 
 map_labels <- c(
-  "1"="BRT 1", "2"="BRT 2", "0"="BRT O",
-  "A"="Metro A", "B"="Metro B", "C"="Metro C",
-  "H"="Metrocable H", "J"="Metrocable J", "K"="Metrocable K", "L"="Metrocable L",
-  "M"="Metrocable M", "O"="Metrocable O", "P"="Metrocable P",
-  "T"="Tram T"
+  "1" = "BRT 1",
+  "2" = "BRT 2",
+  "0" = "BRT O",
+  "A" = "Metro A",
+  "B" = "Metro B",
+  "C" = "Metro C",
+  "H" = "Metrocable H",
+  "J" = "Metrocable J",
+  "K" = "Metrocable K",
+  "L" = "Metrocable L",
+  "M" = "Metrocable M",
+  "O" = "Metrocable O",
+  "P" = "Metrocable P",
+  "T" = "Tram T"
 )
 
-linea_pretty <- ifelse(codigo %in% names(map_labels), map_labels[codigo], codigo)
-linea_pretty <- linea_pretty %>%
-  str_replace_all("^METRO\\s*([A-Z0-9]+)$", "Metro \\1") %>%
-  str_replace_all("^METROCABLE\\s*([A-Z0-9]+)$", "Metrocable \\1") %>%
-  str_replace_all("^BRT\\s*([A-Z0-9]+)$", "BRT \\1") %>%
-  str_replace_all("^TRAM\\s*([A-Z0-9]+)$", "Tram \\1") %>%
-  str_trim()
+make_linea_pretty <- function(x){
+  x <- str_squish(as.character(x))
+  x[is.na(x) | x == ""] <- "Sin nombre"
+  
+  code <- x %>%
+    str_to_upper() %>%
+    str_replace_all("L[IÍ]NEA\\s*", "") %>%
+    str_replace_all("^LINE\\s*", "") %>%
+    str_replace_all("\\s+", " ") %>%
+    str_trim()
+  
+  token <- str_extract(code, "\\b(BRT\\s*[0120]|METRO\\s*[ABC]|METROCABLE\\s*[HJKLMOP]|TRAM\\s*T|TRANV[IÍ]A|[012ABC HJKLMOPT])\\b")
+  token <- str_replace_all(token, "\\s+", "")
+  token <- str_replace(token, "^TRANV[IÍ]A$", "T")
+  token <- str_replace(token, "^TRAMT$", "T")
+  token <- str_replace(token, "^METRO([ABC])$", "\\1")
+  token <- str_replace(token, "^BRT([0120])$", "\\1")
+  
+  pretty <- ifelse(token %in% names(map_labels), map_labels[token], code)
+  
+  pretty %>%
+    str_replace_all("^METRO\\s*([A-Z0-9]+)$", "Metro \\1") %>%
+    str_replace_all("^METROCABLE\\s*([A-Z0-9]+)$", "Metrocable \\1") %>%
+    str_replace_all("^BRT\\s*([A-Z0-9]+)$", "BRT \\1") %>%
+    str_replace_all("^TRAM\\s*([A-Z0-9]+)$", "Tram \\1") %>%
+    str_replace_all("\\s+", " ") %>%
+    str_trim()
+}
 
-metro_ln$linea_plot <- factor(linea_pretty)
+# carga vías (líneas)
+vias_ln <- st_read(ruta_vias, quiet = TRUE)
+if (is.na(st_crs(vias_ln))) vias_ln <- st_set_crs(vias_ln, 3116)
+vias_ln <- st_transform(vias_ln, 4326)
 
-metro_clip <- tryCatch({
-  st_intersection(st_make_valid(metro_ln), med_union)
-}, error = function(e) {
-  st_crop(metro_ln, st_bbox(shape))
-})
-metro_clip$linea_plot <- droplevels(metro_clip$linea_plot)
+col_linea_vias <- pick_col(vias_ln, c("linea","línea","line","route","nombre","name","codigo","sigla","tipo","mode","serv"))
+if (is.na(col_linea_vias)) {
+  vias_ln$linea_plot <- "SITVA"
+} else {
+  vias_ln$linea_plot <- make_linea_pretty(vias_ln[[col_linea_vias]])
+}
+vias_ln$linea_plot <- factor(vias_ln$linea_plot)
 
+metro_clip <- tryCatch(
+  st_intersection(st_make_valid(vias_ln), med_union),
+  error = function(e) st_crop(vias_ln, st_bbox(shape))
+)
+metro_clip$linea_plot <- droplevels(factor(metro_clip$linea_plot))
+
+# carga estaciones
+est_pts <- st_read(ruta_estaciones, quiet = TRUE)
+if (is.na(st_crs(est_pts))) est_pts <- st_set_crs(est_pts, 3116)
+est_pts <- st_transform(est_pts, 4326)
+
+est_clip <- tryCatch(
+  st_intersection(st_make_valid(est_pts), med_union),
+  error = function(e) st_crop(est_pts, st_bbox(shape))
+)
+
+# paleta SITVA (la nueva)
 pal_base <- c(
-  "BRT 1"        = "#F8766D",
-  "BRT 2"        = "#D89000",
-  "BRT O"        = "#00BFC4",
-  "Metro A"      = "#619CFF",
-  "Metro B"      = "#00BA38",
-  "Metro C"      = "#7CAE00",
-  "Metrocable H" = "#00C08B",
-  "Metrocable J" = "#00BFC4",
-  "Metrocable K" = "#00A9FF",
-  "Metrocable L" = "#00A0FF",
-  "Metrocable M" = "#A3A5FF",
-  "Metrocable O" = "#C77CFF",
-  "Metrocable P" = "#F564E3",
-  "Tram T"       = "#FF61C3"
+  "BRT 1"        = "#67B7E1",
+  "BRT 2"        = "#2F7FBF",
+  "BRT O"        = "#08306B",
+  "Metro A"      = "#6A51A3",
+  "Metro B"      = "#4D4D4D",
+  "Metro C"      = "#9E9E9E",
+  "Metrocable H" = "#FCA5A5",
+  "Metrocable J" = "#F87171",
+  "Metrocable K" = "#EF4444",
+  "Metrocable L" = "#B91C1C",
+  "Metrocable M" = "#7F1D1D",
+  "Metrocable O" = "#6B1F2B",
+  "Metrocable P" = "#4C0519",
+  "Tram T"       = "#16A34A",
+  "SITVA"        = "#444444"
 )
 
 niv_m <- levels(metro_clip$linea_plot)
@@ -210,7 +255,7 @@ orden_leyenda <- c(
   "BRT 1","BRT 2","BRT O",
   "Metro A","Metro B","Metro C",
   "Metrocable H","Metrocable J","Metrocable K","Metrocable L","Metrocable M","Metrocable O","Metrocable P",
-  "Tram T"
+  "Tram T","SITVA"
 )
 orden_leyenda <- orden_leyenda[orden_leyenda %in% niv_m]
 metro_clip$linea_plot <- factor(metro_clip$linea_plot, levels = orden_leyenda)
@@ -242,7 +287,7 @@ map.med.modal <- ggplot() +
     na.value = "#FAFAFA"
   ) +
   
-  # Metro
+  # SITVA (líneas)
   geom_sf(
     data = metro_clip,
     aes(color = linea_plot),
@@ -256,6 +301,19 @@ map.med.modal <- ggplot() +
     values = pal_metro,
     breaks = orden_leyenda,
     drop = FALSE
+  ) +
+  
+  # ✅ estaciones SITVA (puntos) — discretas para no tapar
+  geom_sf(
+    data = est_clip,
+    shape = 21,
+    size = 1.8,
+    stroke = 0.35,
+    color = "black",
+    fill  = "white",
+    alpha = 0.95,
+    inherit.aes = FALSE,
+    show.legend = FALSE
   ) +
   
   # Pies (2da escala fill)

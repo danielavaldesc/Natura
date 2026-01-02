@@ -87,8 +87,8 @@ dy <- 0.0022
 h_df <- centros %>% transmute(x, y = y + dy, txt = txt_h)
 m_df <- centros %>% transmute(x, y = y - dy, txt = txt_m)
 
-# ---------- paleta calor ----------
-pal_calor <- c("#FEE8C8", "#FDBB84", "#FC8D59", "#E34A33", "#B30000")
+# ---------- paleta calor (CAMBIO: AZULES) ----------
+pal_azules <- c("#F7FBFF","#DEEBF7","#C6DBEF","#9ECAE1","#6BAED6","#4292C6","#2171B5","#08519C","#08306B")
 
 bb <- st_bbox(shape_cali)
 xpad <- 0.02 * as.numeric(bb["xmax"] - bb["xmin"])
@@ -97,18 +97,18 @@ xlim <- c(as.numeric(bb["xmin"]) - xpad, as.numeric(bb["xmax"]) + xpad)
 ylim <- c(as.numeric(bb["ymin"]) - ypad, as.numeric(bb["ymax"]) + ypad)
 
 # ==========================================================
-# MAPA (sin cajas blancas; símbolo a la izquierda del número)
+# MAPA (solo cambia: colores + nombre del label)
 # ==========================================================
 p <- ggplot() +
   geom_sf(
     data = shape_cali,
-    aes(fill = poblacion),
+    aes(fill = poblacion),  # <-- se mantiene igual
     color = "grey40",
     linewidth = 0.25
   ) +
   scale_fill_gradientn(
-    colors = pal_calor,
-    name = "Densidad poblacional",
+    colors = pal_azules,                 # <-- CAMBIO: azules
+    name = "Densidad poblacional (miles)",# <-- CAMBIO: label
     na.value = "white"
   ) +
   
@@ -164,4 +164,3 @@ p <- ggplot() +
   )
 
 ggsave("cali_hombres_mujeres_por_comuna.png", p, width = 12, height = 8, dpi = 300, bg = "white")
-

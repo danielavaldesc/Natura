@@ -16,12 +16,28 @@ library(scales)
 library(ggspatial)
 
 # -------------------------------------------------------------------
+# 0) Encoding / fuente (arregla tildes)
+# -------------------------------------------------------------------
+options(encoding = "UTF-8")
+try(Sys.setlocale("LC_CTYPE", "Spanish_Colombia.1252"), silent = TRUE)
+try(Sys.setlocale("LC_CTYPE", "Spanish_Colombia.UTF-8"), silent = TRUE)
+try(Sys.setlocale("LC_ALL",   "Spanish_Colombia.1252"), silent = TRUE)
+
+base_font <- "Arial"
+
+if ("package:plyr" %in% search()) detach("package:plyr", unload = TRUE)
+if ("package:tidytable" %in% search()) detach("package:tidytable", unload = TRUE)
+
+# -------------------------------------------------------------------
 # 0) Rutas
 # -------------------------------------------------------------------
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\mapas\\Geo_AMVA\\")
 ruta_xlsx  <- "input_famd_med_29102025.xlsx"
 ruta_shp   <- "LimiteComunaCorregimiento_2014.shp"
-ruta_metro <- "Lineas_Sistema_Metro_-OD\\Lineas_Sistema_Metro_-OD.shp"
+
+# NUEVAS RUTAS SITVA (Figura 6)
+ruta_estaciones <- "shapes_transportepublico\\estaciones_sitva_MED.shp"
+ruta_vias       <- "shapes_transportepublico\\vias_sitva_MED.shp"
 
 # -------------------------------------------------------------------
 # 1) Datos base
@@ -92,7 +108,7 @@ shape <- shape_med %>%
 
 shape$categoria <- factor(shape$categoria, levels = c("Bajo","Medio","Alto"))
 
-# unión para recorte metro
+# unión para recorte
 med_union <- st_make_valid(st_union(shape))
 
 # -------------------------------------------------------------------
@@ -155,67 +171,109 @@ r_pie <- 0.060 * min(xspan, yspan)
 colores_estrato <- c("Bajo"="#F2F2F2","Medio"="#DDDDDD","Alto"="#C8C8C8")
 
 # -------------------------------------------------------------------
-# 7) Metro: MISMA lógica Figura 3 (nombres completos + colores)
+# 7) SITVA: vías (líneas) + estaciones (puntos) — desde Figura 6
 # -------------------------------------------------------------------
-metro_ln <- st_read(ruta_metro, quiet = TRUE)
-if (is.na(st_crs(metro_ln))) metro_ln <- st_set_crs(metro_ln, 3116)
-metro_ln <- st_transform(metro_ln, 4326)
 
-cand <- names(metro_ln)[grepl("linea|línea|line|nombre|name|route|codigo|sigla|tipo|mode", names(metro_ln), ignore.case = TRUE)]
-if (length(cand) == 0) stop("No pude detectar la columna de línea en el SHP del Metro.")
-col_linea <- cand[1]
-
-codigo_raw <- str_squish(as.character(metro_ln[[col_linea]]))
-codigo_raw[is.na(codigo_raw) | codigo_raw == ""] <- "Sin nombre"
-
-codigo <- codigo_raw %>%
-  str_to_upper() %>%
-  str_replace_all("L[IÍ]NEA\\s*", "") %>%
-  str_replace_all("^LINE\\s*", "") %>%
-  str_replace_all("\\s+", " ") %>%
-  str_trim()
+# helpers (idénticos a Figura 6)
+pick_col <- function(x, patterns){
+  cand <- names(x)[grepl(paste(patterns, collapse="|"), names(x), ignore.case = TRUE)]
+  if (length(cand) == 0) return(NA_character_)
+  cand[1]
+}
 
 map_labels <- c(
-  "1"="BRT 1", "2"="BRT 2", "0"="BRT O",
-  "A"="Metro A", "B"="Metro B", "C"="Metro C",
-  "H"="Metrocable H", "J"="Metrocable J", "K"="Metrocable K", "L"="Metrocable L",
-  "M"="Metrocable M", "O"="Metrocable O", "P"="Metrocable P",
-  "T"="Tram T"
+  "1" = "BRT 1",
+  "2" = "BRT 2",
+  "0" = "BRT O",
+  "A" = "Metro A",
+  "B" = "Metro B",
+  "C" = "Metro C",
+  "H" = "Metrocable H",
+  "J" = "Metrocable J",
+  "K" = "Metrocable K",
+  "L" = "Metrocable L",
+  "M" = "Metrocable M",
+  "O" = "Metrocable O",
+  "P" = "Metrocable P",
+  "T" = "Tram T"
 )
 
-linea_pretty <- ifelse(codigo %in% names(map_labels), map_labels[codigo], codigo)
-linea_pretty <- linea_pretty %>%
-  str_replace_all("^METRO\\s*([A-Z0-9]+)$", "Metro \\1") %>%
-  str_replace_all("^METROCABLE\\s*([A-Z0-9]+)$", "Metrocable \\1") %>%
-  str_replace_all("^BRT\\s*([A-Z0-9]+)$", "BRT \\1") %>%
-  str_replace_all("^TRAM\\s*([A-Z0-9]+)$", "Tram \\1") %>%
-  str_trim()
+make_linea_pretty <- function(x){
+  x <- str_squish(as.character(x))
+  x[is.na(x) | x == ""] <- "Sin nombre"
 
-metro_ln$linea_plot <- factor(linea_pretty)
+  code <- x %>%
+    str_to_upper() %>%
+    str_replace_all("L[IÍ]NEA\\s*", "") %>%
+    str_replace_all("^LINE\\s*", "") %>%
+    str_replace_all("\\s+", " ") %>%
+    str_trim()
 
-metro_clip <- tryCatch({
-  st_intersection(st_make_valid(metro_ln), med_union)
-}, error = function(e) {
-  st_crop(metro_ln, st_bbox(shape))
-})
-metro_clip$linea_plot <- droplevels(metro_clip$linea_plot)
+  token <- str_extract(code, "\\b(BRT\\s*[0120]|METRO\\s*[ABC]|METROCABLE\\s*[HJKLMOP]|TRAM\\s*T|TRANV[IÍ]A|[012ABC HJKLMOPT])\\b")
+  token <- str_replace_all(token, "\\s+", "")
+  token <- str_replace(token, "^TRANV[IÍ]A$", "T")
+  token <- str_replace(token, "^TRAMT$", "T")
+  token <- str_replace(token, "^METRO([ABC])$", "\\1")
+  token <- str_replace(token, "^BRT([0120])$", "\\1")
 
-# COLORES (los mismos que vienes usando en Figura 3)
+  pretty <- ifelse(token %in% names(map_labels), map_labels[token], code)
+
+  pretty %>%
+    str_replace_all("^METRO\\s*([A-Z0-9]+)$", "Metro \\1") %>%
+    str_replace_all("^METROCABLE\\s*([A-Z0-9]+)$", "Metrocable \\1") %>%
+    str_replace_all("^BRT\\s*([A-Z0-9]+)$", "BRT \\1") %>%
+    str_replace_all("^TRAM\\s*([A-Z0-9]+)$", "Tram \\1") %>%
+    str_replace_all("\\s+", " ") %>%
+    str_trim()
+}
+
+# carga vías (líneas) + estaciones (puntos)
+vias_ln <- st_read(ruta_vias, quiet = TRUE)
+if (is.na(st_crs(vias_ln))) vias_ln <- st_set_crs(vias_ln, 3116)
+vias_ln <- st_transform(vias_ln, 4326)
+
+est_pts <- st_read(ruta_estaciones, quiet = TRUE)
+if (is.na(st_crs(est_pts))) est_pts <- st_set_crs(est_pts, 3116)
+est_pts <- st_transform(est_pts, 4326)
+
+# columna para identificar línea/servicio en VIAS
+col_linea_vias <- pick_col(vias_ln, c("linea","línea","line","route","nombre","name","codigo","sigla","tipo","mode","serv"))
+if (is.na(col_linea_vias)) {
+  vias_ln$linea_plot <- "SITVA"
+} else {
+  vias_ln$linea_plot <- make_linea_pretty(vias_ln[[col_linea_vias]])
+}
+vias_ln$linea_plot <- factor(vias_ln$linea_plot)
+
+# recorte a comunas
+metro_clip <- tryCatch(
+  st_intersection(st_make_valid(vias_ln), med_union),
+  error = function(e) st_crop(vias_ln, st_bbox(shape))
+)
+metro_clip$linea_plot <- droplevels(factor(metro_clip$linea_plot))
+
+est_clip <- tryCatch(
+  st_intersection(st_make_valid(est_pts), med_union),
+  error = function(e) st_crop(est_pts, st_bbox(shape))
+)
+
+# NUEVA PALETA (Figura 6)
 pal_base <- c(
-  "BRT 1"        = "#F8766D",
-  "BRT 2"        = "#D89000",
-  "BRT O"        = "#00BFC4",
-  "Metro A"      = "#619CFF",
-  "Metro B"      = "#00BA38",
-  "Metro C"      = "#7CAE00",
-  "Metrocable H" = "#00C08B",
-  "Metrocable J" = "#00BFC4",
-  "Metrocable K" = "#00A9FF",
-  "Metrocable L" = "#00A0FF",
-  "Metrocable M" = "#A3A5FF",
-  "Metrocable O" = "#C77CFF",
-  "Metrocable P" = "#F564E3",
-  "Tram T"       = "#FF61C3"
+  "BRT 1"        = "#67B7E1",
+  "BRT 2"        = "#2F7FBF",
+  "BRT O"        = "#08306B",
+  "Metro A"      = "#6A51A3",
+  "Metro B"      = "#4D4D4D",
+  "Metro C"      = "#9E9E9E",
+  "Metrocable H" = "#FCA5A5",
+  "Metrocable J" = "#F87171",
+  "Metrocable K" = "#EF4444",
+  "Metrocable L" = "#B91C1C",
+  "Metrocable M" = "#7F1D1D",
+  "Metrocable O" = "#6B1F2B",
+  "Metrocable P" = "#4C0519",
+  "Tram T"       = "#16A34A",
+  "SITVA"        = "#444444"
 )
 
 niv_m <- levels(metro_clip$linea_plot)
@@ -226,7 +284,7 @@ orden_leyenda <- c(
   "BRT 1","BRT 2","BRT O",
   "Metro A","Metro B","Metro C",
   "Metrocable H","Metrocable J","Metrocable K","Metrocable L","Metrocable M","Metrocable O","Metrocable P",
-  "Tram T"
+  "Tram T","SITVA"
 )
 orden_leyenda <- orden_leyenda[orden_leyenda %in% niv_m]
 
@@ -245,7 +303,7 @@ ylim <- c(as.numeric(bb["ymin"]) - ypad, as.numeric(bb["ymax"]) + ypad)
 # 9) Mapa final (edad)
 # -------------------------------------------------------------------
 map.med.edad <- ggplot() +
-  
+
   # comunas (estrato)
   geom_sf(
     data = shape,
@@ -259,10 +317,10 @@ map.med.edad <- ggplot() +
     values = colores_estrato,
     breaks = c("Bajo","Medio","Alto"),
     drop = FALSE,
-    na.value = "#FFFFFF"   # <- NO metas NA en leyenda
+    na.value = "#FFFFFF"
   ) +
-  
-  # metro
+
+  # líneas SITVA
   geom_sf(
     data = metro_clip,
     aes(color = linea_plot),
@@ -277,26 +335,38 @@ map.med.edad <- ggplot() +
     breaks = orden_leyenda,
     drop = FALSE
   ) +
-  
+
+  # estaciones SITVA (puntos) — discretas para no tapar
+  geom_sf(
+    data = est_clip,
+    shape = 21,
+    size = 1.8,
+    stroke = 0.35,
+    color = "black",
+    fill  = "white",
+    alpha = 0.95,
+    inherit.aes = FALSE
+  ) +
+
   # pies (2da escala fill)
   ggnewscale::new_scale_fill() +
   geom_scatterpie(
     data = df_counts,
     aes(x = long, y = lat, group = cuadrante, r = r_pie),
-    cols = cols_pie,                      # <- orden correcto
+    cols = cols_pie,
     color = "white",
     linewidth = 0.25,
     alpha = 0.92
   ) +
   scale_fill_manual(
     name   = "Medio de transporte",
-    values = colores_medio[cols_pie],     # <- colores correctos (subset)
+    values = colores_medio[cols_pie],
     breaks = cols_pie,
     drop = FALSE
   ) +
-  
+
   facet_wrap(~ rango_edad, ncol = 3) +
-  
+
   # brújula + escala
   ggspatial::annotation_north_arrow(
     location = "bl",
@@ -314,35 +384,35 @@ map.med.edad <- ggplot() +
     pad_y = unit(0.30, "cm"),
     text_cex = 0.85
   ) +
-  
+
   coord_sf(
     xlim = xlim, ylim = ylim,
     clip = "on",
     expand = FALSE,
     datum = st_crs(4326)
   ) +
-  
+
   labs(
     title = "Elección modal por comuna - Medellín (por rango de edad)",
     x = NULL, y = NULL
   ) +
-  
-  theme_minimal(base_size = 12) +
+
+  theme_minimal(base_size = 12, base_family = base_font) +
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
-    
+
     # CUADRO por panel
     panel.border     = element_rect(color = "grey30", fill = NA, linewidth = 0.6),
-    
+
     # GRADOS visibles
-    axis.text        = element_text(size = 9, color = "grey20"),
+    axis.text        = element_text(size = 9, color = "grey20", family = base_font),
     axis.ticks       = element_line(color = "grey20"),
     axis.ticks.length = unit(0.12, "cm"),
-    
+
     strip.background = element_rect(fill = "grey95", color = NA),
-    strip.text       = element_text(face = "bold"),
-    
+    strip.text       = element_text(face = "bold", family = base_font),
+
     legend.position  = "right",
     legend.background = element_rect(fill = "white", color = "grey70")
   )
@@ -352,3 +422,4 @@ ggsave(
   filename = "map.med_edad_con_metro.png",
   width = 14, height = 8, dpi = 300, bg = "white"
 )
+

@@ -14,7 +14,10 @@ library(ggspatial)
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\mapas\\Geo_AMVA\\")
 ruta_xlsx  <- "input_famd_med_29102025.xlsx"
 ruta_shp   <- "LimiteComunaCorregimiento_2014.shp"
-ruta_metro <- "Lineas_Sistema_Metro_-OD\\Lineas_Sistema_Metro_-OD.shp"
+
+# ✅ SITVA (vías + estaciones)
+ruta_vias       <- "shapes_transportepublico\\vias_sitva_MED.shp"
+ruta_estaciones <- "shapes_transportepublico\\estaciones_sitva_MED.shp"
 
 # ==========================================================
 # 1) Datos
@@ -80,20 +83,37 @@ lims <- range(shape_join$mean_time, na.rm = TRUE)
 mid  <- mean(shape_join$mean_time, na.rm = TRUE)
 
 # ==========================================================
-# 5) Metro: gris oscuro, una sola tinta, SIN leyenda
+# 5) SITVA: vías grises (una sola tinta) + estaciones (puntos)
+#     SIN leyenda
 # ==========================================================
-metro_clip <- NULL
-if (file.exists(ruta_metro)) {
-  metro_ln <- st_read(ruta_metro, quiet = TRUE)
-  if (is.na(st_crs(metro_ln))) metro_ln <- st_set_crs(metro_ln, 3116)
-  metro_ln <- st_transform(metro_ln, 4326)
+vias_clip <- NULL
+est_clip  <- NULL
+
+med_union <- st_make_valid(st_union(comunas_sf))
+
+# vías
+if (file.exists(ruta_vias)) {
+  vias_ln <- st_read(ruta_vias, quiet = TRUE)
+  if (is.na(st_crs(vias_ln))) vias_ln <- st_set_crs(vias_ln, 3116)
+  vias_ln <- st_transform(vias_ln, 4326)
   
-  med_union <- st_make_valid(st_union(comunas_sf))
-  
-  metro_clip <- tryCatch({
-    st_intersection(st_make_valid(metro_ln), med_union)
+  vias_clip <- tryCatch({
+    st_intersection(st_make_valid(vias_ln), med_union)
   }, error = function(e) {
-    st_crop(metro_ln, st_bbox(comunas_sf))
+    st_crop(vias_ln, st_bbox(comunas_sf))
+  })
+}
+
+# estaciones
+if (file.exists(ruta_estaciones)) {
+  est_pts <- st_read(ruta_estaciones, quiet = TRUE)
+  if (is.na(st_crs(est_pts))) est_pts <- st_set_crs(est_pts, 3116)
+  est_pts <- st_transform(est_pts, 4326)
+  
+  est_clip <- tryCatch({
+    st_intersection(st_make_valid(est_pts), med_union)
+  }, error = function(e) {
+    st_crop(est_pts, st_bbox(comunas_sf))
   })
 }
 
@@ -110,7 +130,7 @@ xlim <- c(as.numeric(bb["xmin"]) - xpad, as.numeric(bb["xmax"]) + xpad)
 ylim <- c(as.numeric(bb["ymin"]) - ypad, as.numeric(bb["ymax"]) + ypad)
 
 # ==========================================================
-# 7) Plot (RECUADRO + GRADOS + METRO gris)
+# 7) Plot (RECUADRO + GRADOS + VÍAS grises + ESTACIONES)
 # ==========================================================
 p <- ggplot() +
   
@@ -122,14 +142,28 @@ p <- ggplot() +
     linewidth = 0.25
   ) +
   
-  # Metro en gris oscuro (sin leyenda)
-  {if (!is.null(metro_clip))
+  # Vías SITVA en gris (sin leyenda)
+  {if (!is.null(vias_clip))
     geom_sf(
-      data = metro_clip,
-      color = "grey25",
+      data = vias_clip,
+      color = "grey35",
       linewidth = 0.80,
       alpha = 0.85,
       lineend = "round",
+      inherit.aes = FALSE
+    )
+  } +
+  
+  # Estaciones (puntos) — discretas (sin leyenda)
+  {if (!is.null(est_clip))
+    geom_sf(
+      data = est_clip,
+      shape = 21,
+      size = 2.0,
+      stroke = 0.35,
+      color = "black",
+      fill  = "white",
+      alpha = 0.95,
       inherit.aes = FALSE
     )
   } +
@@ -178,7 +212,7 @@ p <- ggplot() +
     panel.grid  = element_blank(),
     axis.title  = element_blank(),
     
-    # ✅ GRADOS visibles
+    # GRADOS 
     axis.text        = element_text(size = 9, color = "grey20"),
     axis.ticks       = element_line(color = "grey25"),
     axis.ticks.length = unit(0.12, "cm"),
@@ -187,10 +221,9 @@ p <- ggplot() +
     strip.background = element_rect(fill = "grey95", color = NA),
     strip.text       = element_text(colour = "grey20", face = "bold"),
     
-    # ✅ RECUADRO por panel
+    # RECUADRO por panel
     panel.border = element_rect(color = "grey30", fill = NA, linewidth = 0.6),
     
-    # sin borde externo
     plot.background  = element_rect(fill = "white", color = NA),
     panel.background = element_rect(fill = "white", color = NA)
   )
