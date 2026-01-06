@@ -9,12 +9,18 @@ library(sf)
 library(ggplot2)
 library(ggspatial)
 library(grid)
+library(units)
 
+# ==========================================================
+# 0) RUTAS
+# ==========================================================
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
 ruta_tabla   <- "Comunas.xlsx"
 ruta_comunas <- "mc_comunas.shp"
 
-# ---------- helpers ----------
+# ==========================================================
+# 1) HELPERS
+# ==========================================================
 to_num_personas <- function(x){
   x <- as.character(x)
   x <- str_replace_all(x, "\\s+", "")
@@ -22,6 +28,7 @@ to_num_personas <- function(x){
   x <- str_replace_all(x, ",", ".")
   suppressWarnings(as.numeric(x))
 }
+
 to_prop_pct <- function(x){
   x <- as.character(x)
   x <- str_replace_all(x, "\\s+", "")
@@ -31,14 +38,23 @@ to_prop_pct <- function(x){
   suppressWarnings(as.numeric(x))/100
 }
 
-fmt_punto <- function(x){
-  format(x, big.mark=".", decimal.mark=",", scientific=FALSE, trim=TRUE)
+# Formato corto en miles (1 decimal)
+fmt_miles <- function(x, dec = 1){
+  format(
+    round(x, dec),
+    decimal.mark = ",",
+    big.mark = ".",
+    scientific = FALSE,
+    trim = TRUE,
+    nsmall = dec
+  )
 }
 
-# ---------- tabla ----------
-tab <- readxl::read_excel(ruta_tabla)
+# ==========================================================
+# 2) TABLA
+# ==========================================================
+tab <- read_excel(ruta_tabla)
 
-# OJO: tu excel a veces dice Población o Poblacion
 col_pob <- if ("Población" %in% names(tab)) "Población" else if ("Poblacion" %in% names(tab)) "Poblacion" else NA
 if (is.na(col_pob)) stop("No encuentro la columna de población (Población / Poblacion) en Comunas.xlsx")
 
@@ -52,11 +68,15 @@ tab2 <- tab %>%
   filter(!is.na(Comuna), !is.na(poblacion), !is.na(pct_h), !is.na(pct_m)) %>%
   mutate(
     hombres = round(poblacion * pct_h),
-    mujeres = round(poblacion * pct_m)
+    mujeres = round(poblacion * pct_m),
+    poblacion_miles = poblacion / 1000
   )
 
-# ---------- shape ----------
+# ==========================================================
+# 3) SHAPE + JOIN
+# ==========================================================
 shape_cali <- st_read(ruta_comunas, quiet = TRUE)
+
 col_comuna <- names(shape_cali)[grepl("comuna", names(shape_cali), ignore.case = TRUE)][1]
 if (is.na(col_comuna)) stop("No se detectó columna comuna en el SHP de comunas.")
 
@@ -68,7 +88,9 @@ crs_src <- st_crs(shape_cali)
 if (is.na(crs_src)) stop("El shapefile de comunas no tiene CRS.")
 shape_cali <- st_transform(shape_cali, 4326)
 
-# ---------- puntos dentro de cada comuna ----------
+# ==========================================================
+# 4) PUNTOS (H y M) — EN MILES + CENTRADOS
+# ==========================================================
 pts <- st_point_on_surface(shape_cali)
 xy  <- st_coordinates(pts)
 
@@ -78,55 +100,71 @@ centros <- pts %>%
   dplyr::select(Comuna, x, y, hombres, mujeres, poblacion) %>%
   filter(!is.na(hombres), !is.na(mujeres), !is.na(poblacion)) %>%
   mutate(
-    txt_h = paste0("\u25B2 ", fmt_punto(hombres)), # ▲
-    txt_m = paste0("\u2605 ", fmt_punto(mujeres))  # ★
+    txt_h = paste0("\u25B2 ", fmt_miles(hombres / 1000, 1)), # ▲
+    txt_m = paste0("\u2605 ", fmt_miles(mujeres / 1000, 1))  # ★
   )
 
-# offset chiquito para separar H y M dentro de la comuna
-dy <- 0.0022
+# separación
+dy <- 0.0020
 h_df <- centros %>% transmute(x, y = y + dy, txt = txt_h)
 m_df <- centros %>% transmute(x, y = y - dy, txt = txt_m)
 
-# ---------- paleta calor (CAMBIO: AZULES) ----------
-pal_azules <- c("#F7FBFF","#DEEBF7","#C6DBEF","#9ECAE1","#6BAED6","#4292C6","#2171B5","#08519C","#08306B")
-
-bb <- st_bbox(shape_cali)
-xpad <- 0.02 * as.numeric(bb["xmax"] - bb["xmin"])
-ypad <- 0.02 * as.numeric(bb["ymax"] - bb["ymin"])
-xlim <- c(as.numeric(bb["xmin"]) - xpad, as.numeric(bb["xmax"]) + xpad)
-ylim <- c(as.numeric(bb["ymin"]) - ypad, as.numeric(bb["ymax"]) + ypad)
+# ==========================================================
+# 5) PALETA AZULES
+# ==========================================================
+pal_azules <- c(
+  "#F7FBFF","#DEEBF7","#C6DBEF","#9ECAE1",
+  "#6BAED6","#4292C6","#2171B5","#08519C","#08306B"
+)
 
 # ==========================================================
-# MAPA (solo cambia: colores + nombre del label)
+# 6) BBOX (MUCHO más aire para evitar “recortes” en bordes)
+# ==========================================================
+bb <- st_bbox(shape_cali)
+
+# subo padding para que el texto jamás quede pegado al panel
+xpad <- 0.08 * (bb$xmax - bb$xmin)
+ypad <- 0.08 * (bb$ymax - bb$ymin)
+
+xlim <- c(bb$xmin - xpad, bb$xmax + xpad)
+ylim <- c(bb$ymin - ypad, bb$ymax + ypad)
+
+# ==========================================================
+# 7) MAPA FINAL (estilo Medellín, sin cajas)
 # ==========================================================
 p <- ggplot() +
   geom_sf(
     data = shape_cali,
-    aes(fill = poblacion),  # <-- se mantiene igual
+    aes(fill = poblacion_miles),
     color = "grey40",
     linewidth = 0.25
   ) +
   scale_fill_gradientn(
-    colors = pal_azules,                 # <-- CAMBIO: azules
-    name = "Densidad poblacional (miles)",# <-- CAMBIO: label
-    na.value = "white"
+    colors = pal_azules,
+    name   = "Densidad poblacional (miles)",
+    na.value = "white",
+    labels = function(x) fmt_miles(x, 1)
   ) +
   
-  # Texto Hombres / Mujeres (solo negro)
+  # Texto Hombres / Mujeres (negro, más grande, centrado)
   geom_text(
     data = h_df,
     aes(x = x, y = y, label = txt),
     color = "black",
-    size = 2.5,
+    size = 3.5,
     fontface = "bold",
+    hjust = 0.5,
+    vjust = 0.5,
     lineheight = 0.95
   ) +
   geom_text(
     data = m_df,
     aes(x = x, y = y, label = txt),
     color = "black",
-    size = 2.5,
+    size = 3.5,
     fontface = "bold",
+    hjust = 0.5,
+    vjust = 0.5,
     lineheight = 0.95
   ) +
   
@@ -146,12 +184,18 @@ p <- ggplot() +
     pad_y = unit(0.2, "cm")
   ) +
   
-  coord_sf(xlim = xlim, ylim = ylim, clip = "on") +
+  coord_sf(
+    xlim = xlim, ylim = ylim,
+    clip = "off",     # clave: que el panel NO recorte texto
+    expand = FALSE
+  ) +
+  
   labs(
     title = "Cali • Hombres y Mujeres por comuna",
-    subtitle = "▲ Hombres  ★ Mujeres  (valores en miles)",
+    subtitle = "▲ Hombres  ★ Mujeres (valores en miles)",
     x = NULL, y = NULL
   ) +
+  
   theme_minimal(base_size = 12) +
   theme(
     panel.border = element_rect(color = "grey20", fill = NA, linewidth = 0.8),
@@ -160,7 +204,20 @@ p <- ggplot() +
     axis.text  = element_text(size = 9, color = "grey30"),
     axis.ticks = element_line(color = "grey30"),
     legend.position = "right",
-    plot.title = element_text(face = "bold")
+    plot.title = element_text(face = "bold"),
+    
+    # más margen externo para evitar recorte por el borde del plot
+    plot.margin = margin(15, 55, 15, 15)
   )
 
-ggsave("cali_hombres_mujeres_por_comuna.png", p, width = 12, height = 8, dpi = 300, bg = "white")
+# ==========================================================
+# 8) EXPORTAR
+# ==========================================================
+ggsave(
+  "cali_hombres_mujeres_por_comuna.png",
+  p,
+  width = 12, height = 8,
+  dpi = 300,
+  bg = "white"
+)
+
