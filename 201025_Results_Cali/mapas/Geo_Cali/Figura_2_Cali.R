@@ -12,6 +12,10 @@ library(scatterpie)
 library(ggnewscale)
 library(ggspatial)
 library(grid)
+library(scales)
+library(units)
+library(FNN)
+library(igraph)
 
 # Evitar choques
 if ("package:plyr" %in% search()) detach("package:plyr", unload = TRUE)
@@ -21,10 +25,9 @@ if ("package:tidytable" %in% search()) detach("package:tidytable", unload = TRUE
 # 0) Rutas
 # -------------------------------------------------------------------
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
-ruta_xlsx <- "input_famd_cali_29102025.xlsx"
+ruta_xlsx        <- "input_famd_cali_29102025.xlsx"
 ruta_shp_comunas <- "mc_comunas.shp"
-ruta_shp_terminales <- "terminales\\terminales.shp"
-ruta_shp_paradas    <- "Estaciones_de_Parada_2025\\Estaciones_de_Parada_2025.shp"
+ruta_pts_mio <- "Estaciones_de_Parada_2025\\Estaciones_de_Parada_2025.shp"
 
 # -------------------------------------------------------------------
 # 1) Datos
@@ -75,8 +78,10 @@ for (k in 1:nrow(data)) {
   if (data$Comuna[k] %in% c(10,17,18,19,20,22))      data$zona[k] <- "Sur"
 }
 data <- data[!is.na(data$zona), ]
-data$zona <- factor(data$zona,
-                    levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"))
+data$zona <- factor(
+  data$zona,
+  levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur")
+)
 
 coords_zona <- data.frame(
   zona = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"),
@@ -104,6 +109,13 @@ if (is.na(columna_comuna_shape)) stop("No se detectó columna con 'comuna' en el
 shape$Comuna <- as.integer(gsub("\\D","", as.character(shape[[columna_comuna_shape]])))
 shape <- left_join(shape, estratos_comuna, by = "Comuna")
 
+crs_shape <- st_crs(shape)
+if (is.na(crs_shape)) stop("El shapefile de comunas no tiene CRS. Asigna st_crs(shape) (ej. 3116).")
+
+shape_4326 <- st_transform(shape, 4326)
+shape_4326$categoria <- factor(shape_4326$categoria, levels = c("Bajo","Medio","Alto"))
+cali_union <- sf::st_make_valid(sf::st_union(shape_4326))
+
 # -------------------------------------------------------------------
 # 6) Conteos por sexo-zona-medio + pivot (pies)
 # -------------------------------------------------------------------
@@ -113,7 +125,6 @@ df_counts <- data %>%
   tidyr::pivot_wider(names_from = medio, values_from = n, values_fill = 0) %>%
   left_join(coords_zona, by = "zona")
 
-# Columnas del pie
 cols_cand <- setdiff(names(df_counts), c("sexo","zona","long","lat"))
 for (nm in cols_cand) {
   df_counts[[nm]] <- suppressWarnings(as.numeric(df_counts[[nm]]))
@@ -137,40 +148,79 @@ colores_medio <- c(
 cols_pie <- intersect(cols_cand, names(colores_medio))
 if (length(cols_pie) == 0) stop("cols_pie quedó vacío: revisa 'medio' en la base.")
 
-# MIO (dos azules)
-azul_paradas    <- "#6BAED6"
-azul_terminales <- "#08519C"
+# >>> Color líneas MIO (como en Figura 5)
+azul_lineas <- "#1F78B4"
 
 # -------------------------------------------------------------------
-# 8) Leer MIO + CRS -> WGS84 (grados)
+# 8) MIO -> líneas punto-a-punto (kNN + MST) SIN puntos (copiado de Figura 5)
 # -------------------------------------------------------------------
-terminales <- sf::st_read(ruta_shp_terminales, quiet = TRUE)
-paradas    <- sf::st_read(ruta_shp_paradas, quiet = TRUE)
+mio_pts <- sf::st_read(ruta_pts_mio, quiet = TRUE)
+if (is.na(sf::st_crs(mio_pts))) sf::st_crs(mio_pts) <- crs_shape
+mio_pts_4326 <- sf::st_transform(mio_pts, 4326)
 
-crs_shape <- st_crs(shape)
-if (is.na(crs_shape)) stop("El shapefile de comunas no tiene CRS. Asigna st_crs(shape) (ej. 3116).")
+mio_pts_clip <- tryCatch(
+  sf::st_intersection(sf::st_make_valid(mio_pts_4326), cali_union),
+  error = function(e) sf::st_crop(mio_pts_4326, sf::st_bbox(shape_4326))
+)
 
-if (is.na(st_crs(paradas)))    st_crs(paradas)    <- crs_shape
-if (is.na(st_crs(terminales))) st_crs(terminales) <- crs_shape
+mio_pts_clip <- mio_pts_clip[!sf::st_is_empty(mio_pts_clip), ]
+mio_pts_clip <- sf::st_cast(mio_pts_clip, "POINT", warn = FALSE)
 
-shape_4326      <- st_transform(shape, 4326)
-paradas_4326    <- st_transform(paradas, 4326)
-terminales_4326 <- st_transform(terminales, 4326)
+mio_pts_m <- sf::st_transform(mio_pts_clip, 3857)
+mio_pts_m <- sf::st_cast(mio_pts_m, "POINT", warn = FALSE)
+mio_pts_m <- mio_pts_m[!sf::st_is_empty(mio_pts_m), ]
+mio_pts_m$.idx <- seq_len(nrow(mio_pts_m))
 
-# IMPORTANTÍSIMO: transformar coords_zona (metros) a grados para que los pies queden donde deben
+xy <- sf::st_coordinates(mio_pts_m)
+if (nrow(xy) < 3) stop("Muy pocos puntos dentro de Cali para construir líneas.")
+
+k <- 6
+kn <- FNN::get.knn(xy, k = min(k, nrow(xy) - 1))
+
+edges <- do.call(rbind, lapply(seq_len(nrow(xy)), function(i){
+  to <- kn$nn.index[i, ]
+  w  <- kn$nn.dist[i, ]
+  cbind(from = rep(i, length(to)), to = to, w = w)
+}))
+edges <- as.data.frame(edges)
+
+edges <- edges %>%
+  filter(!is.na(from), !is.na(to),
+         from >= 1, to >= 1,
+         from <= nrow(xy), to <= nrow(xy))
+
+verts <- data.frame(id = seq_len(nrow(xy)))
+g <- igraph::graph_from_data_frame(edges[, c("from","to")], directed = FALSE, vertices = verts)
+E(g)$weight <- edges$w
+
+mst_g <- igraph::mst(g, weights = E(g)$weight)
+mst_edges <- igraph::as_data_frame(mst_g, what = "edges")
+
+seg_geom <- lapply(seq_len(nrow(mst_edges)), function(r){
+  i <- as.integer(mst_edges$from[r])
+  j <- as.integer(mst_edges$to[r])
+  sf::st_linestring(rbind(xy[i, ], xy[j, ]))
+})
+
+mio_lines_m    <- sf::st_sfc(seg_geom, crs = 3857) %>% sf::st_as_sf()
+mio_lines_4326 <- sf::st_transform(mio_lines_m, 4326)
+mio_lines_4326 <- sf::st_simplify(mio_lines_4326, dTolerance = 0.0005, preserveTopology = TRUE)
+
+# -------------------------------------------------------------------
+# 9) Pies -> transformar coords_zona (metros) a grados (igual que antes)
+# -------------------------------------------------------------------
 pies_sf_m  <- st_as_sf(df_counts, coords = c("long","lat"), crs = crs_shape, remove = FALSE)
 pies_4326  <- st_transform(pies_sf_m, 4326)
 df_counts$long <- st_coordinates(pies_4326)[,1]
 df_counts$lat  <- st_coordinates(pies_4326)[,2]
 
-# Radio del pie en grados
 bb    <- sf::st_bbox(shape_4326)
 xspan <- as.numeric(bb["xmax"] - bb["xmin"])
 yspan <- as.numeric(bb["ymax"] - bb["ymin"])
 r_pie <- 0.08 * min(xspan, yspan)
 
 # -------------------------------------------------------------------
-# 9) Mapa final (UNA sola coord_sf)
+# 10) Mapa final
 # -------------------------------------------------------------------
 map.cali.sexo <- ggplot() +
   geom_sf(
@@ -184,6 +234,21 @@ map.cali.sexo <- ggplot() +
     name   = "Estrato predominante",
     values = colores_estrato,
     na.value = "#F7F7F7"
+  ) +
+  
+  geom_sf(
+    data = mio_lines_4326,
+    aes(color = "Troncales MIO"),
+    linewidth = 0.45,
+    alpha = 0.95,
+    lineend = "round",
+    inherit.aes = FALSE
+  ) +
+  scale_color_manual(
+    name = NULL,
+    values = c("Troncales MIO" = azul_lineas),
+    breaks = "Troncales MIO",
+    guide  = guide_legend(override.aes = list(linewidth = 1.2, alpha = 1))
   ) +
   
   coord_sf(clip = "on") +
@@ -204,31 +269,8 @@ map.cali.sexo <- ggplot() +
     guide  = guide_legend(override.aes = list(alpha = 1))
   ) +
   
-  # Paradas/Terminales (triángulo forzado)
-  geom_sf(
-    data = paradas_4326,
-    aes(color = "Paradas MIO"),
-    shape = 16,
-    size  = 1.6,
-    alpha = 0.95
-  ) +
-  geom_sf(
-    data = terminales_4326,
-    aes(color = "Terminales MIO"),
-    shape = 17,
-    size  = 2.8,
-    alpha = 0.98
-  ) +
-  scale_color_manual(
-    name = NULL,
-    values = c("Paradas MIO" = azul_paradas, "Terminales MIO" = azul_terminales),
-    breaks = c("Paradas MIO","Terminales MIO"),
-    guide = guide_legend(override.aes = list(shape = c(16, 17), size = c(3, 3)))
-  ) +
-  
   facet_wrap(~ sexo) +
   
-  # Brújula (mantengo) — SIN annotation_scale para evitar warning y “daño”
   annotation_north_arrow(
     location = "bl",
     which_north = "true",
@@ -259,6 +301,6 @@ map.cali.sexo <- ggplot() +
 
 ggsave(
   plot = map.cali.sexo,
-  filename = "map.cali_sexo_facet_mio_con_grados_y_brujula.png",
+  filename = "map.cali_sexo_facet.png",
   width = 12, height = 8, dpi = 300, bg = "white"
 )

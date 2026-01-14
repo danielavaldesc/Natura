@@ -89,59 +89,12 @@ lab_pts <- st_point_on_surface(shape_comunas) %>%
   mutate(label = as.character(Comuna))
 
 # ==========================================================
-# 4) HELPERS: detectar columna + mapear a nombres completos
+# 4) HELPERS: detectar columna
 # ==========================================================
 pick_col <- function(x, patterns){
   cand <- names(x)[grepl(paste(patterns, collapse="|"), names(x), ignore.case = TRUE)]
   if (length(cand) == 0) return(NA_character_)
   cand[1]
-}
-
-map_labels <- c(
-  "1" = "BRT 1",
-  "2" = "BRT 2",
-  "0" = "BRT O",
-  "A" = "Metro A",
-  "B" = "Metro B",
-  "C" = "Metro C",
-  "H" = "Metrocable H",
-  "J" = "Metrocable J",
-  "K" = "Metrocable K",
-  "L" = "Metrocable L",
-  "M" = "Metrocable M",
-  "O" = "Metrocable O",
-  "P" = "Metrocable P",
-  "T" = "Tram T"
-)
-
-make_linea_pretty <- function(x){
-  x <- str_squish(as.character(x))
-  x[is.na(x) | x == ""] <- "Sin nombre"
-  
-  code <- x %>%
-    str_to_upper() %>%
-    str_replace_all("L[IÍ]NEA\\s*", "") %>%
-    str_replace_all("^LINE\\s*", "") %>%
-    str_replace_all("\\s+", " ") %>%
-    str_trim()
-  
-  # captura algo útil aunque venga "METRO A", "BRT 1", "A", etc.
-  token <- str_extract(code, "\\b(BRT\\s*[0120]|METRO\\s*[ABC]|METROCABLE\\s*[HJKLMOP]|TRAM\\s*T|TRANV[IÍ]A|[012ABC HJKLMOPT])\\b")
-  token <- str_replace_all(token, "\\s+", "")
-  token <- str_replace(token, "^TRANV[IÍ]A$", "T")
-  token <- str_replace(token, "^TRAMT$", "T")
-  token <- str_replace(token, "^METRO([ABC])$", "\\1")
-  token <- str_replace(token, "^BRT([0120])$", "\\1")
-  
-  pretty <- ifelse(token %in% names(map_labels), map_labels[token], code)
-  
-  pretty %>%
-    str_replace_all("^METRO\\s*([A-Z0-9]+)$", "Metro \\1") %>%
-    str_replace_all("^METROCABLE\\s*([A-Z0-9]+)$", "Metrocable \\1") %>%
-    str_replace_all("^BRT\\s*([A-Z0-9]+)$", "BRT \\1") %>%
-    str_replace_all("^TRAM\\s*([A-Z0-9]+)$", "Tram \\1") %>%
-    str_replace_all("\\s+", " ") %>%
-    str_trim()
 }
 
 # ==========================================================
@@ -158,20 +111,19 @@ est_pts <- st_transform(est_pts, 4326)
 # columna para identificar línea/servicio en VIAS
 col_linea_vias <- pick_col(vias_ln, c("linea","línea","line","route","nombre","name","codigo","sigla","tipo","mode","serv"))
 if (is.na(col_linea_vias)) {
-  # si no hay ninguna candidata, igual dibujo en un solo color (sin leyenda)
   vias_ln$linea_plot <- "SITVA"
 } else {
-  vias_ln$linea_plot <- make_linea_pretty(vias_ln[[col_linea_vias]])
+  vias_ln$linea_plot <- str_trim(as.character(vias_ln[[col_linea_vias]]))
 }
-
-vias_ln$linea_plot <- factor(vias_ln$linea_plot)
 
 # recorte a comunas
 vias_clip <- tryCatch(
   st_intersection(st_make_valid(vias_ln), med_union),
   error = function(e) st_crop(vias_ln, st_bbox(shape_comunas))
 )
-vias_clip$linea_plot <- droplevels(factor(vias_clip$linea_plot))
+
+# Asegura character (evita factores raros)
+vias_clip$linea_plot <- as.character(vias_clip$linea_plot)
 
 est_clip <- tryCatch(
   st_intersection(st_make_valid(est_pts), med_union),
@@ -179,41 +131,49 @@ est_clip <- tryCatch(
 )
 
 # ==========================================================
-# 6) PALETAS
+# 6) PALETAS (CORRECCIÓN MÍNIMA: traducir códigos -> nombres, NO factor levels)
 # ==========================================================
 colores_estrato <- c("Bajo"="#F2F2F2","Medio"="#D9D9D9","Alto"="#BFBFBF")
 
-pal_base <- c(
-  "BRT 1"        = "#67B7E1",  # azul claro
-  "BRT 2"        = "#2F7FBF",  # azul medio
-  "BRT O"        = "#08306B",  # azul oscuro (BRT O)
-  "Metro A"      = "#6A51A3",  # morado
-  "Metro B"      = "#4D4D4D",  # gris
-  "Metro C"      = "#9E9E9E",  # gris claro (si aparece)
-  "Metrocable H" = "#FCA5A5",  # rojo muy claro
-  "Metrocable J" = "#F87171",  # rojo claro
-  "Metrocable K" = "#EF4444",  # rojo
-  "Metrocable L" = "#B91C1C",  # rojo oscuro
-  "Metrocable M" = "#7F1D1D",  # burdeos
-  "Metrocable O" = "#6B1F2B",  # vino (si aparece)
-  "Metrocable P" = "#4C0519",  # vino oscuro
-  "Tram T"       = "#16A34A",  # verde
-  "SITVA"        = "#444444"   
+# Traducción directa (si en tu shap viene con códigos)
+mapa_lineas <- c(
+  "1" = "BRT 1",
+  "2" = "BRT 2",
+  "0" = "BRT O",
+  "O" = "BRT O",
+  "A" = "Metro A",
+  "B" = "Metro B",
+  "H" = "Metrocable H",
+  "J" = "Metrocable J",
+  "K" = "Metrocable K",
+  "L" = "Metrocable L",
+  "M" = "Metrocable M",
+  "P" = "Metrocable P",
+  "T" = "Tram T"
 )
 
-niv <- levels(vias_clip$linea_plot)
-pal_vias <- setNames(hue_pal()(length(niv)), niv)
-pal_vias[names(pal_base)[names(pal_base) %in% niv]] <- pal_base[names(pal_base) %in% niv]
+# Aplica mapeo; lo que no matchee queda como SITVA
+vias_clip$linea_plot <- mapa_lineas[vias_clip$linea_plot]
+vias_clip$linea_plot[is.na(vias_clip$linea_plot) | vias_clip$linea_plot == ""] <- "SITVA"
 
-orden_leyenda <- c(
-  "BRT 1","BRT 2","BRT O",
-  "Metro A","Metro B","Metro C",
-  "Metrocable H","Metrocable J","Metrocable K","Metrocable L","Metrocable M","Metrocable O","Metrocable P",
-  "Tram T","SITVA"
+# Paleta fija (la tuya)
+pal_vias <- c(
+  "BRT 1"        = "#67B7E1",
+  "BRT 2"        = "#2F7FBF",
+  "BRT O"        = "#08306B",
+  "Metro A"      = "#6A51A3",
+  "Metro B"      = "#4D4D4D",
+  "Metro C"      = "#9E9E9E",
+  "Metrocable H" = "#FCA5A5",
+  "Metrocable J" = "#F87171",
+  "Metrocable K" = "#EF4444",
+  "Metrocable L" = "#B91C1C",
+  "Metrocable M" = "#7F1D1D",
+  "Metrocable O" = "#6B1F2B",
+  "Metrocable P" = "#4C0519",
+  "Tram T"       = "#16A34A",
+  "SITVA"        = "#444444"
 )
-orden_leyenda <- orden_leyenda[orden_leyenda %in% niv]
-vias_clip$linea_plot <- factor(vias_clip$linea_plot, levels = orden_leyenda)
-pal_vias <- pal_vias[orden_leyenda]
 
 # ==========================================================
 # 7) BBOX con margen (zoom)
@@ -255,11 +215,10 @@ map_med_sitva <- ggplot() +
   scale_color_manual(
     values = pal_vias,
     name = enc2utf8("Líneas SITVA"),
-    breaks = orden_leyenda,
     drop = FALSE
   ) +
   
-  # estaciones (puntos) — discretas para no tapar
+  # estaciones (puntos)
   geom_sf(
     data = est_clip,
     shape = 21,

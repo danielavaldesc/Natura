@@ -25,7 +25,7 @@ ruta_paradas    <- "Estaciones_de_Parada_2025\\Estaciones_de_Parada_2025.shp"
 ruta_corredores <- "corredores\\corredores.shp"
 
 # ==========================================================
-# 1) DATOS – ESTRATO PREDOMINANTE POR COMUNA (MODA)
+# 1) DATOS – ESTRATO PREDOMINANTE POR COMUNA
 # ==========================================================
 data <- read_excel(ruta_xlsx)
 
@@ -33,7 +33,7 @@ data$Comuna <- suppressWarnings(as.integer(gsub("\\D","", as.character(data$p19c
 
 nombre_estrato <- if ("p9_estrato3" %in% names(data)) "p9_estrato3" else
   if ("p9_estratro3" %in% names(data)) "p9_estratro3" else NA
-if (is.na(nombre_estrato)) stop("No se encontró la columna de estrato (p9_estrato3 / p9_estratro3).")
+if (is.na(nombre_estrato)) stop("No se encontró la columna de estrato.")
 
 tmp <- data.frame(
   Comuna = data$Comuna,
@@ -46,13 +46,12 @@ tmp$estrato_cat[tmp$estrato_cat %in% c("medio","media")] <- "Medio"
 tmp$estrato_cat[tmp$estrato_cat %in% c("bajo","baja")]   <- "Bajo"
 tmp <- tmp[!is.na(tmp$Comuna) & !is.na(tmp$estrato_cat) & tmp$estrato_cat != "", ]
 
-niveles <- c("Bajo","Medio","Alto")
-tmp$estrato_cat <- factor(tmp$estrato_cat, levels = niveles, ordered = TRUE)
+tmp$estrato_cat <- factor(tmp$estrato_cat, levels = c("Bajo","Medio","Alto"), ordered = TRUE)
 
 estratos_comuna <- tmp %>%
   group_by(Comuna, estrato_cat) %>%
   summarise(n = n(), .groups = "drop_last") %>%
-  arrange(desc(n), estrato_cat) %>%   # desempate estable
+  arrange(desc(n), estrato_cat) %>%
   slice(1) %>%
   ungroup() %>%
   transmute(Comuna, categoria = as.character(estrato_cat))
@@ -66,17 +65,15 @@ paradas    <- st_read(ruta_paradas, quiet = TRUE)
 corredores <- st_read(ruta_corredores, quiet = TRUE)
 
 col_comuna <- names(shape_cali)[grepl("comuna", names(shape_cali), ignore.case = TRUE)][1]
-if (is.na(col_comuna)) stop("No se detectó columna comuna en el SHP de comunas.")
-
 shape_cali$Comuna <- suppressWarnings(as.integer(gsub("\\D","", as.character(shape_cali[[col_comuna]]))))
+
 shape_cali <- left_join(shape_cali, estratos_comuna, by = "Comuna")
 shape_cali$categoria <- factor(shape_cali$categoria, levels = c("Bajo","Medio","Alto"))
 
 # ==========================================================
-# 3) CRS → WGS84 (grados)
+# 3) CRS → WGS84
 # ==========================================================
 crs_src <- st_crs(shape_cali)
-if (is.na(crs_src)) stop("El shapefile de comunas no tiene CRS.")
 
 if (is.na(st_crs(terminales))) st_crs(terminales) <- crs_src
 if (is.na(st_crs(paradas)))    st_crs(paradas)    <- crs_src
@@ -88,35 +85,33 @@ paradas    <- st_transform(paradas, 4326)
 corredores <- st_transform(corredores, 4326)
 
 # ==========================================================
-# 4) RECORTAR CORREDORES AL LÍMITE DE CALI (quita “líneas sueltas”)
+# 4) RECORTE CORREDORES
 # ==========================================================
 cali_union <- st_make_valid(st_union(shape_cali))
 
-corredores_clip <- tryCatch({
-  st_intersection(st_make_valid(corredores), cali_union)
-}, error = function(e) {
-  message("No se pudo hacer st_intersection (intentando st_crop + mask visual).")
-  st_crop(corredores, st_bbox(shape_cali))
-})
+corredores_clip <- tryCatch(
+  st_intersection(st_make_valid(corredores), cali_union),
+  error = function(e) st_crop(corredores, st_bbox(shape_cali))
+)
 
 # ==========================================================
-# 5) Etiquetas comunas (número)
+# 5) Etiquetas comunas
 # ==========================================================
 lab_pts <- st_point_on_surface(shape_cali) %>%
   mutate(label = as.character(Comuna))
 
 # ==========================================================
-# 6) Puntos MIO (una sola leyenda: color + shape)
+# 6) Puntos MIO
 # ==========================================================
 paradas$tipo    <- "Paradas"
 terminales$tipo <- "Terminales"
+
 mio_pts <- bind_rows(paradas, terminales) %>%
   mutate(tipo = factor(tipo, levels = c("Paradas","Terminales")))
 
 # ==========================================================
-# 7) Paletas (estrato visible + azules MIO)
+# 7) Paletas
 # ==========================================================
-# Si quieres grises como tu Figura 2, pero visibles:
 colores_estrato <- c(
   "Bajo"  = "#F2F2F2",
   "Medio" = "#D9D9D9",
@@ -128,20 +123,20 @@ azul_terminales <- "#08519C"
 azul_corredor   <- "#2171B5"
 
 # ==========================================================
-# 8) Zoom/corte del mapa al bbox de Cali con margen
+# 8) Zoom
 # ==========================================================
 bb <- st_bbox(shape_cali)
-xpad <- 0.02 * as.numeric(bb["xmax"] - bb["xmin"])
-ypad <- 0.02 * as.numeric(bb["ymax"] - bb["ymin"])
-xlim <- c(as.numeric(bb["xmin"]) - xpad, as.numeric(bb["xmax"]) + xpad)
-ylim <- c(as.numeric(bb["ymin"]) - ypad, as.numeric(bb["ymax"]) + ypad)
+xpad <- 0.02 * (bb["xmax"] - bb["xmin"])
+ypad <- 0.02 * (bb["ymax"] - bb["ymin"])
+
+xlim <- c(bb["xmin"] - xpad, bb["xmax"] + xpad)
+ylim <- c(bb["ymin"] - ypad, bb["ymax"] + ypad)
 
 # ==========================================================
 # 9) MAPA FINAL
 # ==========================================================
 map_final <- ggplot() +
   
-  # Estrato predominante (base)
   geom_sf(
     data = shape_cali,
     aes(fill = categoria),
@@ -151,20 +146,16 @@ map_final <- ggplot() +
   scale_fill_manual(
     name = "Estrato predominante",
     values = colores_estrato,
-    breaks = c("Bajo","Medio","Alto"),
-    drop = FALSE,
-    na.value = "#FFFFFF"
+    drop = FALSE
   ) +
   
-  # Corredores recortados (delgados)
   geom_sf(
     data = corredores_clip,
     color = azul_corredor,
-    linewidth = 0.35,   # <- delgado
+    linewidth = 0.35,
     alpha = 0.55
   ) +
   
-  # Paradas/Terminales (SIN fill para no duplicar leyenda)
   geom_sf(
     data = mio_pts,
     aes(shape = tipo, color = tipo),
@@ -172,58 +163,50 @@ map_final <- ggplot() +
     alpha = 0.95,
     stroke = 0.6
   ) +
-  scale_shape_manual(values = c("Paradas" = 16, "Terminales" = 17)) +
+  scale_shape_manual(
+    name = NULL,
+    values = c("Paradas" = 16, "Terminales" = 17)
+  ) +
   scale_color_manual(
-    values = c("Paradas" = azul_paradas, "Terminales" = azul_terminales),
-    name = NULL
+    name = NULL,
+    values = c("Paradas" = azul_paradas, "Terminales" = azul_terminales)
   ) +
   guides(
-    shape = "none",              
-    color = guide_legend(order = 1),
-    fill  = guide_legend(order = 2)
+    shape = "none",
+    color = guide_legend(
+      order = 1,
+      override.aes = list(shape = c(16, 17))
+    ),
+    fill = guide_legend(order = 2)
   ) +
   
-  # Números de comuna
   geom_sf_text(
     data = lab_pts,
     aes(label = label),
-    size = 3.0,
-    fontface = "bold",
-    color = "black"
+    size = 3,
+    fontface = "bold"
   ) +
   
-  # Brújula + escala
   annotation_north_arrow(
     location = "bl",
     which_north = "true",
     style = north_arrow_fancy_orienteering,
     height = unit(1.2, "cm"),
-    width  = unit(1.2, "cm"),
-    pad_x  = unit(0.2, "cm"),
-    pad_y  = unit(0.2, "cm")
+    width  = unit(1.2, "cm")
   ) +
   annotation_scale(
     location = "bl",
-    width_hint = 0.25,
-    pad_x = unit(1.6, "cm"),
-    pad_y = unit(0.2, "cm")
+    width_hint = 0.25
   ) +
   
-  coord_sf(xlim = xlim, ylim = ylim, clip = "on") +
-  
+  coord_sf(xlim = xlim, ylim = ylim) +
   labs(
     title = "Cali • Estrato predominante por comuna y red MIO",
     x = NULL, y = NULL
   ) +
-  
   theme_minimal(base_size = 12) +
   theme(
     panel.border = element_rect(color = "grey20", fill = NA, linewidth = 0.8),
-    panel.grid.major = element_line(color = "grey88", linewidth = 0.35),
-    panel.grid.minor = element_line(color = "grey94", linewidth = 0.20),
-    axis.title = element_blank(),
-    axis.text  = element_text(size = 9, color = "grey20"),
-    axis.ticks = element_line(color = "grey20"),
     legend.position = "right",
     legend.background = element_rect(fill = "white", color = "grey60"),
     plot.title = element_text(face = "bold")
@@ -237,5 +220,3 @@ ggsave(
   dpi = 300,
   bg = "white"
 )
-
-

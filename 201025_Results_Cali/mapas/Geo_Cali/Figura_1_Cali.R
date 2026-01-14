@@ -11,12 +11,21 @@ library(scatterpie)
 library(ggnewscale)
 library(ggspatial)
 library(grid)
+library(scales)
+library(units)
+library(FNN)
+library(igraph)
 
 # -------------------------------------------------------------------
-# 1) Datos
+# 1) Datos + rutas
 # -------------------------------------------------------------------
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
-dataset <- readxl::read_excel("input_famd_cali_29102025.xlsx")
+
+ruta_xlsx        <- "input_famd_cali_29102025.xlsx"
+ruta_shp_comunas <- "mc_comunas.shp"
+ruta_pts_mio <- "Estaciones_de_Parada_2025\\Estaciones_de_Parada_2025.shp"
+
+dataset <- readxl::read_excel(ruta_xlsx)
 
 dataset$id     <- as.character(dataset$id)
 dataset$medio  <- as.character(dataset$medio)
@@ -73,7 +82,6 @@ data$zona <- factor(
 table_data_mode <- as.data.frame.matrix(table(data$zona, data$medio))
 table_data_mode$zona <- rownames(table_data_mode)
 
-# Coordenadas manuales EN METROS (CRS del shapefile de comunas)
 table_data_mode$long <- NA_real_
 table_data_mode$long[table_data_mode$zona == "Noroccidente"]       <- 1060000 - 300
 table_data_mode$long[table_data_mode$zona == "Nororiente"]         <- 1065000 - 200
@@ -100,8 +108,9 @@ colores_medio <- c(
   "Transporte público"  = "#6C78A8"
 )
 
-azul_paradas    <- "#6BAED6"
-azul_terminales <- "#08519C"
+# Color líneas MIO + label
+azul_lineas <- "#1F78B4"
+label_linea <- "Troncales MIO"
 
 # -------------------------------------------------------------------
 # 6) FIX scatterpie: cols_pie numéricos + filtrar a categorías conocidas
@@ -114,43 +123,88 @@ for (nm in cols_cand) {
 }
 
 cols_pie <- intersect(cols_cand, names(colores_medio))
-if (length(cols_pie) == 0) {
-  stop("cols_pie quedó vacío: revisa niveles de 'medio' o actualiza colores_medio.")
-}
+if (length(cols_pie) == 0) stop("cols_pie quedó vacío: revisa niveles de 'medio' o actualiza colores_medio.")
 
 # -------------------------------------------------------------------
-# 7) Shapes: comunas + MIO
+# 7) Shapes comunas + unión Cali
 # -------------------------------------------------------------------
-shape <- sf::st_read("mc_comunas.shp", quiet = TRUE)
+shape <- sf::st_read(ruta_shp_comunas, quiet = TRUE)
 columna_comuna_shape <- names(shape)[grepl("comuna", names(shape), ignore.case = TRUE)][1]
 if (is.na(columna_comuna_shape)) stop("No se detectó ninguna columna con 'comuna' en el shapefile.")
 shape$Comuna <- as.integer(gsub("\\D","", as.character(shape[[columna_comuna_shape]])))
 shape <- left_join(shape, estratos_comuna, by = "Comuna")
 
-terminales <- sf::st_read("terminales\\terminales.shp", quiet = TRUE)
-paradas    <- sf::st_read("Estaciones_de_Parada_2025\\Estaciones_de_Parada_2025.shp", quiet = TRUE)
-
-# -------------------------------------------------------------------
-# 8) CRS → WGS84 (grados) + pies a data.frame (NO sf) para scatterpie
-# -------------------------------------------------------------------
 crs_shape <- st_crs(shape)
 if (is.na(crs_shape)) stop("El shapefile de comunas no tiene CRS. Asigna st_crs(shape) (ej. 3116).")
 
-if (is.na(st_crs(paradas)))    st_crs(paradas)    <- crs_shape
-if (is.na(st_crs(terminales))) st_crs(terminales) <- crs_shape
+shape_4326 <- st_transform(shape, 4326)
+shape_4326$categoria <- factor(shape_4326$categoria, levels = c("Bajo","Medio","Alto"))
+cali_union <- sf::st_make_valid(sf::st_union(shape_4326))
 
-shape_4326      <- st_transform(shape, 4326)
-paradas_4326    <- st_transform(paradas, 4326)
-terminales_4326 <- st_transform(terminales, 4326)
+# -------------------------------------------------------------------
+# 8) MIO -> líneas punto-a-punto (kNN + MST) SIN puntos
+# -------------------------------------------------------------------
+mio_pts <- sf::st_read(ruta_pts_mio, quiet = TRUE)
+if (is.na(sf::st_crs(mio_pts))) sf::st_crs(mio_pts) <- crs_shape
+mio_pts_4326 <- sf::st_transform(mio_pts, 4326)
 
-# Pies: sf solo para transformar coords, luego data.frame sin geometry
+mio_pts_clip <- tryCatch(
+  sf::st_intersection(sf::st_make_valid(mio_pts_4326), cali_union),
+  error = function(e) sf::st_crop(mio_pts_4326, sf::st_bbox(shape_4326))
+)
+
+mio_pts_clip <- mio_pts_clip[!sf::st_is_empty(mio_pts_clip), ]
+mio_pts_clip <- sf::st_cast(mio_pts_clip, "POINT", warn = FALSE)
+
+mio_pts_m <- sf::st_transform(mio_pts_clip, 3857)
+mio_pts_m <- sf::st_cast(mio_pts_m, "POINT", warn = FALSE)
+mio_pts_m <- mio_pts_m[!sf::st_is_empty(mio_pts_m), ]
+mio_pts_m$.idx <- seq_len(nrow(mio_pts_m))
+
+xy_mio <- sf::st_coordinates(mio_pts_m)
+if (nrow(xy_mio) < 3) stop("Muy pocos puntos dentro de Cali para construir líneas.")
+
+k <- 6
+kn <- FNN::get.knn(xy_mio, k = min(k, nrow(xy_mio) - 1))
+
+edges <- do.call(rbind, lapply(seq_len(nrow(xy_mio)), function(i){
+  to <- kn$nn.index[i, ]
+  w  <- kn$nn.dist[i, ]
+  cbind(from = rep(i, length(to)), to = to, w = w)
+})) |> as.data.frame()
+
+edges <- edges %>%
+  filter(!is.na(from), !is.na(to),
+         from >= 1, to >= 1,
+         from <= nrow(xy_mio), to <= nrow(xy_mio))
+
+verts <- data.frame(id = seq_len(nrow(xy_mio)))
+g <- igraph::graph_from_data_frame(edges[, c("from","to")], directed = FALSE, vertices = verts)
+E(g)$weight <- edges$w
+
+mst_g <- igraph::mst(g, weights = E(g)$weight)
+mst_edges <- igraph::as_data_frame(mst_g, what = "edges")
+
+seg_geom <- lapply(seq_len(nrow(mst_edges)), function(r){
+  i <- as.integer(mst_edges$from[r])
+  j <- as.integer(mst_edges$to[r])
+  sf::st_linestring(rbind(xy_mio[i, ], xy_mio[j, ]))
+})
+
+mio_lines_m    <- sf::st_sfc(seg_geom, crs = 3857) %>% sf::st_as_sf()
+mio_lines_4326 <- sf::st_transform(mio_lines_m, 4326)
+mio_lines_4326 <- sf::st_simplify(mio_lines_4326, dTolerance = 0.0005, preserveTopology = TRUE)
+
+# -------------------------------------------------------------------
+# 9) Pies: coords (metros) -> grados (scatterpie usa x/y)
+# -------------------------------------------------------------------
 pies_sf_m    <- st_as_sf(table_data_mode, coords = c("long","lat"), crs = crs_shape, remove = FALSE)
 pies_sf_4326 <- st_transform(pies_sf_m, 4326)
 
 pies_df <- st_drop_geometry(pies_sf_4326)
-xy <- st_coordinates(pies_sf_4326)
-pies_df$long <- xy[,1]
-pies_df$lat  <- xy[,2]
+xy_pies <- st_coordinates(pies_sf_4326)
+pies_df$long <- xy_pies[,1]
+pies_df$lat  <- xy_pies[,2]
 
 for (nm in cols_pie) {
   pies_df[[nm]] <- suppressWarnings(as.numeric(pies_df[[nm]]))
@@ -158,21 +212,18 @@ for (nm in cols_pie) {
 }
 
 # -------------------------------------------------------------------
-# 9) Radio del pie en grados (MÁS GRANDE)
+# 10) Radio del pie en grados
 # -------------------------------------------------------------------
 bb    <- sf::st_bbox(shape_4326)
 xspan <- as.numeric(bb["xmax"] - bb["xmin"])
 yspan <- as.numeric(bb["ymax"] - bb["ymin"])
-
-# antes: 0.03; ahora: más visible
 r_pie <- 0.08 * min(xspan, yspan)
 
 # -------------------------------------------------------------------
-# 10) Mapa final
+# 11) Mapa final
 # -------------------------------------------------------------------
 map.cali <- ggplot() +
   
-  # Estrato predominante
   geom_sf(data = shape_4326, aes(fill = categoria), color = "#BFBFBF", linewidth = 0.25) +
   scale_fill_manual(
     name   = "Estrato predominante",
@@ -181,12 +232,26 @@ map.cali <- ggplot() +
     na.value = "#FAFAFA"
   ) +
   
+  # ✅ Líneas MIO + leyenda "Troncales MIO"
+  geom_sf(
+    data = mio_lines_4326,
+    aes(color = label_linea),
+    linewidth = 0.45,
+    alpha = 0.95,
+    lineend = "round",
+    inherit.aes = FALSE
+  ) +
+  scale_color_manual(
+    name   = NULL,
+    values = setNames(azul_lineas, label_linea),
+    breaks = label_linea,
+    guide  = guide_legend(override.aes = list(linewidth = 1.2, alpha = 1))
+  ) +
+  
   coord_sf(clip = "on") +
   
-  # Nuevo fill para los pies
   ggnewscale::new_scale_fill() +
   
-  # Pies elección modal (data.frame, no sf)
   geom_scatterpie(
     data = pies_df,
     aes(x = long, y = lat, group = zona, r = r_pie),
@@ -200,32 +265,6 @@ map.cali <- ggplot() +
     guide  = guide_legend(override.aes = list(alpha = 1))
   ) +
   
-  # MIO (triángulos reales)
-  geom_sf(
-    data = paradas_4326,
-    aes(color = "Paradas MIO"),
-    shape = 16,
-    size  = 1.8,
-    alpha = 0.95
-  ) +
-  geom_sf(
-    data = terminales_4326,
-    aes(color = "Terminales MIO"),
-    shape = 17,
-    size  = 3.0,
-    alpha = 0.98
-  ) +
-  scale_color_manual(
-    name = NULL,
-    values = c(
-      "Paradas MIO"    = azul_paradas,
-      "Terminales MIO" = azul_terminales
-    ),
-    breaks = c("Paradas MIO","Terminales MIO"),
-    guide = guide_legend(override.aes = list(shape = c(16, 17), size = c(3, 3)))
-  ) +
-  
-  # Brújula + escala
   annotation_north_arrow(
     location = "bl",
     which_north = "true",
@@ -265,4 +304,3 @@ ggsave(
   dpi = 300,
   bg = "white"
 )
-

@@ -12,6 +12,10 @@ library(ggnewscale)
 library(sf)
 library(ggspatial)
 library(grid)
+library(scales)
+library(units)
+library(FNN)
+library(igraph)
 
 # Evitar choques
 if ("package:plyr" %in% search()) detach("package:plyr", unload = TRUE)
@@ -21,10 +25,9 @@ if ("package:tidytable" %in% search()) detach("package:tidytable", unload = TRUE
 # 0) Rutas
 # -------------------------------------------------------------------
 setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\mapas\\Geo_Cali\\")
-ruta_xlsx <- "input_famd_cali_29102025.xlsx"
+ruta_xlsx        <- "input_famd_cali_29102025.xlsx"
 ruta_shp_comunas <- "mc_comunas.shp"
-ruta_shp_terminales <- "terminales\\terminales.shp"
-ruta_shp_paradas    <- "Estaciones_de_Parada_2025\\Estaciones_de_Parada_2025.shp"
+ruta_pts_mio <- "Estaciones_de_Parada_2025\\Estaciones_de_Parada_2025.shp"
 
 # -------------------------------------------------------------------
 # 1) Datos
@@ -75,8 +78,10 @@ for (k in 1:nrow(data)) {
   if (data$Comuna[k] %in% c(10,17,18,19,20,22))    data$zona[k] <- "Sur"
 }
 data <- data[!is.na(data$zona), ]
-data$zona <- factor(data$zona,
-                    levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"))
+data$zona <- factor(
+  data$zona,
+  levels = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur")
+)
 
 coords_zona <- data.frame(
   zona = c("Noroccidente","Nororiente","Oriente-aguablanca","Sur"),
@@ -86,7 +91,7 @@ coords_zona <- data.frame(
 )
 
 # -------------------------------------------------------------------
-# 4) RANGO DE EDAD (sin depender de "años"/ñ en el script)
+# 4) RANGO DE EDAD
 # -------------------------------------------------------------------
 if (!"edad_r2" %in% names(data)) stop("No se encontro la columna 'edad_r2'.")
 
@@ -99,7 +104,6 @@ data$rango_edad[str_detect(edad_raw, "\\b55\\s*[-–]\\s*80\\b")] <- "55_80"
 data <- data[!is.na(data$rango_edad), ]
 data$rango_edad <- factor(data$rango_edad, levels = c("18_34","35_54","55_80"))
 
-# Labels “bonitos” sin escribir ñ literal (unicode)
 label_anos <- paste0("a", "\u00f1", "os")
 edad_labels <- c(
   "18_34" = paste("18 - 34", label_anos),
@@ -108,7 +112,7 @@ edad_labels <- c(
 )
 
 # -------------------------------------------------------------------
-# 5) Shapes: comunas + union estrato + MIO
+# 5) Shape comunas + join estrato + union Cali
 # -------------------------------------------------------------------
 shape <- sf::st_read(ruta_shp_comunas, quiet = TRUE)
 columna_comuna_shape <- names(shape)[grepl("comuna", names(shape), ignore.case = TRUE)][1]
@@ -119,24 +123,70 @@ shape <- left_join(shape, estratos_comuna, by = "Comuna")
 crs_shape <- sf::st_crs(shape)
 if (is.na(crs_shape)) stop("El shapefile de comunas no tiene CRS. Debes asignarlo (ej. 3116).")
 
-terminales <- sf::st_read(ruta_shp_terminales, quiet = TRUE)
-paradas    <- sf::st_read(ruta_shp_paradas, quiet = TRUE)
-
-# Si vienen sin CRS, asumir el de comunas
-if (is.na(sf::st_crs(paradas)))    sf::st_crs(paradas)    <- crs_shape
-if (is.na(sf::st_crs(terminales))) sf::st_crs(terminales) <- crs_shape
-
-# Asegurar POINT (por si vienen multipoint)
-paradas    <- sf::st_cast(paradas, "POINT", warn = FALSE)
-terminales <- sf::st_cast(terminales, "POINT", warn = FALSE)
-
-# Transformar todo a WGS84 para grados + cuadro
-shape_4326      <- sf::st_transform(shape, 4326)
-paradas_4326    <- sf::st_transform(paradas, 4326)
-terminales_4326 <- sf::st_transform(terminales, 4326)
+shape_4326 <- sf::st_transform(shape, 4326)
+shape_4326$categoria <- factor(shape_4326$categoria, levels = c("Bajo","Medio","Alto"))
+cali_union <- sf::st_make_valid(sf::st_union(shape_4326))
 
 # -------------------------------------------------------------------
-# 6) Conteos por rango_edad-zona-medio (wide para scatterpie)
+# 6) MIO -> líneas punto-a-punto (kNN + MST) SIN puntos (copiado de Figura 5)
+# -------------------------------------------------------------------
+mio_pts <- sf::st_read(ruta_pts_mio, quiet = TRUE)
+if (is.na(sf::st_crs(mio_pts))) sf::st_crs(mio_pts) <- crs_shape
+mio_pts_4326 <- sf::st_transform(mio_pts, 4326)
+
+mio_pts_clip <- tryCatch(
+  sf::st_intersection(sf::st_make_valid(mio_pts_4326), cali_union),
+  error = function(e) sf::st_crop(mio_pts_4326, sf::st_bbox(shape_4326))
+)
+
+mio_pts_clip <- mio_pts_clip[!sf::st_is_empty(mio_pts_clip), ]
+mio_pts_clip <- sf::st_cast(mio_pts_clip, "POINT", warn = FALSE)
+
+mio_pts_m <- sf::st_transform(mio_pts_clip, 3857)
+mio_pts_m <- sf::st_cast(mio_pts_m, "POINT", warn = FALSE)
+mio_pts_m <- mio_pts_m[!sf::st_is_empty(mio_pts_m), ]
+mio_pts_m$.idx <- seq_len(nrow(mio_pts_m))
+
+xy <- sf::st_coordinates(mio_pts_m)
+if (nrow(xy) < 3) stop("Muy pocos puntos dentro de Cali para construir líneas.")
+
+k <- 6
+kn <- FNN::get.knn(xy, k = min(k, nrow(xy) - 1))
+
+edges <- do.call(rbind, lapply(seq_len(nrow(xy)), function(i){
+  to <- kn$nn.index[i, ]
+  w  <- kn$nn.dist[i, ]
+  cbind(from = rep(i, length(to)), to = to, w = w)
+}))
+edges <- as.data.frame(edges)
+
+edges <- edges %>%
+  filter(!is.na(from), !is.na(to),
+         from >= 1, to >= 1,
+         from <= nrow(xy), to <= nrow(xy))
+
+verts <- data.frame(id = seq_len(nrow(xy)))
+g <- igraph::graph_from_data_frame(edges[, c("from","to")], directed = FALSE, vertices = verts)
+E(g)$weight <- edges$w
+
+mst_g <- igraph::mst(g, weights = E(g)$weight)
+mst_edges <- igraph::as_data_frame(mst_g, what = "edges")
+
+seg_geom <- lapply(seq_len(nrow(mst_edges)), function(r){
+  i <- as.integer(mst_edges$from[r])
+  j <- as.integer(mst_edges$to[r])
+  sf::st_linestring(rbind(xy[i, ], xy[j, ]))
+})
+
+mio_lines_m    <- sf::st_sfc(seg_geom, crs = 3857) %>% sf::st_as_sf()
+mio_lines_4326 <- sf::st_transform(mio_lines_m, 4326)
+mio_lines_4326 <- sf::st_simplify(mio_lines_4326, dTolerance = 0.0005, preserveTopology = TRUE)
+
+# Color líneas
+azul_lineas <- "#1F78B4"
+
+# -------------------------------------------------------------------
+# 7) Conteos por rango_edad-zona-medio (wide para scatterpie)
 # -------------------------------------------------------------------
 df_counts <- data %>%
   group_by(rango_edad, zona, medio) %>%
@@ -146,7 +196,6 @@ df_counts <- data %>%
 
 cols_pie_all <- setdiff(names(df_counts), c("rango_edad","zona","long","lat"))
 
-# FIX scatterpie: todo numérico sí o sí
 df_counts[cols_pie_all] <- lapply(df_counts[cols_pie_all], function(x){
   x <- suppressWarnings(as.numeric(x))
   x[is.na(x)] <- 0
@@ -164,7 +213,7 @@ colores_medio <- c(
   "Transporte publico"  = "#6C78A8"
 )
 
-# Alias por si viene con tilde en la base (sin escribir tilde literal)
+# Alias por si viene con tilde en la base
 if ("Transporte publico" %in% names(colores_medio) && ("Transporte público" %in% cols_pie_all)) {
   colores_medio <- c(colores_medio, "Transporte público" = colores_medio[["Transporte publico"]])
 }
@@ -174,7 +223,7 @@ if (length(cols_pie) == 0) stop("No hay columnas de medio que coincidan con la p
 breaks_medios <- cols_pie
 
 # -------------------------------------------------------------------
-# 7) Convertir coords_zona (metros) -> grados (para que el pie no se pierda)
+# 8) Convertir coords_zona (metros) -> grados (para que el pie no se pierda)
 # -------------------------------------------------------------------
 pies_sf_m <- sf::st_as_sf(df_counts, coords = c("long","lat"), crs = crs_shape, remove = FALSE)
 pies_4326 <- sf::st_transform(pies_sf_m, 4326)
@@ -182,18 +231,14 @@ coords <- sf::st_coordinates(pies_4326)
 df_counts$long <- coords[,1]
 df_counts$lat  <- coords[,2]
 
-# Radio del pie en grados (MAS GRANDE)
+# Radio del pie en grados
 bb    <- sf::st_bbox(shape_4326)
 xspan <- as.numeric(bb["xmax"] - bb["xmin"])
 yspan <- as.numeric(bb["ymax"] - bb["ymin"])
 r_pie <- 0.10 * min(xspan, yspan)  # sube/baja: 0.08–0.12
 
-# MIO colores (dos azules)
-azul_paradas    <- "#6BAED6"
-azul_terminales <- "#08519C"
-
 # -------------------------------------------------------------------
-# 8) Mapa final: cuadro + grados + brujula + MIO + pies
+# 9) Mapa final: comunas + líneas MIO + pies + brujula + facetas
 # -------------------------------------------------------------------
 map.cali.edad <- ggplot() +
   
@@ -212,7 +257,21 @@ map.cali.edad <- ggplot() +
     na.value = "#F7F7F7"
   ) +
   
-  # Cuadro + ejes en grados
+  geom_sf(
+    data = mio_lines_4326,
+    aes(color = "Troncales MIO"),
+    linewidth = 0.45,
+    alpha = 0.95,
+    lineend = "round",
+    inherit.aes = FALSE
+  ) +
+  scale_color_manual(
+    name = NULL,
+    values = c("Troncales MIO" = azul_lineas),
+    breaks = "Troncales MIO",
+    guide  = guide_legend(override.aes = list(linewidth = 1.2, alpha = 1))
+  ) +
+  
   coord_sf(clip = "on") +
   
   ggnewscale::new_scale_fill() +
@@ -231,28 +290,6 @@ map.cali.edad <- ggplot() +
     guide  = guide_legend(override.aes = list(alpha = 1))
   ) +
   
-  # MIO: circulos + triangulos (forzados)
-  geom_sf(
-    data = paradas_4326,
-    aes(color = "Paradas MIO"),
-    shape = 16,
-    size  = 1.4,
-    alpha = 0.95
-  ) +
-  geom_sf(
-    data = terminales_4326,
-    aes(color = "Terminales MIO"),
-    shape = 17,
-    size  = 2.7,
-    alpha = 0.98
-  ) +
-  scale_color_manual(
-    name = NULL,
-    values = c("Paradas MIO" = azul_paradas, "Terminales MIO" = azul_terminales),
-    breaks = c("Paradas MIO","Terminales MIO"),
-    guide = guide_legend(override.aes = list(shape = c(16, 17), size = c(3, 3)))
-  ) +
-  
   # Brújula
   annotation_north_arrow(
     location = "bl",
@@ -264,7 +301,6 @@ map.cali.edad <- ggplot() +
     pad_y  = unit(0.2, "cm")
   ) +
   
-  # Facetas (labels bonitos)
   facet_wrap(
     ~ rango_edad, ncol = 3,
     labeller = labeller(rango_edad = edad_labels)
@@ -277,16 +313,12 @@ map.cali.edad <- ggplot() +
   
   theme_minimal(base_size = 12) +
   theme(
-    # Marco del mapa
     panel.border = element_rect(color = "grey20", fill = NA, linewidth = 0.8),
-    
-    # Rejilla + grados
     panel.grid.major = element_line(color = "grey88", linewidth = 0.35),
     panel.grid.minor = element_line(color = "grey94", linewidth = 0.20),
     axis.title       = element_blank(),
     axis.text        = element_text(size = 9, color = "grey20"),
     axis.ticks       = element_line(color = "grey20"),
-    
     panel.background = element_rect(fill = "white", color = NA),
     plot.background  = element_rect(fill = "white", color = NA),
     legend.position  = "right"
