@@ -1,0 +1,121 @@
+ciudad,genero_2,motivo,medio,n
+Cali,Hombre,Estudio,Modo activo,1
+Cali,Hombre,Estudio,Moto privada,4
+Cali,Hombre,Estudio,Taxi / Plataforma,1
+Cali,Hombre,Estudio,Transporte público,3
+Cali,Hombre,Otro,Modo activo,1
+Cali,Hombre,Otro,Moto privada,2
+Cali,Hombre,Otro,Transporte público,1
+Cali,Hombre,Recreación y actividades personales,Auto privado,1
+Cali,Hombre,Recreación y actividades personales,Modo activo,5
+Cali,Hombre,Recreación y actividades personales,Moto privada,3
+Cali,Hombre,Recreación y actividades personales,Taxi / Plataforma,1
+Cali,Hombre,Recreación y actividades personales,Transporte público,2
+Cali,Hombre,Salud,Auto privado,3
+Cali,Hombre,Salud,Modo activo,4
+Cali,Hombre,Salud,Moto privada,2
+Cali,Hombre,Salud,Taxi / Plataforma,4
+Cali,Hombre,Salud,Transporte informal,1
+Cali,Hombre,Salud,Transporte público,10
+Cali,Hombre,Trabajo,Auto privado,33
+Cali,Hombre,Trabajo,Modo activo,21
+Cali,Hombre,Trabajo,Moto privada,59
+Cali,Hombre,Trabajo,Taxi / Plataforma,8
+Cali,Hombre,Trabajo,Transporte informal,4
+Cali,Hombre,Trabajo,Transporte público,11
+Cali,Hombre,Trámites,Modo activo,1
+Cali,Hombre,Trámites,Moto privada,2
+Cali,Hombre,Trámites,Taxi / Plataforma,1
+Cali,Hombre,Trámites,Transporte público,2
+Cali,Hombre,Viajes de cuidado,Auto privado,5
+Cali,Hombre,Viajes de cuidado,Modo activo,3
+Cali,Hombre,Viajes de cuidado,Moto privada,4
+Cali,Hombre,Viajes de cuidado,Taxi / Plataforma,2
+Cali,Hombre,Viajes de cuidado,Transporte público,2
+Cali,Hombre,Visitas sociales,Auto privado,1
+Cali,Hombre,Visitas sociales,Moto privada,1
+Cali,Hombre,Visitas sociales,Taxi / Plataforma,2
+Cali,Hombre,Visitas sociales,Transporte público,1
+Cali,Mujer,Estudio,Moto privada,4
+Cali,Mujer,Estudio,Taxi / Plataforma,2
+Cali,Mujer,Estudio,Transporte público,7
+Cali,Mujer,Otro,Transporte público,1
+Cali,Mujer,Recreación y actividades personales,Modo activo,1
+Cali,Mujer,Recreación y actividades personales,Moto privada,2
+Cali,Mujer,Recreación y actividades personales,Taxi / Plataforma,2
+Cali,Mujer,Salud,Auto privado,5
+Cali,Mujer,Salud,Modo activo,4
+Cali,Mujer,Salud,Moto privada,8
+Cali,Mujer,Salud,Taxi / Plataforma,13
+Cali,Mujer,Salud,Transporte público,23
+Cali,Mujer,Trabajo,Auto privado,17
+Cali,Mujer,Trabajo,Modo activo,8
+Cali,Mujer,Trabajo,Moto privada,33
+Cali,Mujer,Trabajo,Taxi / Plataforma,15
+Cali,Mujer,Trabajo,Transporte informal,2
+Cali,Mujer,Trabajo,Transporte público,32
+Cali,Mujer,Trámites,Auto privado,1
+Cali,Mujer,Trámites,Moto privada,4
+Cali,Mujer,Trámites,Taxi / Plataforma,5
+Cali,Mujer,Trámites,Transporte público,1
+Cali,Mujer,Viajes de cuidado,Auto privado,5
+Cali,Mujer,Viajes de cuidado,Moto privada,6
+Cali,Mujer,Viajes de cuidado,Taxi / Plataforma,10
+Cali,Mujer,Viajes de cuidado,Transporte público,5
+Cali,Mujer,Visitas sociales,Auto privado,1
+Cali,Mujer,Visitas sociales,Moto privada,2
+Cali,Mujer,Visitas sociales,Transporte público,2
+Medellín,Hombre,Estudio,Modo activo,3
+Medellín,Hombre,Estudio,Moto privada,6
+Medellín,Hombre,Estudio,Taxi / Plataforma,1
+Medellín,Hombre,Estudio,Transporte público,11
+Medellín,Hombre,Otro,Modo activo,1
+Medellín,Hombre,Recreación y actividades personales,Modo activo,1
+Medellín,Hombre,Recreación y actividades personales,Taxi / Plataforma,1
+Medellín,Hombre,Recreación y actividades personales,Transporte público,1
+Medellín,Hombre,Salud,Auto privado,1
+Medellín,Hombre,Salud,Modo activo,1
+Medellín,Hombre,Salud,Taxi / Plataforma,2
+Medellín,Hombre,Salud,Transporte público,16
+Medellín,Hombre,Trabajo,Auto privado,8
+Medellín,Hombre,Trabajo,Modo activo,4
+Medellín,Hombre,Trabajo,Moto privada,41
+Medellín,Hombre,Trabajo,Taxi / Plataforma,4
+Medellín,Hombre,Trabajo,Transporte público,55
+Medellín,Hombre,Trámites,Modo activo,1
+Medellín,Hombre,Trámites,Transporte público,6
+Medellín,Hombre,Viajes de cuidado,Modo activo,1
+Medellín,Hombre,Viajes de cuidado,Moto privada,5
+Medellín,Hombre,Viajes de cuidado,Taxi / Plataforma,2
+Medellín,Hombre,Viajes de cuidado,Transporte público,8
+Medellín,Hombre,Visitas sociales,Moto privada,4
+Medellín,Hombre,Visitas sociales,Taxi / Plataforma,1
+Medellín,Hombre,Visitas sociales,Transporte público,3
+Medellín,Mujer,Estudio,Auto privado,1
+Medellín,Mujer,Estudio,Modo activo,1
+Medellín,Mujer,Estudio,Moto privada,3
+Medellín,Mujer,Estudio,Transporte público,7
+Medellín,Mujer,Otro,Auto privado,1
+Medellín,Mujer,Otro,Taxi / Plataforma,1
+Medellín,Mujer,Recreación y actividades personales,Taxi / Plataforma,3
+Medellín,Mujer,Recreación y actividades personales,Transporte público,5
+Medellín,Mujer,Salud,Modo activo,1
+Medellín,Mujer,Salud,Moto privada,2
+Medellín,Mujer,Salud,Taxi / Plataforma,14
+Medellín,Mujer,Salud,Transporte público,42
+Medellín,Mujer,Trabajo,Auto privado,9
+Medellín,Mujer,Trabajo,Modo activo,3
+Medellín,Mujer,Trabajo,Moto privada,17
+Medellín,Mujer,Trabajo,Taxi / Plataforma,8
+Medellín,Mujer,Trabajo,Transporte público,45
+Medellín,Mujer,Trámites,Auto privado,1
+Medellín,Mujer,Trámites,Moto privada,2
+Medellín,Mujer,Trámites,Taxi / Plataforma,2
+Medellín,Mujer,Trámites,Transporte público,4
+Medellín,Mujer,Viajes de cuidado,Modo activo,1
+Medellín,Mujer,Viajes de cuidado,Moto privada,4
+Medellín,Mujer,Viajes de cuidado,Taxi / Plataforma,5
+Medellín,Mujer,Viajes de cuidado,Transporte público,20
+Medellín,Mujer,Visitas sociales,Moto privada,2
+Medellín,Mujer,Visitas sociales,Taxi / Plataforma,3
+Medellín,Mujer,Visitas sociales,Transporte público,3

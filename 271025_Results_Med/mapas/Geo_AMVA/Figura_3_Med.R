@@ -336,17 +336,19 @@ map.med.edad <- ggplot() +
     drop = FALSE
   ) +
 
-  # estaciones SITVA (puntos) — discretas para no tapar
-  geom_sf(
-    data = est_clip,
-    shape = 21,
-    size = 1.8,
-    stroke = 0.35,
-    color = "black",
-    fill  = "white",
-    alpha = 0.95,
-    inherit.aes = FALSE
-  ) +
+  # # estaciones SITVA (puntos) — discretas para no tapar
+  # geom_sf(
+  #   data = est_clip,
+  #   shape = 21,
+  #   size = 1.8,
+  #   stroke = 0.35,
+  #   color = "black",
+  #   fill  = "white",
+  #   alpha = 0.95,
+  #   inherit.aes = FALSE,
+  #   show.legend = FALSE
+  # ) +
+
 
   # pies (2da escala fill)
   ggnewscale::new_scale_fill() +

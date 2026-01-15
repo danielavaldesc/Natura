@@ -75,6 +75,7 @@ control_vars <- c(
 )
 
 # Función tablas 
+library(tibble)
 resultados <- lapply(names(control_vars), function(ctrl) {
   tabla <- describe_by_group(
     data        = dataset,

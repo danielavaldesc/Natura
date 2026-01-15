@@ -149,7 +149,7 @@ for (var in names(etiquetas_lista)) {
   }
 }
 
-var_label(dataset)z
+var_label(dataset)
 
 ###############################################################################
 ## IDENTIFICACIÓN DE CADA MÓDULO Y SUBMÓDULO

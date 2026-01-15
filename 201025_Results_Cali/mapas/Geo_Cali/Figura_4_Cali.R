@@ -105,24 +105,16 @@ data <- data %>%
     motivo = fct_collapse(
       p23_agregado,
       "Trabajo"          = c("Trabajo"),
-      "Compras/Tramites" = c("Compras y trámites","Compras y tramites","Compras y tr\u00e1mites","Compras y tramites "),
-      "Tiempo personal"  = c("Recreación, salud y actividades personales",
-                             "Recreacion, salud y actividades personales",
-                             "Recreaci\u00f3n, salud y actividades personales",
-                             "Visitas sociales"),
       "Estudio"          = c("Estudio"),
-      "Cuidado"          = c(
-        "Cuidado y familia (centro educativo, niños/as o jóvenes)",
-        "Cuidado y familia (otro lugar, niños/as o jóvenes)",
-        "Cuidado y familia (persona con discapacidad)",
-        "Cuidado y familia (persona enferma)",
-        "Cuidado y familia (recreación, niños)",
-        "Cuidado y familia (salud, niños)",
-        "Cuidado y familia (recreacion, ninos)",
-        "Cuidado y familia (salud, ninos)",
-        "Cuidado y familia (recreaci\u00f3n, ni\u00f1as/os)",
-        "Cuidado y familia (salud, ni\u00f1as/os)"
-      ),
+      "Tramites"         = c("Trámites", "Tramites"),
+      "Tiempo personal"  = c("Recreación y actividades personales",
+                             "Recreacion y actividades personales",
+                             "Recreación y actividades personales ",
+                             "Visitas sociales",
+                             "Visitas sociales "),
+      "Viajes de cuidado"          = c("Viajes de cuidado",
+                             "Viajes de cuidado "),
+      "Salud"            = c("Salud", "Salud "),
       "Otros"            = c("Otro","Otros")
     )
   ) %>%
@@ -130,8 +122,9 @@ data <- data %>%
 
 data$motivo <- factor(
   as.character(data$motivo),
-  levels = c("Trabajo","Estudio","Compras/Tramites","Tiempo personal","Cuidado")
+  levels = c("Trabajo","Estudio","Viajes de cuidado","Salud","Tramites","Tiempo personal")
 )
+
 
 # -------------------------------------------------------------------
 # 5) Shape comunas + join estrato

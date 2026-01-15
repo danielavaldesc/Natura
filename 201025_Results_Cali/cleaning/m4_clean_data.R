@@ -131,4 +131,3 @@ diccionario_clasificado <- diccionario_clasificado %>%
 writexl::write_xlsx(dataset, "output/clean_cali_dataset_21102025.xlsx")
 writexl::write_xlsx(diccionario_clasificado, "output/diccionario_cali.xlsx")
 
-

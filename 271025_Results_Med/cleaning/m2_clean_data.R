@@ -185,53 +185,50 @@ dataset <- dataset %>%
 dataset <- dataset %>%
   mutate(
     p23_agregado = case_when(
-      # --- Cuidado y familia: niñas/os con detalle de destino ---
-      p23 == "A acompañar o llevar a alguien" & p23_1 == "Una niña o niño" &
-        p23_2 == "Asistir a un centro educativo (colegio, jardín infantil)" ~
-        "Cuidado y familia (escuela, niñas/os)",
       
-      p23 == "A acompañar o llevar a alguien" & p23_1 == "Una niña o niño" &
-        p23_2 == "Atender asuntos médicos" ~
-        "Cuidado y familia (salud, niñas/os)",
+      # -----------------------------
+      # VIAJES DE CUIDADO (UNA SOLA CATEGORÍA)
+      # -----------------------------
+      p23 %in% c(
+        "A acompañar o llevar a alguien",
+        "A llevar y/o dejar algo",
+        "A realizar compras"
+      ) ~ "Viajes de cuidado",
       
-      p23 == "A acompañar o llevar a alguien" & p23_1 == "Una niña o niño" &
-        p23_2 == "Ir a un evento social, cultural, religioso y/o recreativo" ~
-        "Cuidado y familia (recreación, niñas/os)",
+      # -----------------------------
+      # SALUD
+      # -----------------------------
+      p23 == "A una cita médica, tomarse  examenes o reclamar medicamentos para usted mismo" ~
+        "Salud",
       
-      p23 == "A acompañar o llevar a alguien" & p23_1 == "Una niña o niño" &
-        (is.na(p23_2) | p23_2 == "Otro asunto") ~
-        "Cuidado y familia (otro/sin detalle, niñas/os)",
-      
-      # --- Cuidado y familia: otros acompañamientos que sí aparecen en tus tablas ---
-      p23 == "A acompañar o llevar a alguien" &
-        p23_1 == "A una persona con alguna discapacidad" ~
-        "Cuidado y familia (persona con discapacidad)",
-      
-      p23 == "A acompañar o llevar a alguien" &
-        p23_1 == "A una persona enferma" ~
-        "Cuidado y familia (persona enferma)",
-      
-      p23 == "A acompañar o llevar a alguien" & is.na(p23_1) ~
-        "Cuidado y familia (sin especificar)",
-      
-      # --- Trabajo / estudio ---
+      # -----------------------------
+      # TRABAJO / ESTUDIO
+      # -----------------------------
       p23 %in% c("Ir a trabajar", "A buscar trabajo") ~ "Trabajo",
       p23 == "Ir a estudiar" ~ "Estudio",
       
-      # --- Compras / trámites ---
-      p23 %in% c("A llevar y/o dejar algo",
-                 "A realizar algún trámite personal",
-                 "A realizar compras") ~ "Compras y trámites",
+      # -----------------------------
+      # COMPRAS / TRÁMITES (solo trámites)
+      # -----------------------------
+      p23 == "A realizar algún trámite personal" ~ "Trámites",
       
-      # --- Recreación, salud, personales ---
-      p23 %in% c("A realizar actividades físicas y/o deportivas (ir al gym, trotar, entrenar)",
-                 "A realizar actividades recreativas y culturales (ir a cine, a un concierto, una presentación etc)",
-                 "A asistir a alguna actividad de tipo religioso y/o de culto (la iglesia)",
-                 "A una cita médica, tomarse  examenes o reclamar medicamentos para usted mismo") ~
-        "Recreación, salud y actividades personales",
+      # -----------------------------
+      # RECREACIÓN Y ACTIVIDADES PERSONALES
+      # -----------------------------
+      p23 %in% c(
+        "A realizar actividades físicas y/o deportivas (ir al gym, trotar, entrenar)",
+        "A realizar actividades recreativas y culturales (ir a cine, a un concierto, una presentación etc)",
+        "A asistir a alguna actividad de tipo religioso y/o de culto (la iglesia)"
+      ) ~ "Recreación y actividades personales",
       
-      # --- Visitas / Otro ---
+      # -----------------------------
+      # VISITAS
+      # -----------------------------
       p23 == "A visitar a alguien (familiar o amigo)" ~ "Visitas sociales",
+      
+      # -----------------------------
+      # OTRO
+      # -----------------------------
       p23 == "A otro asunto" ~ "Otro",
       
       TRUE ~ NA_character_

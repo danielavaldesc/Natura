@@ -10,7 +10,7 @@
 ## 0. Cargar entorno y configuración inicial
 ## ============================================================================
 
-setwd("C:\\Users\\Portatil\\Desktop\\Natura\\271025_Results_Med\\")
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\")
 
 source("cleaning/m3_clean_data.R", encoding = "UTF-8")
 

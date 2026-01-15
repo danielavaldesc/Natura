@@ -16,6 +16,7 @@
 ## ============================================================================
 ## 0. Cargar entorno y funciones auxiliares
 ## ============================================================================
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\201025_Results_Cali\\")
 
 # Función principal para resúmenes
 source("aux_functions/aux_summary.R")
@@ -75,6 +76,7 @@ control_vars_m1 <- c(
 )
 
 # Ejecuta y exporta 
+library(tibble)
 resultados_m1 <- lapply(names(control_vars_m1), function(ctrl) {
   tabla <- describe_by_group(
     data        = dataset,

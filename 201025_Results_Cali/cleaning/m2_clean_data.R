@@ -195,52 +195,62 @@ dataset <- dataset %>%
 
 
 ## ============================================================================ 
-## 6. Propósito principal del viaje (armonizado y detallado)
+## 6. Propósito principal del viaje 
 ## ============================================================================ 
 
 dataset <- dataset %>%
   mutate(
     p23_agregado = case_when(
-      # Cuidado y familia
-      p23 == "A acompañar o llevar a alguien" &
-        p23_1 %in% c("Una niña o niño", "Un adolescente/jóven") &
-        p23_2 == "Asistir a un centro educativo (colegio, jardín infantil)" ~
-        "Cuidado y familia (centro educativo, niños/as o jóvenes)",
-      p23 == "A acompañar o llevar a alguien" &
-        p23_1 %in% c("Una niña o niño", "Un adolescente/jóven") &
-        p23_2 == "Otro asunto" ~
-        "Cuidado y familia (otro lugar, niños/as o jóvenes)",
-      p23 == "A acompañar o llevar a alguien" &
-        p23_1 %in% c("Una niña o niño", "Un adolescente/jóven") &
-        is.na(p23_2) ~
-        "Cuidado y familia (sin detalle, niños/as o jóvenes)",
-      p23 == "A acompañar o llevar a alguien" & is.na(p23_1) ~
-        "Cuidado y familia (sin especificar)",
       
-      # Trabajo / estudio
+      # -----------------------------
+      # VIAJES DE CUIDADO 
+      # -----------------------------
+      p23 %in% c(
+        "A acompañar o llevar a alguien",
+        "A llevar y/o dejar algo",
+        "A realizar compras"
+      ) ~ "Viajes de cuidado",
+      
+      # -----------------------------
+      # SALUD
+      # -----------------------------
+      p23 == "A una cita médica, tomarse  examenes o reclamar medicamentos para usted mismo" ~
+        "Salud",
+      
+      # -----------------------------
+      # TRABAJO / ESTUDIO
+      # -----------------------------
       p23 %in% c("Ir a trabajar", "A buscar trabajo") ~ "Trabajo",
       p23 == "Ir a estudiar" ~ "Estudio",
       
-      # Compras / trámites
-      p23 %in% c("A llevar y/o dejar algo",
-                 "A realizar algún trámite personal",
-                 "A realizar compras") ~ "Compras y trámites",
+      # -----------------------------
+      # TRÁMITES 
+      # -----------------------------
+      p23 == "A realizar algún trámite personal" ~ "Trámites",
       
-      # Recreación, salud, personales
-      p23 %in% c("A realizar actividades físicas y/o deportivas (ir al gym, trotar, entrenar)",
-                 "A realizar actividades recreativas y culturales (ir a cine, a un concierto, una presentación etc)",
-                 "A asistir a alguna actividad de tipo religioso y/o de culto (la iglesia)",
-                 "A una cita médica, tomarse  examenes o reclamar medicamentos para usted mismo") ~
-        "Recreación, salud y actividades personales",
+      # -----------------------------
+      # RECREACIÓN Y ACTIVIDADES PERSONALES
+      # -----------------------------
+      p23 %in% c(
+        "A realizar actividades físicas y/o deportivas (ir al gym, trotar, entrenar)",
+        "A realizar actividades recreativas y culturales (ir a cine, a un concierto, una presentación etc)",
+        "A asistir a alguna actividad de tipo religioso y/o de culto (la iglesia)"
+      ) ~ "Recreación y actividades personales",
       
-      # Visitas
+      # -----------------------------
+      # VISITAS
+      # -----------------------------
       p23 == "A visitar a alguien (familiar o amigo)" ~ "Visitas sociales",
       
-      # Otro
+      # -----------------------------
+      # OTRO
+      # -----------------------------
       p23 == "A otro asunto" ~ "Otro",
+      
       TRUE ~ NA_character_
     )
   )
+
 
 
 ## ============================================================================ 

@@ -1,0 +1,832 @@
+ciudad,genero_2,medio,tiempo_total
+Cali,Hombre,Transporte informal,106
+Cali,Mujer,Transporte público,180
+Cali,Mujer,Moto privada,20
+Cali,Hombre,Transporte público,80
+Cali,Mujer,Moto privada,60
+Cali,Hombre,Transporte público,40
+Cali,Mujer,Moto privada,10
+Cali,Mujer,Transporte público,80
+Cali,Hombre,Taxi / Plataforma,30
+Cali,Hombre,Transporte informal,165
+Cali,Mujer,Moto privada,40
+Cali,Hombre,Auto privado,40
+Cali,Hombre,Auto privado,30
+Cali,Mujer,Transporte público,95
+Cali,Hombre,Moto privada,60
+Cali,Mujer,Transporte público,130
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Mujer,Moto privada,50
+Cali,Mujer,Transporte público,140
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Mujer,Transporte público,138
+Cali,Hombre,Transporte público,108
+Cali,Mujer,Transporte público,125
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Transporte público,81
+Cali,Hombre,Transporte público,98
+Cali,Hombre,Taxi / Plataforma,25
+Cali,Hombre,Auto privado,25
+Cali,Mujer,Moto privada,15
+Cali,Hombre,Moto privada,20
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Hombre,Auto privado,20
+Cali,Hombre,Moto privada,20
+Cali,Hombre,Moto privada,60
+Cali,Hombre,Modo activo,60
+Cali,Hombre,Auto privado,30
+Cali,Hombre,Modo activo,25
+Cali,Mujer,Transporte público,73
+Cali,Mujer,Transporte público,203
+Cali,Mujer,Auto privado,20
+Cali,Mujer,Transporte informal,32
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Mujer,Transporte público,72
+Cali,Hombre,Auto privado,20
+Cali,Hombre,Modo activo,5
+Cali,Mujer,Transporte público,96
+Cali,Mujer,Transporte público,82
+Cali,Mujer,Taxi / Plataforma,8
+Cali,Mujer,Moto privada,10
+Cali,Mujer,Transporte público,110
+Cali,Mujer,Taxi / Plataforma,7
+Cali,Hombre,Moto privada,25
+Cali,Mujer,Moto privada,20
+Cali,Hombre,Moto privada,10
+Cali,Hombre,Moto privada,30
+Cali,Mujer,Transporte público,135
+Cali,Mujer,Transporte público,55
+Cali,Mujer,Moto privada,20
+Cali,Hombre,Modo activo,30
+Cali,Mujer,Moto privada,15
+Cali,Mujer,Moto privada,30
+Cali,Hombre,Modo activo,60
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Hombre,Taxi / Plataforma,6
+Cali,Mujer,Transporte público,41
+Cali,Hombre,Transporte público,45
+Cali,Hombre,Transporte público,75
+Cali,Mujer,Moto privada,30
+Cali,Hombre,Moto privada,20
+Cali,Hombre,Moto privada,20
+Cali,Hombre,Auto privado,45
+Cali,Hombre,Moto privada,15
+Cali,Hombre,Modo activo,10
+Cali,Mujer,Transporte público,95
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Mujer,Moto privada,10
+Cali,Hombre,Transporte público,125
+Cali,Hombre,Auto privado,90
+Cali,Mujer,Transporte público,155
+Cali,Mujer,Taxi / Plataforma,10
+Cali,Mujer,Taxi / Plataforma,20
+Cali,Hombre,Auto privado,120
+Cali,Hombre,Moto privada,110
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Moto privada,40
+Cali,Hombre,Moto privada,40
+Cali,Mujer,Moto privada,30
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Transporte público,110
+Cali,Hombre,Transporte público,130
+Cali,Mujer,Auto privado,30
+Cali,Hombre,Moto privada,25
+Cali,Hombre,Auto privado,60
+Cali,Hombre,Auto privado,30
+Cali,Hombre,Moto privada,20
+Cali,Hombre,Auto privado,30
+Cali,Hombre,Transporte informal,30
+Cali,Hombre,Moto privada,20
+Cali,Hombre,Transporte informal,30
+Cali,Hombre,Modo activo,90
+Cali,Mujer,Modo activo,20
+Cali,Mujer,Transporte público,59
+Cali,Hombre,Moto privada,30
+Cali,Hombre,Modo activo,30
+Cali,Mujer,Modo activo,15
+Cali,Hombre,Transporte público,70
+Cali,Hombre,Transporte público,90
+Cali,Hombre,Transporte público,68
+Cali,Hombre,Moto privada,25
+Cali,Mujer,Moto privada,90
+Cali,Mujer,Moto privada,15
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Taxi / Plataforma,8
+Cali,Hombre,Moto privada,30
+Cali,Mujer,Modo activo,10
+Cali,Hombre,Moto privada,20
+Cali,Hombre,Moto privada,15
+Cali,Hombre,Moto privada,10
+Cali,Hombre,Transporte público,128
+Cali,Mujer,Transporte público,205
+Cali,Hombre,Transporte público,85
+Cali,Mujer,Modo activo,10
+Cali,Mujer,Modo activo,2
+Cali,Mujer,Taxi / Plataforma,7
+Cali,Mujer,Taxi / Plataforma,7
+Cali,Hombre,Taxi / Plataforma,90
+Cali,Mujer,Taxi / Plataforma,15
+Cali,Hombre,Modo activo,60
+Cali,Hombre,Modo activo,120
+Cali,Hombre,Transporte público,75
+Cali,Hombre,Auto privado,30
+Cali,Hombre,Modo activo,120
+Cali,Hombre,Moto privada,10
+Cali,Hombre,Moto privada,5
+Cali,Mujer,Transporte público,115
+Cali,Hombre,Auto privado,5
+Cali,Hombre,Modo activo,30
+Cali,Hombre,Transporte público,148
+Cali,Mujer,Transporte público,60
+Cali,Hombre,Moto privada,10
+Cali,Mujer,Transporte público,35
+Cali,Mujer,Taxi / Plataforma,15
+Cali,Hombre,Moto privada,30
+Cali,Hombre,Transporte público,105
+Cali,Hombre,Transporte público,75
+Cali,Hombre,Taxi / Plataforma,20
+Cali,Hombre,Modo activo,25
+Cali,Hombre,Modo activo,60
+Cali,Hombre,Moto privada,45
+Cali,Hombre,Moto privada,15
+Cali,Hombre,Modo activo,10
+Cali,Mujer,Transporte público,110
+Cali,Mujer,Taxi / Plataforma,15
+Cali,Mujer,Taxi / Plataforma,15
+Cali,Mujer,Transporte público,156
+Cali,Mujer,Taxi / Plataforma,8
+Cali,Mujer,Transporte público,31
+Cali,Mujer,Transporte informal,136
+Cali,Hombre,Moto privada,1
+Cali,Mujer,Taxi / Plataforma,60
+Cali,Hombre,Taxi / Plataforma,1
+Cali,Hombre,Moto privada,30
+Cali,Mujer,Moto privada,20
+Cali,Mujer,Taxi / Plataforma,100
+Cali,Mujer,Moto privada,30
+Cali,Hombre,Auto privado,30
+Cali,Hombre,Moto privada,7
+Cali,Hombre,Auto privado,40
+Cali,Mujer,Moto privada,20
+Cali,Hombre,Transporte público,115
+Cali,Mujer,Modo activo,20
+Cali,Hombre,Modo activo,6
+Cali,Mujer,Transporte público,37
+Cali,Mujer,Moto privada,20
+Cali,Hombre,Moto privada,10
+Cali,Mujer,Auto privado,20
+Cali,Hombre,Transporte público,73
+Cali,Hombre,Modo activo,40
+Cali,Mujer,Transporte público,95
+Cali,Hombre,Transporte público,50
+Cali,Hombre,Transporte público,90
+Cali,Hombre,Modo activo,15
+Cali,Hombre,Auto privado,15
+Cali,Hombre,Moto privada,40
+Cali,Mujer,Taxi / Plataforma,60
+Cali,Mujer,Moto privada,30
+Cali,Mujer,Moto privada,5
+Cali,Hombre,Taxi / Plataforma,60
+Cali,Hombre,Modo activo,2
+Cali,Mujer,Moto privada,15
+Cali,Hombre,Moto privada,15
+Cali,Hombre,Transporte público,75
+Cali,Hombre,Transporte público,97
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Moto privada,20
+Cali,Mujer,Taxi / Plataforma,15
+Cali,Mujer,Taxi / Plataforma,40
+Cali,Hombre,Moto privada,70
+Cali,Hombre,Auto privado,30
+Cali,Hombre,Taxi / Plataforma,20
+Cali,Hombre,Moto privada,60
+Cali,Mujer,Taxi / Plataforma,60
+Cali,Mujer,Transporte público,150
+Cali,Hombre,Auto privado,60
+Cali,Mujer,Transporte público,75
+Cali,Hombre,Taxi / Plataforma,15
+Cali,Mujer,Modo activo,20
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Hombre,Taxi / Plataforma,15
+Cali,Hombre,Moto privada,20
+Cali,Hombre,Transporte informal,45
+Cali,Hombre,Taxi / Plataforma,30
+Cali,Mujer,Taxi / Plataforma,10
+Cali,Hombre,Taxi / Plataforma,15
+Cali,Mujer,Transporte público,168
+Cali,Mujer,Transporte público,250
+Cali,Hombre,Moto privada,120
+Cali,Hombre,Moto privada,15
+Cali,Hombre,Moto privada,7
+Cali,Mujer,Moto privada,560
+Cali,Mujer,Moto privada,240
+Cali,Hombre,Moto privada,680
+Cali,Hombre,Auto privado,30
+Cali,Mujer,Modo activo,30
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Modo activo,90
+Cali,Hombre,Auto privado,10
+Cali,Mujer,Auto privado,60
+Cali,Hombre,Transporte público,107
+Cali,Mujer,Transporte público,100
+Cali,Hombre,Auto privado,30
+Cali,Hombre,Moto privada,20
+Cali,Mujer,Moto privada,20
+Cali,Hombre,Taxi / Plataforma,15
+Cali,Hombre,Moto privada,5
+Cali,Mujer,Moto privada,30
+Cali,Mujer,Transporte público,42
+Cali,Hombre,Moto privada,60
+Cali,Mujer,Modo activo,30
+Cali,Mujer,Taxi / Plataforma,15
+Cali,Hombre,Transporte público,120
+Cali,Hombre,Moto privada,30
+Cali,Mujer,Moto privada,15
+Cali,Hombre,Auto privado,10
+Cali,Mujer,Moto privada,20
+Cali,Hombre,Modo activo,30
+Cali,Hombre,Transporte público,115
+Cali,Mujer,Moto privada,60
+Cali,Hombre,Taxi / Plataforma,30
+Cali,Hombre,Modo activo,5
+Cali,Mujer,Auto privado,15
+Cali,Hombre,Transporte público,135
+Cali,Hombre,Transporte público,45
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Auto privado,60
+Cali,Hombre,Moto privada,20
+Cali,Hombre,Transporte público,48
+Cali,Mujer,Taxi / Plataforma,60
+Cali,Hombre,Transporte público,40
+Cali,Hombre,Moto privada,60
+Cali,Mujer,Taxi / Plataforma,40
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Hombre,Moto privada,120
+Cali,Mujer,Transporte público,80
+Cali,Hombre,Moto privada,25
+Cali,Mujer,Auto privado,90
+Cali,Hombre,Modo activo,15
+Cali,Hombre,Moto privada,5
+Cali,Hombre,Moto privada,10
+Cali,Hombre,Moto privada,20
+Cali,Mujer,Moto privada,90
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Transporte público,90
+Cali,Mujer,Auto privado,60
+Cali,Hombre,Moto privada,40
+Cali,Hombre,Auto privado,60
+Cali,Mujer,Auto privado,60
+Cali,Hombre,Taxi / Plataforma,45
+Cali,Mujer,Transporte público,100
+Cali,Hombre,Moto privada,60
+Cali,Hombre,Modo activo,60
+Cali,Hombre,Moto privada,20
+Cali,Mujer,Transporte público,120
+Cali,Mujer,Transporte público,42
+Cali,Hombre,Modo activo,10
+Cali,Mujer,Transporte público,60
+Cali,Hombre,Modo activo,40
+Cali,Mujer,Transporte público,100
+Cali,Hombre,Modo activo,40
+Cali,Hombre,Modo activo,60
+Cali,Mujer,Transporte público,63
+Cali,Hombre,Auto privado,30
+Cali,Mujer,Transporte público,163
+Cali,Hombre,Auto privado,90
+Cali,Mujer,Auto privado,60
+Cali,Hombre,Modo activo,90
+Cali,Mujer,Taxi / Plataforma,5
+Cali,Mujer,Transporte público,45
+Cali,Mujer,Auto privado,30
+Cali,Hombre,Auto privado,60
+Cali,Hombre,Modo activo,20
+Cali,Hombre,Modo activo,5
+Cali,Hombre,Modo activo,30
+Cali,Mujer,Transporte público,90
+Cali,Mujer,Auto privado,30
+Cali,Hombre,Auto privado,30
+Cali,Mujer,Moto privada,15
+Cali,Mujer,Taxi / Plataforma,60
+Cali,Hombre,Auto privado,60
+Cali,Mujer,Modo activo,15
+Cali,Mujer,Taxi / Plataforma,20
+Cali,Hombre,Auto privado,30
+Cali,Mujer,Transporte público,170
+Cali,Hombre,Moto privada,30
+Cali,Hombre,Modo activo,240
+Cali,Mujer,Moto privada,120
+Cali,Mujer,Moto privada,20
+Cali,Mujer,Moto privada,120
+Cali,Mujer,Transporte público,175
+Cali,Mujer,Transporte público,159
+Cali,Hombre,Taxi / Plataforma,120
+Cali,Mujer,Taxi / Plataforma,60
+Cali,Hombre,Moto privada,30
+Cali,Mujer,Transporte público,48
+Cali,Hombre,Moto privada,10
+Cali,Mujer,Auto privado,30
+Cali,Mujer,Auto privado,5
+Cali,Hombre,Taxi / Plataforma,15
+Cali,Hombre,Moto privada,25
+Cali,Mujer,Auto privado,15
+Cali,Mujer,Taxi / Plataforma,20
+Cali,Mujer,Auto privado,30
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Mujer,Taxi / Plataforma,20
+Cali,Hombre,Taxi / Plataforma,30
+Cali,Hombre,Moto privada,20
+Cali,Mujer,Moto privada,45
+Cali,Hombre,Moto privada,10
+Cali,Mujer,Taxi / Plataforma,20
+Cali,Mujer,Moto privada,20
+Cali,Hombre,Auto privado,120
+Cali,Mujer,Transporte público,230
+Cali,Mujer,Transporte público,170
+Cali,Mujer,Moto privada,30
+Cali,Mujer,Moto privada,30
+Cali,Mujer,Moto privada,30
+Cali,Hombre,Auto privado,50
+Cali,Mujer,Moto privada,60
+Cali,Hombre,Moto privada,30
+Cali,Mujer,Moto privada,20
+Cali,Mujer,Auto privado,45
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Taxi / Plataforma,15
+Cali,Hombre,Transporte público,138
+Cali,Mujer,Moto privada,45
+Cali,Hombre,Moto privada,60
+Cali,Mujer,Taxi / Plataforma,15
+Cali,Mujer,Taxi / Plataforma,20
+Cali,Mujer,Auto privado,20
+Cali,Mujer,Auto privado,40
+Cali,Hombre,Moto privada,15
+Cali,Hombre,Moto privada,30
+Cali,Hombre,Auto privado,60
+Cali,Mujer,Auto privado,40
+Cali,Mujer,Transporte público,60
+Cali,Mujer,Modo activo,15
+Cali,Hombre,Auto privado,25
+Cali,Hombre,Auto privado,10
+Cali,Hombre,Modo activo,120
+Cali,Mujer,Taxi / Plataforma,30
+Cali,Mujer,Moto privada,15
+Cali,Mujer,Auto privado,60
+Cali,Hombre,Auto privado,40
+Cali,Mujer,Auto privado,120
+Cali,Hombre,Modo activo,90
+Cali,Hombre,Taxi / Plataforma,25
+Cali,Hombre,Moto privada,60
+Cali,Mujer,Auto privado,60
+Cali,Mujer,Auto privado,20
+Cali,Hombre,Moto privada,40
+Cali,Hombre,Auto privado,20
+Cali,Hombre,Moto privada,40
+Cali,Hombre,Auto privado,25
+Cali,Hombre,Transporte público,54
+Cali,Mujer,Auto privado,80
+Cali,Hombre,Auto privado,60
+Cali,Hombre,Auto privado,60
+Cali,Hombre,Auto privado,10
+Cali,Mujer,Auto privado,60
+Cali,Hombre,Modo activo,30
+Cali,Hombre,Auto privado,90
+Cali,Mujer,Transporte público,46
+Cali,Hombre,Auto privado,30
+Cali,Hombre,Modo activo,30
+Cali,Hombre,Moto privada,15
+Cali,Mujer,Auto privado,20
+Cali,Mujer,Moto privada,15
+Cali,Mujer,Transporte público,120
+Cali,Mujer,Transporte público,75
+Cali,Mujer,Moto privada,25
+Cali,Mujer,Transporte público,55
+Cali,Mujer,Moto privada,25
+Cali,Mujer,Transporte público,65
+Cali,Mujer,Auto privado,60
+Cali,Mujer,Transporte público,56
+Cali,Mujer,Transporte público,70
+Cali,Mujer,Moto privada,15
+Cali,Mujer,Moto privada,10
+Cali,Mujer,Taxi / Plataforma,15
+Cali,Mujer,Transporte público,65
+Cali,Mujer,Transporte público,82
+Cali,Mujer,Modo activo,90
+Cali,Mujer,Auto privado,60
+Cali,Mujer,Moto privada,30
+Cali,Mujer,Transporte público,83
+Cali,Mujer,Transporte público,75
+Cali,Mujer,Moto privada,25
+Cali,Mujer,Moto privada,40
+Cali,Mujer,Transporte público,80
+Cali,Mujer,Moto privada,5
+Cali,Mujer,Taxi / Plataforma,25
+Cali,Mujer,Transporte público,78
+Cali,Mujer,Transporte público,47
+Cali,Mujer,Transporte público,80
+Cali,Mujer,Transporte público,90
+Cali,Mujer,Moto privada,35
+Cali,Mujer,Moto privada,15
+Cali,Mujer,Moto privada,30
+Cali,Mujer,Transporte público,118
+Cali,Mujer,Moto privada,30
+Cali,Mujer,Taxi / Plataforma,55
+Cali,Mujer,Taxi / Plataforma,55
+Medellín,Mujer,Moto privada,40
+Medellín,Mujer,Auto privado,15
+Medellín,Hombre,Transporte público,90
+Medellín,Hombre,Moto privada,45
+Medellín,Hombre,Transporte público,55
+Medellín,Hombre,Transporte público,49
+Medellín,Mujer,Transporte público,45
+Medellín,Mujer,Transporte público,52
+Medellín,Hombre,Moto privada,25
+Medellín,Hombre,Moto privada,15
+Medellín,Mujer,Moto privada,30
+Medellín,Mujer,Moto privada,30
+Medellín,Mujer,Transporte público,40
+Medellín,Mujer,Taxi / Plataforma,60
+Medellín,Mujer,Modo activo,25
+Medellín,Mujer,Transporte público,75
+Medellín,Hombre,Transporte público,35
+Medellín,Mujer,Taxi / Plataforma,15
+Medellín,Hombre,Transporte público,80
+Medellín,Mujer,Transporte público,40
+Medellín,Mujer,Transporte público,145
+Medellín,Mujer,Transporte público,43
+Medellín,Mujer,Transporte público,70
+Medellín,Mujer,Transporte público,50
+Medellín,Hombre,Transporte público,33
+Medellín,Mujer,Transporte público,20
+Medellín,Hombre,Transporte público,41
+Medellín,Mujer,Transporte público,20
+Medellín,Mujer,Transporte público,65
+Medellín,Mujer,Transporte público,56
+Medellín,Mujer,Transporte público,34
+Medellín,Hombre,Transporte público,77
+Medellín,Mujer,Transporte público,50
+Medellín,Mujer,Taxi / Plataforma,30
+Medellín,Hombre,Transporte público,37
+Medellín,Hombre,Moto privada,15
+Medellín,Mujer,Transporte público,55
+Medellín,Hombre,Auto privado,60
+Medellín,Mujer,Transporte público,60
+Medellín,Mujer,Transporte público,34
+Medellín,Hombre,Transporte público,60
+Medellín,Mujer,Transporte público,70
+Medellín,Hombre,Transporte público,73
+Medellín,Hombre,Transporte público,105
+Medellín,Hombre,Transporte público,55
+Medellín,Mujer,Modo activo,40
+Medellín,Hombre,Moto privada,30
+Medellín,Mujer,Transporte público,65
+Medellín,Mujer,Transporte público,62
+Medellín,Mujer,Transporte público,65
+Medellín,Mujer,Transporte público,50
+Medellín,Mujer,Transporte público,73
+Medellín,Hombre,Moto privada,20
+Medellín,Mujer,Transporte público,101
+Medellín,Mujer,Moto privada,40
+Medellín,Mujer,Transporte público,125
+Medellín,Mujer,Transporte público,38
+Medellín,Mujer,Transporte público,48
+Medellín,Mujer,Transporte público,80
+Medellín,Hombre,Transporte público,62
+Medellín,Mujer,Transporte público,115
+Medellín,Hombre,Transporte público,70
+Medellín,Mujer,Transporte público,50
+Medellín,Hombre,Modo activo,60
+Medellín,Mujer,Moto privada,15
+Medellín,Hombre,Transporte público,22
+Medellín,Mujer,Transporte público,40
+Medellín,Mujer,Transporte público,76
+Medellín,Hombre,Modo activo,30
+Medellín,Hombre,Moto privada,20
+Medellín,Mujer,Transporte público,85
+Medellín,Mujer,Transporte público,35
+Medellín,Mujer,Transporte público,35
+Medellín,Hombre,Transporte público,52
+Medellín,Mujer,Transporte público,49
+Medellín,Mujer,Transporte público,47
+Medellín,Hombre,Auto privado,30
+Medellín,Hombre,Transporte público,55
+Medellín,Hombre,Moto privada,45
+Medellín,Mujer,Moto privada,20
+Medellín,Hombre,Auto privado,45
+Medellín,Mujer,Transporte público,57
+Medellín,Mujer,Taxi / Plataforma,30
+Medellín,Mujer,Taxi / Plataforma,30
+Medellín,Hombre,Auto privado,10
+Medellín,Hombre,Transporte público,35
+Medellín,Hombre,Transporte público,55
+Medellín,Mujer,Transporte público,60
+Medellín,Hombre,Transporte público,47
+Medellín,Mujer,Transporte público,72
+Medellín,Mujer,Taxi / Plataforma,15
+Medellín,Mujer,Transporte público,39
+Medellín,Hombre,Transporte público,90
+Medellín,Mujer,Transporte público,67
+Medellín,Mujer,Transporte público,66
+Medellín,Hombre,Transporte público,82
+Medellín,Hombre,Moto privada,60
+Medellín,Hombre,Moto privada,20
+Medellín,Hombre,Taxi / Plataforma,30
+Medellín,Mujer,Taxi / Plataforma,12
+Medellín,Hombre,Moto privada,15
+Medellín,Mujer,Transporte público,75
+Medellín,Hombre,Moto privada,60
+Medellín,Mujer,Transporte público,95
+Medellín,Mujer,Transporte público,53
+Medellín,Hombre,Transporte público,93
+Medellín,Hombre,Moto privada,35
+Medellín,Hombre,Auto privado,13
+Medellín,Mujer,Transporte público,55
+Medellín,Mujer,Transporte público,83
+Medellín,Hombre,Moto privada,40
+Medellín,Mujer,Taxi / Plataforma,40
+Medellín,Mujer,Taxi / Plataforma,5
+Medellín,Mujer,Transporte público,31
+Medellín,Hombre,Transporte público,35
+Medellín,Mujer,Transporte público,60
+Medellín,Mujer,Transporte público,54
+Medellín,Hombre,Transporte público,80
+Medellín,Mujer,Moto privada,10
+Medellín,Hombre,Moto privada,15
+Medellín,Hombre,Transporte público,85
+Medellín,Mujer,Transporte público,50
+Medellín,Mujer,Transporte público,65
+Medellín,Hombre,Modo activo,60
+Medellín,Hombre,Moto privada,90
+Medellín,Mujer,Transporte público,43
+Medellín,Hombre,Transporte público,72
+Medellín,Mujer,Transporte público,60
+Medellín,Mujer,Transporte público,85
+Medellín,Mujer,Transporte público,50
+Medellín,Hombre,Transporte público,67
+Medellín,Hombre,Taxi / Plataforma,20
+Medellín,Hombre,Transporte público,52
+Medellín,Hombre,Transporte público,73
+Medellín,Hombre,Transporte público,43
+Medellín,Mujer,Moto privada,40
+Medellín,Hombre,Transporte público,80
+Medellín,Mujer,Taxi / Plataforma,10
+Medellín,Hombre,Transporte público,59
+Medellín,Mujer,Transporte público,26
+Medellín,Hombre,Transporte público,32
+Medellín,Mujer,Transporte público,45
+Medellín,Mujer,Moto privada,30
+Medellín,Mujer,Transporte público,65
+Medellín,Mujer,Transporte público,33
+Medellín,Mujer,Taxi / Plataforma,30
+Medellín,Hombre,Transporte público,21
+Medellín,Mujer,Transporte público,65
+Medellín,Hombre,Transporte público,65
+Medellín,Mujer,Taxi / Plataforma,30
+Medellín,Mujer,Transporte público,30
+Medellín,Mujer,Transporte público,32
+Medellín,Mujer,Transporte público,65
+Medellín,Mujer,Transporte público,90
+Medellín,Hombre,Transporte público,60
+Medellín,Mujer,Auto privado,15
+Medellín,Mujer,Moto privada,20
+Medellín,Mujer,Transporte público,71
+Medellín,Mujer,Transporte público,42
+Medellín,Mujer,Taxi / Plataforma,20
+Medellín,Mujer,Taxi / Plataforma,10
+Medellín,Hombre,Auto privado,30
+Medellín,Hombre,Transporte público,35
+Medellín,Hombre,Moto privada,3
+Medellín,Hombre,Taxi / Plataforma,15
+Medellín,Hombre,Moto privada,60
+Medellín,Hombre,Transporte público,66
+Medellín,Hombre,Transporte público,45
+Medellín,Hombre,Transporte público,59
+Medellín,Hombre,Transporte público,45
+Medellín,Mujer,Transporte público,41
+Medellín,Hombre,Transporte público,45
+Medellín,Hombre,Transporte público,110
+Medellín,Mujer,Moto privada,15
+Medellín,Mujer,Moto privada,3
+Medellín,Mujer,Transporte público,44
+Medellín,Hombre,Transporte público,65
+Medellín,Mujer,Transporte público,61
+Medellín,Hombre,Transporte público,48
+Medellín,Hombre,Transporte público,32
+Medellín,Mujer,Transporte público,29
+Medellín,Mujer,Transporte público,60
+Medellín,Hombre,Transporte público,65
+Medellín,Hombre,Moto privada,10
+Medellín,Mujer,Transporte público,28
+Medellín,Hombre,Moto privada,15
+Medellín,Mujer,Taxi / Plataforma,8
+Medellín,Mujer,Transporte público,31
+Medellín,Hombre,Moto privada,20
+Medellín,Hombre,Modo activo,90
+Medellín,Mujer,Transporte público,65
+Medellín,Hombre,Modo activo,30
+Medellín,Mujer,Transporte público,28
+Medellín,Mujer,Transporte público,72
+Medellín,Hombre,Modo activo,20
+Medellín,Mujer,Modo activo,130
+Medellín,Mujer,Transporte público,73
+Medellín,Mujer,Transporte público,58
+Medellín,Mujer,Modo activo,40
+Medellín,Mujer,Transporte público,62
+Medellín,Hombre,Moto privada,30
+Medellín,Mujer,Moto privada,30
+Medellín,Hombre,Transporte público,53
+Medellín,Mujer,Taxi / Plataforma,15
+Medellín,Hombre,Transporte público,90
+Medellín,Mujer,Transporte público,48
+Medellín,Hombre,Transporte público,50
+Medellín,Hombre,Transporte público,67
+Medellín,Mujer,Transporte público,88
+Medellín,Mujer,Transporte público,28
+Medellín,Hombre,Transporte público,29
+Medellín,Hombre,Transporte público,85
+Medellín,Mujer,Transporte público,70
+Medellín,Mujer,Transporte público,55
+Medellín,Hombre,Moto privada,20
+Medellín,Mujer,Transporte público,47
+Medellín,Hombre,Transporte público,75
+Medellín,Hombre,Taxi / Plataforma,15
+Medellín,Mujer,Transporte público,60
+Medellín,Mujer,Taxi / Plataforma,20
+Medellín,Mujer,Taxi / Plataforma,45
+Medellín,Hombre,Transporte público,25
+Medellín,Hombre,Transporte público,38
+Medellín,Hombre,Transporte público,23
+Medellín,Mujer,Transporte público,35
+Medellín,Mujer,Transporte público,87
+Medellín,Hombre,Transporte público,60
+Medellín,Mujer,Transporte público,22
+Medellín,Mujer,Transporte público,35
+Medellín,Mujer,Transporte público,65
+Medellín,Hombre,Taxi / Plataforma,25
+Medellín,Mujer,Moto privada,20
+Medellín,Hombre,Taxi / Plataforma,20
+Medellín,Hombre,Moto privada,5
+Medellín,Mujer,Transporte público,35
+Medellín,Mujer,Modo activo,15
+Medellín,Hombre,Moto privada,30
+Medellín,Hombre,Taxi / Plataforma,20
+Medellín,Hombre,Transporte público,64
+Medellín,Mujer,Moto privada,40
+Medellín,Mujer,Transporte público,100
+Medellín,Hombre,Transporte público,51
+Medellín,Mujer,Transporte público,47
+Medellín,Hombre,Transporte público,52
+Medellín,Hombre,Transporte público,80
+Medellín,Hombre,Moto privada,25
+Medellín,Hombre,Moto privada,10
+Medellín,Hombre,Moto privada,10
+Medellín,Hombre,Transporte público,56
+Medellín,Mujer,Transporte público,45
+Medellín,Hombre,Transporte público,65
+Medellín,Mujer,Transporte público,38
+Medellín,Hombre,Transporte público,65
+Medellín,Mujer,Moto privada,15
+Medellín,Mujer,Taxi / Plataforma,10
+Medellín,Mujer,Transporte público,45
+Medellín,Mujer,Transporte público,38
+Medellín,Mujer,Moto privada,20
+Medellín,Mujer,Transporte público,42
+Medellín,Hombre,Transporte público,125
+Medellín,Mujer,Taxi / Plataforma,20
+Medellín,Mujer,Taxi / Plataforma,20
+Medellín,Hombre,Transporte público,145
+Medellín,Hombre,Transporte público,138
+Medellín,Hombre,Transporte público,47
+Medellín,Hombre,Transporte público,31
+Medellín,Mujer,Taxi / Plataforma,120
+Medellín,Hombre,Transporte público,35
+Medellín,Mujer,Taxi / Plataforma,30
+Medellín,Hombre,Moto privada,5
+Medellín,Hombre,Moto privada,40
+Medellín,Hombre,Moto privada,40
+Medellín,Hombre,Transporte público,69
+Medellín,Hombre,Transporte público,91
+Medellín,Hombre,Transporte público,70
+Medellín,Mujer,Moto privada,10
+Medellín,Mujer,Transporte público,65
+Medellín,Hombre,Transporte público,60
+Medellín,Mujer,Taxi / Plataforma,20
+Medellín,Hombre,Transporte público,45
+Medellín,Mujer,Transporte público,55
+Medellín,Hombre,Transporte público,45
+Medellín,Hombre,Modo activo,35
+Medellín,Mujer,Auto privado,30
+Medellín,Hombre,Transporte público,32
+Medellín,Hombre,Moto privada,5
+Medellín,Hombre,Moto privada,15
+Medellín,Hombre,Moto privada,20
+Medellín,Mujer,Transporte público,45
+Medellín,Hombre,Moto privada,5
+Medellín,Hombre,Transporte público,55
+Medellín,Hombre,Transporte público,71
+Medellín,Mujer,Transporte público,90
+Medellín,Hombre,Taxi / Plataforma,45
+Medellín,Hombre,Moto privada,20
+Medellín,Mujer,Transporte público,54
+Medellín,Mujer,Moto privada,20
+Medellín,Hombre,Auto privado,30
+Medellín,Hombre,Modo activo,8
+Medellín,Hombre,Moto privada,30
+Medellín,Hombre,Transporte público,48
+Medellín,Hombre,Transporte público,36
+Medellín,Mujer,Transporte público,14
+Medellín,Hombre,Transporte público,58
+Medellín,Mujer,Auto privado,60
+Medellín,Mujer,Transporte público,60
+Medellín,Mujer,Taxi / Plataforma,15
+Medellín,Hombre,Taxi / Plataforma,15
+Medellín,Hombre,Transporte público,28
+Medellín,Hombre,Modo activo,40
+Medellín,Mujer,Transporte público,90
+Medellín,Hombre,Transporte público,41
+Medellín,Mujer,Transporte público,48
+Medellín,Hombre,Moto privada,15
+Medellín,Mujer,Modo activo,120
+Medellín,Mujer,Transporte público,22
+Medellín,Mujer,Taxi / Plataforma,15
+Medellín,Hombre,Moto privada,30
+Medellín,Hombre,Modo activo,80
+Medellín,Mujer,Transporte público,70
+Medellín,Hombre,Transporte público,65
+Medellín,Hombre,Transporte público,90
+Medellín,Hombre,Moto privada,20
+Medellín,Hombre,Taxi / Plataforma,15
+Medellín,Mujer,Taxi / Plataforma,30
+Medellín,Hombre,Modo activo,20
+Medellín,Hombre,Transporte público,45
+Medellín,Hombre,Moto privada,60
+Medellín,Hombre,Moto privada,20
+Medellín,Mujer,Transporte público,45
+Medellín,Hombre,Moto privada,25
+Medellín,Hombre,Auto privado,45
+Medellín,Mujer,Moto privada,15
+Medellín,Mujer,Moto privada,30
+Medellín,Mujer,Transporte público,64
+Medellín,Hombre,Moto privada,60
+Medellín,Mujer,Auto privado,45
+Medellín,Hombre,Moto privada,35
+Medellín,Hombre,Moto privada,30
+Medellín,Mujer,Transporte público,75
+Medellín,Mujer,Moto privada,30
+Medellín,Mujer,Auto privado,35
+Medellín,Hombre,Transporte público,60
+Medellín,Hombre,Moto privada,35
+Medellín,Mujer,Moto privada,40
+Medellín,Mujer,Taxi / Plataforma,40
+Medellín,Mujer,Taxi / Plataforma,50
+Medellín,Mujer,Taxi / Plataforma,30
+Medellín,Mujer,Taxi / Plataforma,40
+Medellín,Mujer,Taxi / Plataforma,40
+Medellín,Hombre,Moto privada,35
+Medellín,Hombre,Transporte público,75
+Medellín,Hombre,Taxi / Plataforma,10
+Medellín,Mujer,Transporte público,55
+Medellín,Mujer,Moto privada,30
+Medellín,Hombre,Transporte público,25
+Medellín,Mujer,Transporte público,35
+Medellín,Hombre,Transporte público,50
+Medellín,Mujer,Transporte público,60
+Medellín,Mujer,Transporte público,85
+Medellín,Hombre,Transporte público,55
+Medellín,Mujer,Transporte público,45
+Medellín,Hombre,Transporte público,70
+Medellín,Hombre,Moto privada,15
+Medellín,Mujer,Moto privada,40
+Medellín,Hombre,Transporte público,45
+Medellín,Mujer,Transporte público,50
+Medellín,Mujer,Transporte público,71
+Medellín,Mujer,Transporte público,100
+Medellín,Mujer,Moto privada,20
+Medellín,Hombre,Moto privada,20
+Medellín,Mujer,Taxi / Plataforma,35
+Medellín,Mujer,Moto privada,25
+Medellín,Hombre,Moto privada,45
+Medellín,Mujer,Auto privado,35
+Medellín,Mujer,Taxi / Plataforma,40
+Medellín,Hombre,Moto privada,35
+Medellín,Mujer,Auto privado,40
+Medellín,Hombre,Transporte público,45
+Medellín,Hombre,Transporte público,60
+Medellín,Hombre,Modo activo,20
+Medellín,Hombre,Transporte público,65
+Medellín,Mujer,Moto privada,30
+Medellín,Mujer,Transporte público,50
+Medellín,Mujer,Taxi / Plataforma,35
+Medellín,Mujer,Moto privada,35
+Medellín,Hombre,Moto privada,30
+Medellín,Mujer,Auto privado,40
+Medellín,Hombre,Moto privada,35
+Medellín,Mujer,Taxi / Plataforma,60
+Medellín,Mujer,Transporte público,65
+Medellín,Mujer,Moto privada,40
+Medellín,Mujer,Auto privado,10
+Medellín,Hombre,Moto privada,30
+Medellín,Hombre,Moto privada,30
+Medellín,Mujer,Auto privado,20
+Medellín,Mujer,Auto privado,30
+Medellín,Hombre,Auto privado,15

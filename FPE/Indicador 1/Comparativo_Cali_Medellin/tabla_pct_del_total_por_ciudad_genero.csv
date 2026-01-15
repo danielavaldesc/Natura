@@ -1,0 +1,9 @@
+ciudad,genero,cuidado_tipo,n_cuidado,total_genero_ciudad,pct_del_total_genero
+Cali,Hombre,Cuidado no remunerado,2,212,0.9433962264150944
+Cali,Hombre,Cuidado remunerado,13,212,6.132075471698113
+Cali,Mujer,Cuidado no remunerado,46,221,20.81447963800905
+Cali,Mujer,Cuidado remunerado,18,221,8.144796380090497
+Medellín,Hombre,Cuidado no remunerado,7,188,3.723404255319149
+Medellín,Hombre,Cuidado remunerado,1,188,0.5319148936170213
+Medellín,Mujer,Cuidado no remunerado,77,210,36.666666666666664
+Medellín,Mujer,Cuidado remunerado,6,210,2.857142857142857

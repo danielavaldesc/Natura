@@ -1,0 +1,5 @@
+genero,cuidado_tipo,n_cuidado,total_genero,pct_del_total_genero
+Hombre,Cuidado no remunerado,9,400,2.25
+Hombre,Cuidado remunerado,14,400,3.5
+Mujer,Cuidado no remunerado,123,431,28.53828306264501
+Mujer,Cuidado remunerado,24,431,5.568445475638051

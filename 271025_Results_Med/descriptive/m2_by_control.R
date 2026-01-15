@@ -92,6 +92,7 @@ control_vars_m2 <- c(
 )
 
 # Ejecutar y exportar para cada variable de control
+library(tibble)
 resultados_m2 <- lapply(names(control_vars_m2), function(ctrl) {
   tabla <- describe_by_group(
     data        = dataset,

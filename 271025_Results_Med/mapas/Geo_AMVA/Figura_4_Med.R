@@ -92,35 +92,27 @@ if (!"p23_agregado" %in% names(data)) stop("No se encontró la columna 'p23_agre
 data <- data %>%
   mutate(
     p23_agregado = trimws(as.character(p23_agregado)),
-    p23_agr5 = fct_collapse(
+    motivo = fct_collapse(
       p23_agregado,
       "Trabajo"          = c("Trabajo"),
-      "Compras/Trámites" = c("Compras y trámites","Compras y tr\u00e1mites"),
-      "Tiempo personal"  = c("Recreación, salud y actividades personales",
-                             "Recreaci\u00f3n, salud y actividades personales",
-                             "Visitas sociales"),
-      "Estudio"          = "Estudio",
-      "Cuidado"          = c(
-        "Cuidado y familia (centro educativo, niños/as o jóvenes)",
-        "Cuidado y familia (otro lugar, niños/as o jóvenes)",
-        "Cuidado y familia (escuela, ni niños)",
-        "Cuidado y familia (persona con discapacidad)",
-        "Cuidado y familia (persona enferma)",
-        "Cuidado y familia (recreación, niños)",
-        "Cuidado y familia (salud, niños)",
-        "Cuidado y familia (salud, ni\u00f1as/os)",
-        "Cuidado y familia (recreaci\u00f3n, ni\u00f1as/os)",
-        "Cuidado y familia (escuela, ni\u00f1as/os)"
-      ),
-      "Otros"            = "Otro"
-    ) %>% fct_drop()
+      "Estudio"          = c("Estudio"),
+      "Tramites"         = c("Trámites", "Tramites"),
+      "Tiempo personal"  = c("Recreación y actividades personales",
+                             "Recreacion y actividades personales",
+                             "Recreación y actividades personales ",
+                             "Visitas sociales",
+                             "Visitas sociales "),
+      "Viajes de cuidado"          = c("Viajes de cuidado",
+                                       "Viajes de cuidado "),
+      "Salud"            = c("Salud", "Salud "),
+      "Otros"            = c("Otro","Otros")
+    )
   ) %>%
-  filter(!is.na(p23_agr5), p23_agr5 != "Otros") %>%
-  mutate(p23_agr5 = factor(as.character(p23_agr5)))
+  filter(!is.na(motivo), motivo != "Otros")
 
 data$motivo <- factor(
-  as.character(data$p23_agr5),
-  levels = c("Trabajo","Estudio","Compras/Trámites","Tiempo personal","Cuidado")
+  as.character(data$motivo),
+  levels = c("Trabajo","Estudio","Viajes de cuidado","Salud","Tramites","Tiempo personal")
 )
 
 # -------------------------------------------------------------------
@@ -358,18 +350,18 @@ map.med.motivo <- ggplot() +
     drop = FALSE
   ) +
   
-  # estaciones (blancas para no tapar)
-  geom_sf(
-    data = est_clip,
-    shape = 21,
-    size = 2.1,
-    stroke = 0.35,
-    color = "black",
-    fill  = "white",
-    alpha = 0.95,
-    inherit.aes = FALSE,
-    show.legend = FALSE
-  ) +
+  # # estaciones SITVA (puntos) — discretas para no tapar
+  # geom_sf(
+  #   data = est_clip,
+  #   shape = 21,
+  #   size = 1.8,
+  #   stroke = 0.35,
+  #   color = "black",
+  #   fill  = "white",
+  #   alpha = 0.95,
+  #   inherit.aes = FALSE,
+  #   show.legend = FALSE
+  # ) +
   
   # pies (2da escala fill)
   ggnewscale::new_scale_fill() +

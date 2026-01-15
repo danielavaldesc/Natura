@@ -7,7 +7,7 @@
 #########################################
 #########################################
 
-setwd("C:/Users/Portatil/Desktop/Natura/271025_Results_Med/")
+setwd("C:\\Users\\danie\\OneDrive\\Escritorio\\Natura\\271025_Results_Med\\")
 
 # Cargar librerías
 library(readxl)
