@@ -125,15 +125,10 @@ names(pal_motivos) <- levels(df_flow2$motivo2)
 
 # -----------------------------
 # 7) Etiquetas abreviadas (SOLO VISUALES)
+#    ✅ SOLO se renombra la de "Recreación y actividades personales"
 # -----------------------------
 label_motivo <- c(
-  "Trabajo" = "Trabajo",
-  "Recreación, salud y actividades personales" = "Recreación / salud",
-  "Compras y trámites" = "Compras / trámites",
-  "Estudio" = "Estudio",
-  "Visitas sociales" = "Visitas",
-  "Otros motivos" = "Otros motivos",
-  "Otro" = "Otro"
+  "Recreación y actividades personales" = "Recreación y\nact. personales"
 )
 
 label_medio <- c(
@@ -154,14 +149,13 @@ label_medio_full[names(label_medio)] <- label_medio
 
 # -----------------------------
 # 8) FIGURA — Alluvial Motivo -> Modo
-# (FIX: indexar por as.character(after_stat(stratum)))
 # -----------------------------
 p_alluvial <- ggplot(
   df_flow2,
   aes(axis1 = motivo2, axis2 = medio2, y = pct)
 ) +
-  geom_alluvium(aes(fill = motivo2), alpha = 0.85, width = 0.30) +
-  geom_stratum(width = 0.30, color = "grey70", fill = "grey95") +
+  geom_alluvium(aes(fill = motivo2), alpha = 0.85, width = 0.35) +
+  geom_stratum(width = 0.35, color = "grey70", fill = "grey95") +
   geom_text(
     stat = "stratum",
     aes(
@@ -171,9 +165,8 @@ p_alluvial <- ggplot(
         label_medio_full[as.character(after_stat(stratum))]
       )
     ),
-    size = 2.4,
-    lineheight = 0.9,
-    hjust = 0.5
+    size = 4.0,
+    lineheight = 0.95
   ) +
   scale_fill_manual(values = pal_motivos) +
   scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
@@ -185,20 +178,23 @@ p_alluvial <- ggplot(
     y = "Porcentaje de viajes",
     fill = NULL
   ) +
-  theme_minimal() +
+  theme_minimal(base_size = 16) +
   theme(
     legend.position = "right",
-    strip.text = element_text(face = "bold"),
-    plot.title = element_text(face = "bold"),
-    axis.text.x = element_blank(),
-    panel.grid.minor = element_blank()
+    strip.text = element_text(size = 16, face = "bold"),
+    plot.title = element_text(size = 22, face = "bold"),
+    plot.subtitle = element_text(size = 16),
+    axis.title.y = element_text(size = 15),
+    legend.text = element_text(size = 13),
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_blank()
   )
 
 ggsave(
   filename = file.path(out_dir, "fig_motivo_a_modo_alluvial_ciudad_genero.png"),
   plot = p_alluvial,
-  width = 16,
-  height = 9,
+  width = 18,
+  height = 10.5,
   dpi = 300
 )
 
@@ -209,3 +205,4 @@ message(
   "\n\nTabla:",
   "\n- tabla_flujos_motivo_medio_genero_ciudad.csv"
 )
+

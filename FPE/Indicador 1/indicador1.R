@@ -5,7 +5,7 @@
 # -----------------------------
 # 0) Paquetes
 # -----------------------------
-pkgs <- c("tidyverse", "readxl", "forcats", "tidyr")
+pkgs <- c("tidyverse", "readxl", "forcats", "tidyr", "ragg")
 to_install <- pkgs[!pkgs %in% rownames(installed.packages())]
 if (length(to_install) > 0) install.packages(to_install, dependencies = TRUE)
 
@@ -13,17 +13,18 @@ library(tidyverse)
 library(readxl)
 library(forcats)
 library(tidyr)
+library(ragg)
 
 # -----------------------------
 # 1) Paleta azul única (todas las gráficas)
 # -----------------------------
 colores_genero <- c(
-  "Hombre" = "#1F3A5F",  # azul oscuro
-  "Mujer"  = "#4A90C2"   # azul claro
+  "Hombre" = "#1F3A5F",
+  "Mujer"  = "#4A90C2"
 )
 
 # -----------------------------
-# 2) Rutas (AJUSTA SOLO base_dir si lo necesitas)
+# 2) Rutas
 # -----------------------------
 base_dir <- "C:/Users/danie/OneDrive/Escritorio/Natura"
 
@@ -33,8 +34,7 @@ input_med  <- file.path(base_dir, "271025_Results_Med",  "output", "input_famd_m
 out_dir <- file.path(base_dir, "FPE", "Indicador 1", "Comparativo_Cali_Medellin")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
-stopifnot(file.exists(input_cali))
-stopifnot(file.exists(input_med))
+stopifnot(file.exists(input_cali), file.exists(input_med))
 
 # -----------------------------
 # 3) Función: cargar y preparar datos
@@ -103,35 +103,45 @@ write_csv(resumen_general, file.path(out_dir, "tabla_resumen_general_ciudad.csv"
 write_csv(resumen_genero,  file.path(out_dir, "tabla_resumen_por_genero_ciudad.csv"))
 
 # ============================================================
-# 6) FIGURA 1 — Media y Mediana por género y ciudad
-# (Mantiene paleta azul y estética limpia)
+# 6) FIGURA 1 — Media y Mediana por género y ciudad (FUENTE XXL)
 # ============================================================
 df_mm <- resumen_genero %>%
   dplyr::select(ciudad, genero_2, promedio, mediana) %>%
-  pivot_longer(cols = c(promedio, mediana),
-               names_to = "estadistico",
-               values_to = "minutos") %>%
+  pivot_longer(
+    cols = c(promedio, mediana),
+    names_to = "estadistico",
+    values_to = "minutos"
+  ) %>%
   mutate(
-    estadistico = case_when(
-      estadistico == "promedio" ~ "Promedio",
-      estadistico == "mediana"  ~ "Mediana",
-      TRUE ~ estadistico
-    )
+    estadistico = recode(estadistico,
+                         promedio = "Promedio",
+                         mediana  = "Mediana")
   )
 
-# Dos tonos azules para los estadísticos (promedio/mediana) coherentes con el esquema
 colores_estad <- c(
-  "Promedio" = "#1F3A5F",  # azul oscuro
-  "Mediana"  = "#4A90C2"   # azul claro
+  "Promedio" = "#1F3A5F",
+  "Mediana"  = "#4A90C2"
 )
 
+tema_fig1 <- theme_minimal(base_size = 22) +
+  theme(
+    plot.title  = element_text(size = 34, face = "bold"),
+    strip.text  = element_text(size = 26, face = "bold"),
+    legend.text = element_text(size = 22),
+    axis.text   = element_text(size = 22),
+    axis.title  = element_text(size = 24),
+    plot.margin = margin(14, 20, 14, 20),
+    legend.position = "top"
+  )
+
 p_mm <- ggplot(df_mm, aes(x = genero_2, y = minutos, fill = estadistico)) +
-  geom_col(position = position_dodge(width = 0.7), width = 0.65) +
+  geom_col(position = position_dodge(width = 0.75), width = 0.7) +
   geom_text(
     aes(label = round(minutos, 1)),
-    position = position_dodge(width = 0.7),
-    vjust = -0.4,
-    size = 3
+    position = position_dodge(width = 0.75),
+    vjust = -0.35,
+    size = 7,
+    fontface = "bold"
   ) +
   facet_wrap(~ ciudad) +
   scale_fill_manual(values = colores_estad) +
@@ -141,45 +151,36 @@ p_mm <- ggplot(df_mm, aes(x = genero_2, y = minutos, fill = estadistico)) +
     title = "Tiempo total de movilidad por género",
     fill = NULL
   ) +
-  theme_minimal() +
-  theme(
-    legend.position = "top",
-    strip.text = element_text(face = "bold"),
-    plot.title = element_text(face = "bold")
-  )
+  tema_fig1 +
+  coord_cartesian(clip = "off")
 
 ggsave(
   filename = file.path(out_dir, "fig_1_media_mediana_por_genero_ciudad.png"),
   plot = p_mm,
-  width = 12, height = 6, dpi = 300
+  width = 16,
+  height = 8,
+  dpi = 320,
+  device = ragg::agg_png
 )
 
 # ============================================================
-# 7) FIGURA 2 — Distribución (DENSIDAD) + P75 y P90 (COLAS)
-# (Todo en azul por género)
+# 7) FIGURA 2 — Distribución densidad + P75 y P90
 # ============================================================
 df_p_lines <- resumen_genero %>%
   dplyr::select(ciudad, genero_2, p75, p90) %>%
   pivot_longer(cols = c(p75, p90),
                names_to = "percentil",
                values_to = "minutos") %>%
-  mutate(
-    percentil = case_when(
-      percentil == "p75" ~ "P75",
-      percentil == "p90" ~ "P90",
-      TRUE ~ percentil
-    )
-  )
+  mutate(percentil = recode(percentil, p75 = "P75", p90 = "P90"))
 
 p_dens <- ggplot(datos, aes(x = tiempo_total, color = genero_2)) +
-  geom_density(linewidth = 1.15, adjust = 1.05) +
+  geom_density(linewidth = 1.15) +
   facet_wrap(~ ciudad, scales = "free_y") +
   geom_vline(
     data = df_p_lines,
     aes(xintercept = minutos, color = genero_2),
     linetype = "dashed",
-    linewidth = 0.9,
-    alpha = 0.95
+    linewidth = 0.9
   ) +
   geom_text(
     data = df_p_lines,
@@ -206,11 +207,13 @@ p_dens <- ggplot(datos, aes(x = tiempo_total, color = genero_2)) +
 ggsave(
   filename = file.path(out_dir, "fig_2_distribucion_densidad_p75_p90.png"),
   plot = p_dens,
-  width = 12, height = 6, dpi = 300
+  width = 12,
+  height = 6,
+  dpi = 300
 )
 
 # ============================================================
-# 8) FIGURA 3 — Boxplot por género y ciudad (paleta azul)
+# 8) FIGURA 3 — Boxplot por género y ciudad
 # ============================================================
 p_box <- ggplot(datos, aes(x = genero_2, y = tiempo_total, fill = genero_2)) +
   geom_boxplot(outlier.alpha = 0.25) +
@@ -232,7 +235,9 @@ p_box <- ggplot(datos, aes(x = genero_2, y = tiempo_total, fill = genero_2)) +
 ggsave(
   filename = file.path(out_dir, "fig_3_boxplot_tiempo_total_por_genero_ciudad.png"),
   plot = p_box,
-  width = 12, height = 6, dpi = 300
+  width = 12,
+  height = 6,
+  dpi = 300
 )
 
 # -----------------------------
@@ -248,4 +253,3 @@ message(
   "\n- fig_2_distribucion_densidad_p75_p90.png",
   "\n- fig_3_boxplot_tiempo_total_por_genero_ciudad.png"
 )
-

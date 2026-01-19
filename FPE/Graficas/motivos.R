@@ -55,6 +55,20 @@ paleta_base_motivos <- c(
 )
 
 # -----------------------------
+# 2.1) Tema global (✅ letra más grande)
+# -----------------------------
+tema_grande <- theme_minimal(base_size = 14) +
+  theme(
+    plot.title    = element_text(size = 18, face = "bold"),
+    plot.subtitle = element_text(size = 14),
+    axis.title    = element_text(size = 14),
+    axis.text     = element_text(size = 12),
+    strip.text    = element_text(size = 14, face = "bold"),
+    legend.text   = element_text(size = 12),
+    legend.title  = element_text(size = 13)
+  )
+
+# -----------------------------
 # 3) Función para hojas de MOTIVOS (%)
 # -----------------------------
 cargar_motivos <- function(sheet, requiere_estrato = FALSE) {
@@ -123,11 +137,9 @@ p1 <- ggplot(dfA, aes(x = genero_2, y = pct, fill = motivo)) +
     subtitle = "Composición porcentual por motivo (p23_agregado)",
     fill = NULL
   ) +
-  theme_minimal() +
+  tema_grande +
   theme(
-    legend.position = "right",
-    strip.text = element_text(face = "bold"),
-    plot.title = element_text(face = "bold")
+    legend.position = "right"
   )
 
 ggsave(
@@ -138,7 +150,6 @@ ggsave(
 
 # ============================================================
 # FIGURA 2 — motivo_x_genero_x_estrato (100% por estrato)
-#   ✅ Diferenciado por ciudad (columnas) y género (filas)
 # ============================================================
 dfB <- cargar_motivos(sheet_B, requiere_estrato = TRUE)
 
@@ -173,11 +184,9 @@ p2 <- ggplot(dfB, aes(x = estrato, y = pct, fill = motivo)) +
     subtitle = "Barras 100% apiladas (por género y ciudad)",
     fill = NULL
   ) +
-  theme_minimal() +
+  tema_grande +
   theme(
-    legend.position = "right",
-    strip.text = element_text(face = "bold"),
-    plot.title = element_text(face = "bold")
+    legend.position = "right"
   )
 
 ggsave(
@@ -188,8 +197,6 @@ ggsave(
 
 # ============================================================
 # FIGURA 3 — tiempo_x_motivo_x_genero
-#   ✅ Tiempo por motivo y género, diferenciado por ciudad
-#   Usamos MEDIANA como punto y P25–P75 como barra (tipo "intervalo")
 # ============================================================
 
 dfC_raw <- read_excel(excel_path, sheet = sheet_C)
@@ -221,12 +228,19 @@ motivo_order_C <- dfC %>%
 
 dfC <- dfC %>% mutate(motivo = factor(motivo, levels = motivo_order_C))
 
+pd <- position_dodge(width = 0.6)
+
 p3 <- ggplot(dfC, aes(x = motivo, y = mediana, color = genero_2)) +
-  geom_linerange(aes(ymin = p25, ymax = p75),
-                 position = position_dodge(width = 0.6),
-                 linewidth = 1) +
-  geom_point(position = position_dodge(width = 0.6), size = 2.2) +
-  facet_wrap(~ ciudad) +  # ✅ por ciudad
+  geom_linerange(
+    aes(ymin = p25, ymax = p75),
+    position = pd,
+    linewidth = 1.2
+  ) +
+  geom_point(
+    position = pd,
+    size = 3
+  ) +
+  facet_wrap(~ ciudad, ncol = 1) +  
   scale_color_manual(values = colores_genero) +
   labs(
     x = NULL,
@@ -235,19 +249,18 @@ p3 <- ggplot(dfC, aes(x = motivo, y = mediana, color = genero_2)) +
     subtitle = "Punto = mediana; línea = P25–P75 (por ciudad)",
     color = NULL
   ) +
-  theme_minimal() +
+  tema_grande +
   theme(
-    legend.position = "top",
-    strip.text = element_text(face = "bold"),
-    plot.title = element_text(face = "bold"),
+    legend.position = "top",              
     axis.text.x = element_text(angle = 35, hjust = 1)
   )
 
 ggsave(
   filename = file.path(out_dir, "fig_3_tiempo_motivo_genero_ciudad_mediana_IQR.png"),
   plot = p3,
-  width = 14, height = 6.5, dpi = 300
+  width = 14, height = 10, dpi = 300
 )
+
 
 # -----------------------------
 # 7) Mensaje final

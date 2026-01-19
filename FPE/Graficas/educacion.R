@@ -1,5 +1,5 @@
 # ============================================================
-# FIGURA — Torta nivel educativo (p5_agregado) 
+# FIGURA — Torta nivel educativo (p5_agregado)
 #           por ciudad y sexo (p40)
 # ============================================================
 
@@ -47,7 +47,6 @@ prep_edu <- function(path_xlsx, ciudad_label) {
       p40 = str_squish(as.character(p40))
     ) %>%
     mutate(
-      # Nivel educativo
       p5_agregado = case_when(
         str_to_lower(p5_agregado) == "primaria o menos" ~ "Primaria o menos",
         str_to_lower(p5_agregado) == "secundaria" ~ "Secundaria",
@@ -55,7 +54,6 @@ prep_edu <- function(path_xlsx, ciudad_label) {
         str_to_lower(p5_agregado) == "superior" ~ "Superior",
         TRUE ~ NA_character_
       ),
-      # Sexo
       sexo = case_when(
         str_detect(str_to_lower(p40), "homb") ~ "Hombre",
         str_detect(str_to_lower(p40), "muj")  ~ "Mujer",
@@ -74,7 +72,7 @@ datos <- bind_rows(
     sexo   = factor(sexo, levels = c("Mujer", "Hombre")),
     p5_agregado = factor(
       p5_agregado,
-      levels = c("Primaria o menos", "Secundaria", 
+      levels = c("Primaria o menos", "Secundaria",
                  "Técnico / Tecnológico", "Superior")
     )
   )
@@ -91,39 +89,46 @@ tabla_edu <- datos %>%
   ungroup()
 
 # -----------------------------
-# 5) GRÁFICA — Torta por ciudad y sexo
+# 5) GRÁFICA — Torta (PORCENTAJES GRANDES Y BLANCOS)
 # -----------------------------
 p <- ggplot(tabla_edu, aes(x = "", y = pct, fill = p5_agregado)) +
-  geom_col(width = 1, color = "white") +
+  geom_col(width = 1, color = "white", linewidth = 0.4) +
   coord_polar(theta = "y") +
   facet_grid(sexo ~ ciudad) +
   geom_text(
     aes(label = percent(pct, accuracy = 1)),
     position = position_stack(vjust = 0.5),
-    size = 3.8
+    color = "white",        # ✅ TEXTO BLANCO
+    size = 6,               # ✅ TEXTO GRANDE
+    fontface = "bold"
   ) +
   scale_fill_manual(values = paleta_morado) +
   labs(
-    title = "Nivel educativo (p5_agregado)",
+    title = "Nivel educativo",
     subtitle = "Distribución porcentual por ciudad y sexo",
     fill = NULL
   ) +
-  theme_minimal() +
+  theme_minimal(base_size = 16) +
   theme(
     axis.title = element_blank(),
     axis.text  = element_blank(),
     panel.grid = element_blank(),
-    strip.text = element_text(face = "bold"),
-    plot.title = element_text(face = "bold"),
+    strip.text = element_text(size = 16, face = "bold"),
+    plot.title = element_text(size = 22, face = "bold"),
+    plot.subtitle = element_text(size = 16),
+    legend.text = element_text(size = 14),
     legend.position = "right"
   )
 
 ggsave(
   filename = file.path(out_dir, "fig_torta_nivel_educativo_p5_por_ciudad_sexo.png"),
   plot = p,
-  width = 12, height = 8, dpi = 300
+  width = 14,
+  height = 10,
+  dpi = 300
 )
 
-message("Listo ✅ Torta guardada en: ",
-        file.path(out_dir, "fig_torta_nivel_educativo_p5_por_ciudad_sexo.png"))
-
+message(
+  "Listo ✅ Torta guardada en: ",
+  file.path(out_dir, "fig_torta_nivel_educativo_p5_por_ciudad_sexo.png")
+)

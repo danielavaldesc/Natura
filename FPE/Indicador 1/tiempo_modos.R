@@ -5,21 +5,37 @@
 # -----------------------------
 # 0) Paquetes
 # -----------------------------
-pkgs <- c("tidyverse", "readxl", "scales")
+pkgs <- c("tidyverse", "readxl", "scales", "ragg")
 to_install <- pkgs[!pkgs %in% rownames(installed.packages())]
 if (length(to_install) > 0) install.packages(to_install, dependencies = TRUE)
 
 library(tidyverse)
 library(readxl)
 library(scales)
+library(ragg)
 
 # -----------------------------
-# 1) Paleta (MISMA lógica que antes)
+# 1) Paleta
 # -----------------------------
 colores_genero <- c(
   "Hombre" = "#1F3A5F",  # azul oscuro
   "Mujer"  = "#4A90C2"   # azul medio
 )
+
+# -----------------------------
+# 1.1) Tema global con letra MÁS GRANDE (XXL)
+# -----------------------------
+tema_xxl <- theme_minimal(base_size = 20) +
+  theme(
+    plot.title    = element_text(size = 30, face = "bold"),
+    plot.subtitle = element_text(size = 20),
+    strip.text    = element_text(size = 22, face = "bold"),
+    legend.text   = element_text(size = 18),
+    legend.title  = element_text(size = 18),
+    axis.title    = element_text(size = 20),
+    axis.text     = element_text(size = 18),
+    plot.margin   = margin(10, 15, 10, 15)
+  )
 
 # -----------------------------
 # 2) Rutas
@@ -70,8 +86,7 @@ df <- bind_rows(df_cali, df_med) %>%
 write_csv(df, file.path(out_dir, "tabla_tiempo_x_modo_genero_ciudad.csv"))
 
 # -----------------------------
-# 4) (Opcional pero recomendado)
-# Ordenar modos por mediana de tiempo
+# 4) Ordenar modos por mediana de tiempo
 # -----------------------------
 modo_order <- df %>%
   group_by(medio) %>%
@@ -102,20 +117,23 @@ p_modos <- ggplot(
     subtitle = "Distribución, mediana y dispersión del tiempo total",
     fill = NULL
   ) +
-  theme_minimal() +
+  tema_xxl +
   theme(
     legend.position = "top",
-    axis.text.x = element_text(angle = 30, hjust = 1),
-    strip.text = element_text(face = "bold"),
-    plot.title = element_text(face = "bold")
+    axis.text.x = element_text(angle = 30, hjust = 1, size = 18),
+    axis.ticks.length = unit(3, "mm")
   )
 
+# -----------------------------
+# 5) Guardar figura (texto más nítido con ragg)
+# -----------------------------
 ggsave(
   filename = file.path(out_dir, "fig_7_tiempo_por_modo_genero_ciudad.png"),
   plot = p_modos,
-  width = 14,
-  height = 7,
-  dpi = 300
+  width = 18,
+  height = 10,
+  dpi = 320,
+  device = ragg::agg_png
 )
 
 message(

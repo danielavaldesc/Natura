@@ -22,7 +22,7 @@ stopifnot(file.exists(input_cali))
 stopifnot(file.exists(input_med))
 
 # -----------------------------
-# 2) Carpeta de salida (la que pediste)
+# 2) Carpeta de salida
 # -----------------------------
 out_dir <- "C:/Users/danie/OneDrive/Escritorio/Natura/FPE/Graficas/trabaj_remu"
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
@@ -30,20 +30,32 @@ dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 # -----------------------------
 # 3) Paletas
 # -----------------------------
-# Género (azules)
 colores_genero <- c(
   "Hombre" = "#1F3A5F",
   "Mujer"  = "#4A90C2"
 )
 
-# Tipo cuidado (morados)
 colores_cuidado <- c(
   "Cuidado remunerado"    = "#4B1D70",
   "Cuidado no remunerado" = "#A678D3"
 )
 
 # -----------------------------
-# 4) Cargar mínimo necesario (evita choques de tipos)
+# 3.1) Tema grande (CLAVE)
+# -----------------------------
+tema_grande <- theme_minimal(base_size = 15) +
+  theme(
+    plot.title    = element_text(size = 20, face = "bold"),
+    plot.subtitle = element_text(size = 15),
+    strip.text    = element_text(size = 15, face = "bold"),
+    axis.text     = element_text(size = 13),
+    axis.title    = element_text(size = 14),
+    legend.text   = element_text(size = 13),
+    legend.title  = element_text(size = 14)
+  )
+
+# -----------------------------
+# 4) Cargar mínimo necesario
 # -----------------------------
 prep_min <- function(path_xlsx, ciudad_label) {
   df <- read_excel(path_xlsx)
@@ -81,18 +93,16 @@ datos <- bind_rows(
   )
 
 # -----------------------------
-# 5) Clasificar cuidado (según tu definición)
+# 5) Clasificar cuidado
 # -----------------------------
 datos <- datos %>%
   mutate(
     cuidado_tipo = case_when(
-      # Remunerado: p7=Trabajar (2) y p7_1=Empleado(a) doméstico (1)
       (p7 == "2" | str_to_lower(p7) == "trabajar") &
         !is.na(p7_1) &
         (p7_1 == "1" | str_to_lower(p7_1) %in% c("empleado(a) doméstico", "empleado(a) domestico")) ~
         "Cuidado remunerado",
       
-      # No remunerado: p7=Hacer trabajo doméstico en su propio hogar (ama de casa) (4)
       (p7 == "4" |
          str_detect(str_to_lower(p7), "hacer trabajo doméstico en su propio hogar") |
          str_detect(str_to_lower(p7), "hacer trabajo domestico en su propio hogar")) ~
@@ -103,8 +113,7 @@ datos <- datos %>%
   )
 
 # ============================================================
-# TABLA 1 — % del total por género (por ciudad)
-# Base: total hombres / total mujeres de la ciudad
+# TABLAS
 # ============================================================
 denom <- datos %>%
   count(ciudad, genero, name = "total_genero_ciudad")
@@ -115,26 +124,19 @@ num <- datos %>%
 
 tabla_pct_del_total <- num %>%
   left_join(denom, by = c("ciudad", "genero")) %>%
-  mutate(pct_del_total_genero = 100 * n_cuidado / total_genero_ciudad) %>%
-  arrange(ciudad, genero, cuidado_tipo)
+  mutate(pct_del_total_genero = 100 * n_cuidado / total_genero_ciudad)
 
-# ============================================================
-# TABLA 2 — Zoom dentro del cuidado (por ciudad)
-# Base: solo personas en cada tipo de cuidado (por ciudad)
-# ============================================================
 tabla_zoom <- datos %>%
   filter(!is.na(cuidado_tipo)) %>%
   count(ciudad, cuidado_tipo, genero, name = "n") %>%
   group_by(ciudad, cuidado_tipo) %>%
   mutate(pct_dentro_cuidado = 100 * n / sum(n)) %>%
-  ungroup() %>%
-  arrange(ciudad, cuidado_tipo, genero)
+  ungroup()
 
 # -----------------------------
-# 6) Exportar Excel (2 hojas)
+# 6) Exportar Excel
 # -----------------------------
 out_xlsx <- file.path(out_dir, "tablas_cuidado_por_ciudad.xlsx")
-
 wb <- createWorkbook()
 
 addWorksheet(wb, "Pct_del_total_genero")
@@ -146,8 +148,7 @@ writeData(wb, "Zoom_dentro_cuidado", tabla_zoom)
 saveWorkbook(wb, out_xlsx, overwrite = TRUE)
 
 # ============================================================
-# GRÁFICO A — % del total por género (barras agrupadas) — por ciudad
-# (Responde: del total de hombres/mujeres, ¿qué % está en rem/no rem?)
+# GRÁFICO A — % del total por género
 # ============================================================
 p_A <- ggplot(tabla_pct_del_total,
               aes(x = genero, y = pct_del_total_genero, fill = cuidado_tipo)) +
@@ -155,56 +156,68 @@ p_A <- ggplot(tabla_pct_del_total,
   geom_text(
     aes(label = paste0(round(pct_del_total_genero, 1), "%")),
     position = position_dodge(width = 0.7),
-    vjust = -0.35,
-    size = 3
+    vjust = -0.4,
+    size = 4.5
   ) +
   facet_wrap(~ ciudad) +
   scale_fill_manual(values = colores_cuidado) +
   labs(
     title = "Trabajo de cuidado como % del total de hombres y mujeres",
-    subtitle = "Base: total de personas en cada género (por ciudad).",
+    subtitle = "Base: total de personas en cada género (por ciudad)",
     x = NULL, y = "Porcentaje (%)",
     fill = NULL
   ) +
-  theme_minimal() +
-  theme(
-    legend.position = "top",
-    strip.text = element_text(face = "bold"),
-    plot.title = element_text(face = "bold")
-  )
+  tema_grande +
+  theme(legend.position = "top")
 
 ggsave(
   filename = file.path(out_dir, "fig_A_pct_del_total_genero_por_ciudad.png"),
   plot = p_A,
-  width = 12, height = 6, dpi = 300
+  width = 13.5, height = 7, dpi = 300
 )
 
 # ============================================================
-# GRÁFICO B — Zoom: composición por género dentro del cuidado (100%) — por ciudad
-# (Responde: dentro del cuidado, ¿qué % son hombres vs mujeres?)
+# GRÁFICO B — Zoom dentro del cuidado (100%)
 # ============================================================
-p_B <- ggplot(tabla_zoom,
-              aes(x = cuidado_tipo, y = pct_dentro_cuidado/100, fill = genero)) +
+
+p_B <- ggplot(
+  tabla_zoom,
+  aes(
+    x = cuidado_tipo,
+    y = pct_dentro_cuidado / 100,
+    fill = genero
+  )
+) +
   geom_col(width = 0.7, color = "white") +
   geom_text(
-    aes(label = paste0(round(pct_dentro_cuidado, 1), "%")),
+    aes(
+      label = paste0(round(pct_dentro_cuidado, 1), "%"),
+      color = genero            # 👈 clave: color por género
+    ),
     position = position_stack(vjust = 0.5),
-    size = 3.6
+    size = 4.8,
+    fontface = "bold",
+    show.legend = FALSE
   ) +
   facet_wrap(~ ciudad) +
   scale_y_continuous(labels = scales::percent) +
   scale_fill_manual(values = colores_genero) +
+  scale_color_manual(          # 👈 colores del TEXTO
+    values = c(
+      "Hombre" = "white",       # azul oscuro → texto blanco
+      "Mujer"  = "black"        # azul claro → texto negro
+    )
+  ) +
   labs(
     title = "Zoom: composición por género dentro del trabajo de cuidado",
-    subtitle = "Base: solo personas clasificadas en cada tipo de cuidado (por ciudad).",
-    x = NULL, y = NULL,
+    subtitle = "Base: personas clasificadas en cada tipo de cuidado (por ciudad)",
+    x = NULL,
+    y = NULL,
     fill = NULL
   ) +
-  theme_minimal() +
+  tema_grande +
   theme(
     legend.position = "top",
-    strip.text = element_text(face = "bold"),
-    plot.title = element_text(face = "bold"),
     axis.text.y = element_blank(),
     panel.grid.major.y = element_blank()
   )
@@ -212,7 +225,9 @@ p_B <- ggplot(tabla_zoom,
 ggsave(
   filename = file.path(out_dir, "fig_B_zoom_genero_dentro_cuidado_por_ciudad.png"),
   plot = p_B,
-  width = 12, height = 6, dpi = 300
+  width = 13.5,
+  height = 7,
+  dpi = 300
 )
 
 # -----------------------------
@@ -226,26 +241,4 @@ message(
   "\n- fig_A_pct_del_total_genero_por_ciudad.png",
   "\n- fig_B_zoom_genero_dentro_cuidado_por_ciudad.png"
 )
-
-# ============================================================
-# TABLA FORMATO (solo Gráfico A)
-# Categoria | Hombre | Mujer
-# Celda = n (pct% del total del género en la ciudad)
-# ============================================================
-
-tabla_A_formato <- tabla_pct_del_total %>%
-  mutate(
-    Categoria = cuidado_tipo,
-    celda = paste0(n_cuidado, " (", round(pct_del_total_genero, 1), "%)")
-  ) %>%
-  select(ciudad, Categoria, genero, celda) %>%
-  tidyr::pivot_wider(
-    names_from  = genero,
-    values_from = celda,
-    values_fill = "0 (0%)"
-  ) %>%
-  arrange(ciudad, Categoria)
-
-tabla_A_formato
-
 
