@@ -5,6 +5,7 @@
 # 2) P22 × Género × Ocupación (p7)
 # 3) P22 × Género × Ocupación agregada (p7_agregado)
 # 4) P21 (número de destinos) × Género
+# 5) P21 × Género × Motivos (p23_agregado) × Edad (edad_r2)
 # =========================
 
 library(readxl)
@@ -39,13 +40,15 @@ clean_cat <- function(x){
 # ---------- 3) Lectura por ciudad (SOLO columnas necesarias) ----------
 read_city <- function(path, city){
   read_excel(path, sheet = excel_sheets(path)[1]) %>%
-    select(any_of(c("p40", "p7", "p21", "p22"))) %>%
+    dplyr::select(any_of(c("p40", "p7", "p21", "p22", "p23", "Edadr"))) %>%
     mutate(
       ciudad = city,
-      p40 = clean_gender(p40),
-      p7  = clean_cat(p7),
-      p21 = clean_cat(p21),
-      p22 = clean_cat(p22)
+      p40   = clean_gender(p40),
+      p7    = clean_cat(p7),
+      p21   = clean_cat(p21),
+      p22   = clean_cat(p22),
+      p23   = clean_cat(p23),
+      edadr = clean_cat(Edadr)
     ) %>%
     filter(p40 %in% c("Hombre", "Mujer"))
 }
@@ -55,7 +58,7 @@ med  <- read_city(path_med,  "Medellín")
 
 base_all <- bind_rows(cali, med)
 
-# ---------- 4) p7 agregada (tu clasificación exacta) ----------
+# ---------- 4) p7 agregada  ----------
 base_all <- base_all %>%
   mutate(
     p7_agregado = case_when(
@@ -66,6 +69,57 @@ base_all <- base_all %>%
       p7 == "Estudiar" ~ "Estudiante",
       p7 == "Hacer trabajo doméstico en su propio hogar" ~ "Trabajo doméstico no remunerado",
       p7 == "Otra actividad" ~ "Otro",
+      TRUE ~ NA_character_
+    )
+  )
+
+# ---------- 4.1) Motivos agregados (p23_agregado) ----------
+base_all <- base_all %>%
+  mutate(
+    p23_agregado = case_when(
+      
+      # VIAJES DE CUIDADO
+      p23 %in% c(
+        "A acompañar o llevar a alguien",
+        "A llevar y/o dejar algo",
+        "A realizar compras"
+      ) ~ "Viajes de cuidado",
+      
+      # SALUD
+      p23 == "A una cita médica, tomarse examenes o reclamar medicamentos para usted mismo" ~ "Salud",
+      
+      # TRABAJO / ESTUDIO
+      p23 %in% c("Ir a trabajar", "A buscar trabajo") ~ "Trabajo",
+      p23 == "Ir a estudiar" ~ "Estudio",
+      
+      # TRÁMITES
+      p23 == "A realizar algún trámite personal" ~ "Trámites",
+      
+      # RECREACIÓN Y ACTIVIDADES PERSONALES
+      p23 %in% c(
+        "A realizar actividades físicas y/o deportivas (ir al gym, trotar, entrenar)",
+        "A realizar actividades recreativas y culturales (ir a cine, a un concierto, una presentación etc)",
+        "A asistir a alguna actividad de tipo religioso y/o de culto (la iglesia)"
+      ) ~ "Recreación y actividades personales",
+      
+      # VISITAS
+      p23 == "A visitar a alguien (familiar o amigo)" ~ "Visitas sociales",
+      
+      # OTRO
+      p23 == "A otro asunto" ~ "Otro",
+      
+      TRUE ~ NA_character_
+    )
+  )
+
+
+# ---------- 4.2) Edad agregada (edad_r2) ----------
+base_all <- base_all %>%
+  mutate(
+    edad_r2 = case_when(
+      edadr %in% c("18 - 24 años", "25 - 34 años") ~ "18 - 34 años",
+      edadr %in% c("35 - 44 años", "45 - 54 años") ~ "35 - 54 años",
+      edadr %in% c("55 - 64 años", "65 - 80 años") ~ "55 - 80 años",
       TRUE ~ NA_character_
     )
   )
@@ -85,8 +139,8 @@ p22_genero <- base_all %>%
 # TABLA 2) P22 × Género × Ocupación (p7) -> n y %
 # ============================================================
 p22_genero_p7 <- base_all %>%
-  filter(!is.na(p22), p22 != "") %>%
-  filter(!is.na(p7), p7 != "") %>%
+  filter(!is.na(p22), p22 != "",
+         !is.na(p7),  p7  != "") %>%
   count(ciudad, p40, p7, p22, name = "n") %>%
   group_by(ciudad, p40, p7) %>%
   mutate(pct = n / sum(n)) %>%
@@ -97,8 +151,8 @@ p22_genero_p7 <- base_all %>%
 # TABLA 3) P22 × Género × Ocupación agregada (p7_agregado) -> n y %
 # ============================================================
 p22_genero_p7_agregado <- base_all %>%
-  filter(!is.na(p22), p22 != "") %>%
-  filter(!is.na(p7_agregado)) %>%
+  filter(!is.na(p22), p22 != "",
+         !is.na(p7_agregado)) %>%
   count(ciudad, p40, p7_agregado, p22, name = "n") %>%
   group_by(ciudad, p40, p7_agregado) %>%
   mutate(pct = n / sum(n)) %>%
@@ -116,16 +170,31 @@ p21_genero <- base_all %>%
   ungroup() %>%
   arrange(ciudad, p40, p21)
 
+# ============================================================
+# TABLA 5) P21 (destinos) × Género × Motivos (p23_agregado) × Edad -> n y %
+# % se calcula dentro de cada: ciudad + género + p23_agregado + edad_r2
+# ============================================================
+p21_genero_motivo_edad <- base_all %>%
+  filter(!is.na(p21), p21 != "",
+         !is.na(p23_agregado),
+         !is.na(edad_r2)) %>%
+  count(ciudad, p40, p23_agregado, edad_r2, p21, name = "n") %>%
+  group_by(ciudad, p40, p23_agregado, edad_r2) %>%
+  mutate(pct = n / sum(n)) %>%
+  ungroup() %>%
+  arrange(ciudad, p23_agregado, edad_r2, p40, p21)
+
 # ---------- 5) Exportar ----------
 out_path <- "C:/Users/danie/OneDrive/Escritorio/Natura/FPE/Outputs/cruces_p21_p22_genero_ocupacion.xlsx"
 dir.create(dirname(out_path), recursive = TRUE, showWarnings = FALSE)
 
 write_xlsx(
   list(
-    "p22_x_genero" = p22_genero,
-    "p22_x_genero_x_p7" = p22_genero_p7,
-    "p22_x_genero_x_p7_agregado" = p22_genero_p7_agregado,
-    "p21_x_genero" = p21_genero
+    "p22_x_genero"                 = p22_genero,
+    "p22_x_genero_x_p7"            = p22_genero_p7,
+    "p22_x_genero_x_p7_agregado"   = p22_genero_p7_agregado,
+    "p21_x_genero"                 = p21_genero,
+    "p21_x_genero_x_p23_x_edad"    = p21_genero_motivo_edad
   ),
   path = out_path
 )
@@ -135,3 +204,5 @@ message("✅ Listo. Exporté: ", out_path)
 # ---------- 6) Chequeos rápidos ----------
 base_all %>% count(ciudad)
 base_all %>% count(ciudad, p40)
+base_all %>% count(ciudad, p23_agregado, sort = TRUE)
+base_all %>% count(ciudad, edad_r2, sort = TRUE)

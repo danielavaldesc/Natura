@@ -1,7 +1,7 @@
 # ============================================================
 # TENENCIA: Licencia, Auto y Moto
 # Por género y ciudad (Cali / Medellín)
-# % sobre total de hombres y mujeres
+# % con denominador GLOBAL (total Cali + Medellín) por género
 # ============================================================
 
 library(tidyverse)
@@ -19,43 +19,35 @@ paths <- tibble(
   )
 )
 
-# 👉 Carpeta de salida CORRECTA
 out_dir  <- "C:/Users/danie/OneDrive/Escritorio/Natura/FPE/Graficas/tenencias"
 out_xlsx <- file.path(out_dir, "trabajo_2_tenencia.xlsx")
-
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 # -----------------------------
-# Función de procesamiento
+# 1) Cargar y estandarizar (por ciudad) -> luego unimos
 # -----------------------------
-procesar_ciudad <- function(path_xlsx, ciudad_nombre) {
+leer_ciudad <- function(path_xlsx, ciudad_nombre) {
   
-  df <- read_excel(path_xlsx) %>%
+  read_excel(path_xlsx) %>%
     transmute(
       ciudad = ciudad_nombre,
       genero = as.character(p40),
       
-      # -------------------------
       # Licencia (p14)
-      # -------------------------
       tiene_licencia = case_when(
         p14 %in% c("Si, auto", "Si, motocicleta", "Si de auto y motocicleta") ~ "Sí",
         p14 == "No" ~ "No",
         TRUE ~ NA_character_
       ),
       
-      # -------------------------
       # Auto (p15 / p15_1)
-      # -------------------------
       tiene_auto = if_else(
         suppressWarnings(as.numeric(p15)) > 0 |
           suppressWarnings(as.numeric(p15_1)) > 0,
         "Sí", "No", missing = NA_character_
       ),
       
-      # -------------------------
-      # Motocicleta (p16 / p16_1)
-      # -------------------------
+      # Moto (p16 / p16_1)
       tiene_moto = if_else(
         suppressWarnings(as.numeric(p16)) > 0 |
           suppressWarnings(as.numeric(p16_1)) > 0,
@@ -63,44 +55,57 @@ procesar_ciudad <- function(path_xlsx, ciudad_nombre) {
       )
     ) %>%
     filter(genero %in% c("Hombre", "Mujer"))
-  
-  # -----------------------------
-  # Función tabla por indicador
-  # -----------------------------
-  tabla_indicador <- function(var, nombre) {
-    df %>%
-      filter(!is.na(.data[[var]])) %>%
-      count(genero, .data[[var]], name = "n") %>%
-      group_by(genero) %>%
-      mutate(pct = 100 * n / sum(n)) %>%
-      ungroup() %>%
-      filter(.data[[var]] == "Sí") %>%
-      transmute(
-        Categoria = nombre,
-        Genero = genero,
-        Valor = paste0(n, " (", round(pct, 1), "%)")
-      ) %>%
-      pivot_wider(
-        names_from = Genero,
-        values_from = Valor
-      )
-  }
-  
-  bind_rows(
-    tabla_indicador("tiene_licencia", "Posee licencia"),
-    tabla_indicador("tiene_auto",     "Posee auto"),
-    tabla_indicador("tiene_moto",     "Posee motocicleta")
-  )
+}
+
+df_all <- pmap_dfr(paths, ~ leer_ciudad(..2, ..1))
+
+# -----------------------------
+# 2) Denominadores globales por género (total Cali + Medellín)
+#    OJO: el denominador se calcula por variable (porque hay NA distintos)
+# -----------------------------
+denom_global <- function(var) {
+  df_all %>%
+    filter(!is.na(.data[[var]])) %>%
+    count(genero, name = "N_total_genero")
 }
 
 # -----------------------------
-# Procesar ciudades
+# 3) Tabla por indicador: n (Sí) por ciudad×género, % sobre N_total_genero
 # -----------------------------
-tabla_cali     <- procesar_ciudad(paths$path[1], "Cali")
-tabla_medellin <- procesar_ciudad(paths$path[2], "Medellín")
+tabla_indicador_global <- function(var, nombre) {
+  
+  den <- denom_global(var)
+  
+  df_all %>%
+    filter(!is.na(.data[[var]])) %>%
+    filter(.data[[var]] == "Sí") %>%
+    count(ciudad, genero, name = "n_si") %>%
+    left_join(den, by = "genero") %>%
+    mutate(pct = 100 * n_si / N_total_genero) %>%
+    transmute(
+      ciudad,
+      Categoria = nombre,
+      Genero = genero,
+      Valor = paste0(n_si, " (", round(pct, 1), "%)")
+    ) %>%
+    pivot_wider(names_from = Genero, values_from = Valor) %>%
+    arrange(ciudad, Categoria)
+}
+
+tabla_long <- bind_rows(
+  tabla_indicador_global("tiene_licencia", "Posee licencia"),
+  tabla_indicador_global("tiene_auto",     "Posee auto"),
+  tabla_indicador_global("tiene_moto",     "Posee motocicleta")
+)
 
 # -----------------------------
-# Exportar a Excel
+# 4) Separar por ciudad para exportar como antes
+# -----------------------------
+tabla_cali     <- tabla_long %>% filter(ciudad == "Cali") %>% select(-ciudad)
+tabla_medellin <- tabla_long %>% filter(ciudad == "Medellín") %>% select(-ciudad)
+
+# -----------------------------
+# 5) Exportar a Excel
 # -----------------------------
 wb <- createWorkbook()
 
@@ -112,9 +117,12 @@ writeData(wb, "Medellín", tabla_medellin)
 
 saveWorkbook(wb, out_xlsx, overwrite = TRUE)
 
-message(
-  "Listo ✅\n",
-  "Archivo Excel generado en:\n",
-  out_xlsx
-)
+message("Listo ✅\nArchivo Excel generado en:\n", out_xlsx)
 
+# -----------------------------
+# 6) Chequeos rápidos (recomendados)
+# -----------------------------
+# Denominadores globales por variable y género
+# denom_global("tiene_licencia")
+# denom_global("tiene_auto")
+# denom_global("tiene_moto")

@@ -103,65 +103,90 @@ write_csv(resumen_general, file.path(out_dir, "tabla_resumen_general_ciudad.csv"
 write_csv(resumen_genero,  file.path(out_dir, "tabla_resumen_por_genero_ciudad.csv"))
 
 # ============================================================
-# 6) FIGURA 1 — Media y Mediana por género y ciudad (FUENTE XXL)
+# 6) FIGURA 1 — Promedio (barra) + Mediana (línea punteada) por género y ciudad
 # ============================================================
-df_mm <- resumen_genero %>%
+
+# ============================================================
+# 6) FIGURA 1 — Promedio (barra) + Mediana (línea blanca punteada)
+# ============================================================
+
+df_fig1 <- resumen_genero %>%
   dplyr::select(ciudad, genero_2, promedio, mediana) %>%
-  pivot_longer(
-    cols = c(promedio, mediana),
-    names_to = "estadistico",
-    values_to = "minutos"
-  ) %>%
   mutate(
-    estadistico = recode(estadistico,
-                         promedio = "Promedio",
-                         mediana  = "Mediana")
+    genero_2 = fct_relevel(genero_2, "Hombre", "Mujer"),
+    ciudad   = factor(ciudad, levels = c("Cali", "Medellín"))
   )
 
-colores_estad <- c(
-  "Promedio" = "#1F3A5F",
-  "Mediana"  = "#4A90C2"
-)
+bar_width  <- 0.70
+line_width <- bar_width * 0.70
 
 tema_fig1 <- theme_minimal(base_size = 22) +
   theme(
     plot.title  = element_text(size = 34, face = "bold"),
     strip.text  = element_text(size = 26, face = "bold"),
-    legend.text = element_text(size = 22),
     axis.text   = element_text(size = 22),
     axis.title  = element_text(size = 24),
     plot.margin = margin(14, 20, 14, 20),
-    legend.position = "top"
+    legend.position = "none"
   )
 
-p_mm <- ggplot(df_mm, aes(x = genero_2, y = minutos, fill = estadistico)) +
-  geom_col(position = position_dodge(width = 0.75), width = 0.7) +
+p_fig1 <- ggplot(df_fig1, aes(x = genero_2, y = promedio, fill = genero_2)) +
+  
+  # Barra = PROMEDIO
+  geom_col(width = bar_width) +
+  
+  # Etiqueta del promedio
   geom_text(
-    aes(label = round(minutos, 1)),
-    position = position_dodge(width = 0.75),
+    aes(label = round(promedio, 1)),
     vjust = -0.35,
     size = 7,
-    fontface = "bold"
+    fontface = "bold",
+    color = "black"
   ) +
+  
+  # Línea blanca punteada = MEDIANA
+  geom_segment(
+    aes(
+      x    = as.numeric(genero_2) - (line_width / 2),
+      xend = as.numeric(genero_2) + (line_width / 2),
+      y    = mediana,
+      yend = mediana
+    ),
+    inherit.aes = FALSE,
+    linetype = "dashed",
+    linewidth = 1.3,
+    color = "white"
+  ) +
+  
+  # Etiqueta explicativa de la mediana (una por panel)
+  geom_text(
+    data = df_fig1 %>% group_by(ciudad) %>% slice(1),
+    aes(x = 2, y = max(promedio) * 0.92, label = "— —  Mediana"),
+    inherit.aes = FALSE,
+    color = "white",
+    size = 6,
+    hjust = 1
+  ) +
+  
   facet_wrap(~ ciudad) +
-  scale_fill_manual(values = colores_estad) +
+  scale_fill_manual(values = colores_genero) +
   labs(
     x = NULL,
     y = "Minutos",
-    title = "Tiempo total de movilidad por género",
-    fill = NULL
+    title = "Tiempo total de movilidad por género"
   ) +
   tema_fig1 +
   coord_cartesian(clip = "off")
 
 ggsave(
-  filename = file.path(out_dir, "fig_1_media_mediana_por_genero_ciudad.png"),
-  plot = p_mm,
+  filename = file.path(out_dir, "fig_1_promedio_barra_mediana_linea_blanca.png"),
+  plot = p_fig1,
   width = 16,
   height = 8,
   dpi = 320,
   device = ragg::agg_png
 )
+
 
 # ============================================================
 # 7) FIGURA 2 — Distribución densidad + P75 y P90
