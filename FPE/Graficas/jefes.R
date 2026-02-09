@@ -5,6 +5,7 @@
 library(tidyverse)
 library(readxl)
 library(forcats)
+library(stringr)
 
 # -----------------------------
 # 1) Rutas
@@ -36,7 +37,8 @@ tema_grande <- theme_minimal(base_size = 17) +
     strip.text    = element_text(size = 18, face = "bold"),
     legend.text   = element_text(size = 16),
     legend.title  = element_text(size = 16),
-    axis.text     = element_text(size = 16)
+    axis.text     = element_text(size = 16),
+    axis.title    = element_text(size = 17)
   )
 
 # -----------------------------
@@ -73,25 +75,24 @@ prep_min <- function(path_xlsx, ciudad_label) {
   
   df %>%
     transmute(
-      ciudad   = ciudad_label,
-      p40      = as.character(p40),
-      p8       = as.character(p8)
+      ciudad = ciudad_label,
+      p40    = as.character(p40),
+      p8     = str_squish(as.character(p8))
     ) %>%
     mutate(
       genero_2 = case_when(
         p40 == "Hombre" ~ "Hombre",
         p40 == "Mujer"  ~ "Mujer",
         TRUE            ~ NA_character_
-      ),
-      p8 = stringr::str_squish(p8)
+      )
     ) %>%
     filter(!is.na(genero_2), !is.na(p8))
 }
 
-cali <- prep_min(input_cali, "Cali")
-med  <- prep_min(input_med,  "Medellín")
-
-datos <- bind_rows(cali, med) %>%
+datos <- bind_rows(
+  prep_min(input_cali, "Cali"),
+  prep_min(input_med,  "Medellín")
+) %>%
   mutate(
     genero_2 = fct_relevel(genero_2, "Hombre", "Mujer"),
     ciudad   = factor(ciudad, levels = c("Cali", "Medellín"))
@@ -103,15 +104,14 @@ datos <- bind_rows(cali, med) %>%
 datos_jefes <- datos %>%
   filter(
     (genero_2 == "Hombre" & p8 %in% p8_hombre) |
-      (genero_2 == "Mujer"  & p8 %in% p8_mujer)
+      (genero_2 == "Mujer" & p8 %in% p8_mujer)
   )
 
 # -----------------------------
-# Helper: color de texto basado en el HEX real del fill
+# Helper: color de texto según luminancia del HEX
 # (oscuro => blanco, claro => negro)
 # -----------------------------
 texto_color_por_fill <- function(fill_hex) {
-  # calcula luminancia aproximada (0=oscuro, 1=claro)
   hex <- gsub("#", "", fill_hex)
   r <- strtoi(substr(hex, 1, 2), 16L) / 255
   g <- strtoi(substr(hex, 3, 4), 16L) / 255
@@ -120,106 +120,82 @@ texto_color_por_fill <- function(fill_hex) {
   ifelse(lum < 0.55, "white", "black")
 }
 
-# -----------------------------
-# 6) Torta TOTAL (Cali + Medellín)
-# -----------------------------
-df_pie_total <- datos_jefes %>%
-  count(genero_2) %>%
-  mutate(
-    porcentaje = 100 * n / sum(n),
-    label = paste0(round(porcentaje, 1), "%"),
-    fill_hex = colores_genero[as.character(genero_2)],
-    label_color = texto_color_por_fill(fill_hex)
+# ============================================================
+# FUNCIÓN: Torta por ciudad (SIN facet) + label grande
+# ============================================================
+hacer_torta_jefes <- function(df_ciudad, ciudad_nombre, out_dir) {
+  
+  df_pie <- df_ciudad %>%
+    count(genero_2) %>%
+    mutate(
+      porcentaje  = 100 * n / sum(n),
+      label       = paste0(round(porcentaje, 1), "%"),
+      fill_hex    = colores_genero[as.character(genero_2)],
+      label_color = texto_color_por_fill(fill_hex)
+    )
+  
+  p_pie <- ggplot(df_pie, aes(x = "", y = porcentaje, fill = genero_2)) +
+    geom_col(width = 1, color = "white") +
+    coord_polar(theta = "y") +
+    geom_text(
+      aes(label = label, color = label_color),
+      position = position_stack(vjust = 0.5),
+      size = 6.6,              # 👈 MÁS GRANDE
+      fontface = "bold",
+      show.legend = FALSE
+    ) +
+    scale_fill_manual(values = colores_genero) +
+    scale_color_identity() +
+    labs(
+      title = paste0("Jefes(as) de hogar (definición por p8) — ", ciudad_nombre),
+      fill = NULL
+    ) +
+    tema_grande +
+    theme(
+      axis.title = element_blank(),
+      axis.text  = element_blank(),
+      panel.grid = element_blank(),
+      legend.position = "top"
+    )
+  
+  out_png <- file.path(out_dir, paste0("fig_pie_jefes_hogar_por_genero_", ciudad_nombre, ".png"))
+  
+  ggsave(
+    filename = out_png,
+    plot = p_pie,
+    width = 9.5, height = 7.2, dpi = 300
   )
+  
+  message("✔ Listo jefes(as): ", ciudad_nombre, "\n- ", out_png)
+  
+  invisible(list(df = df_pie, plot = p_pie, file = out_png))
+}
 
-p_pie_total <- ggplot(df_pie_total, aes(x = "", y = porcentaje, fill = genero_2)) +
-  geom_col(width = 1, color = "white") +
-  coord_polar(theta = "y") +
-  geom_text(
-    aes(label = label, color = label_color),
-    position = position_stack(vjust = 0.5),
-    size = 6.4,
-    fontface = "bold",
-    show.legend = FALSE
-  ) +
-  scale_fill_manual(values = colores_genero) +
-  scale_color_identity() +
-  labs(
-    title = "Jefes(as) de hogar (definición por p8) — Distribución por género",
-    fill = NULL
-  ) +
-  tema_grande +
-  theme(
-    axis.title = element_blank(),
-    axis.text  = element_blank(),
-    panel.grid = element_blank(),
-    legend.position = "top"
-  )
+# ============================================================
+# EJECUCIÓN: Cali y Medellín por separado (SIN facet)
+# ============================================================
+jefes_cali <- datos_jefes %>% filter(ciudad == "Cali")
+jefes_med  <- datos_jefes %>% filter(ciudad == "Medellín")
 
-ggsave(
-  filename = file.path(out_dir, "fig_pie_jefes_hogar_por_genero_total.png"),
-  plot = p_pie_total,
-  width = 9.5, height = 7.2, dpi = 300
-)
+hacer_torta_jefes(jefes_cali, "Cali", out_dir)
+hacer_torta_jefes(jefes_med,  "Medellin", out_dir)
 
-# -----------------------------
-# 7) Torta POR CIUDAD (facet)
-# -----------------------------
-df_pie_ciudad <- datos_jefes %>%
-  count(ciudad, genero_2) %>%
-  group_by(ciudad) %>%
-  mutate(
-    porcentaje = 100 * n / sum(n),
-    label = paste0(round(porcentaje, 1), "%"),
-    fill_hex = colores_genero[as.character(genero_2)],
-    label_color = texto_color_por_fill(fill_hex)
-  ) %>%
-  ungroup()
-
-p_pie_ciudad <- ggplot(df_pie_ciudad, aes(x = "", y = porcentaje, fill = genero_2)) +
-  geom_col(width = 1, color = "white") +
-  coord_polar(theta = "y") +
-  geom_text(
-    aes(label = label, color = label_color),
-    position = position_stack(vjust = 0.5),
-    size = 6.0,
-    fontface = "bold",
-    show.legend = FALSE
-  ) +
-  facet_wrap(~ ciudad) +
-  scale_fill_manual(values = colores_genero) +
-  scale_color_identity() +
-  labs(
-    title = "Jefes(as) de hogar (definición por p8) — Por ciudad y género",
-    fill = NULL
-  ) +
-  tema_grande +
-  theme(
-    axis.title = element_blank(),
-    axis.text  = element_blank(),
-    panel.grid = element_blank(),
-    legend.position = "top"
-  )
-
-ggsave(
-  filename = file.path(out_dir, "fig_pie_jefes_hogar_por_genero_por_ciudad.png"),
-  plot = p_pie_ciudad,
-  width = 13.5, height = 7.4, dpi = 300
-)
-
-# -----------------------------
-# 8) Tabla check
-# -----------------------------
+# ============================================================
+# TABLA CHECK (por ciudad y género)
+# ============================================================
 tabla_check <- datos_jefes %>%
   count(ciudad, genero_2) %>%
   arrange(ciudad, genero_2)
 
 write_csv(tabla_check, file.path(out_dir, "tabla_check_jefes_hogar_conteos.csv"))
 
+# -----------------------------
+# Mensaje final
+# -----------------------------
 message(
-  "Listo. Guardé:\n",
-  "- fig_pie_jefes_hogar_por_genero_total.png\n",
-  "- fig_pie_jefes_hogar_por_genero_por_ciudad.png\n",
+  "✅ Listo. Guardé:\n",
+  "- fig_pie_jefes_hogar_por_genero_Cali.png\n",
+  "- fig_pie_jefes_hogar_por_genero_Medellin.png\n",
   "- tabla_check_jefes_hogar_conteos.csv\n",
   "En: ", out_dir
 )

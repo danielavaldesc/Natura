@@ -43,15 +43,15 @@ colores_cuidado <- c(
 # -----------------------------
 # 3.1) Tema grande (CLAVE)
 # -----------------------------
-tema_grande <- theme_minimal(base_size = 15) +
+tema_grande <- theme_minimal(base_size = 17) +
   theme(
-    plot.title    = element_text(size = 20, face = "bold"),
-    plot.subtitle = element_text(size = 15),
-    strip.text    = element_text(size = 15, face = "bold"),
-    axis.text     = element_text(size = 13),
-    axis.title    = element_text(size = 14),
-    legend.text   = element_text(size = 13),
-    legend.title  = element_text(size = 14)
+    plot.title    = element_text(size = 24, face = "bold"),
+    plot.subtitle = element_text(size = 17),
+    strip.text    = element_text(size = 17, face = "bold"),
+    axis.text     = element_text(size = 16),
+    axis.title    = element_text(size = 17),
+    legend.text   = element_text(size = 16),
+    legend.title  = element_text(size = 17)
   )
 
 # -----------------------------
@@ -113,132 +113,142 @@ datos <- datos %>%
   )
 
 # ============================================================
-# TABLAS
+# FUNCIÓN: Exporta tablas + figuras por ciudad (SIN facet)
 # ============================================================
-denom <- datos %>%
-  count(ciudad, genero, name = "total_genero_ciudad")
-
-num <- datos %>%
-  filter(!is.na(cuidado_tipo)) %>%
-  count(ciudad, genero, cuidado_tipo, name = "n_cuidado")
-
-tabla_pct_del_total <- num %>%
-  left_join(denom, by = c("ciudad", "genero")) %>%
-  mutate(pct_del_total_genero = 100 * n_cuidado / total_genero_ciudad)
-
-tabla_zoom <- datos %>%
-  filter(!is.na(cuidado_tipo)) %>%
-  count(ciudad, cuidado_tipo, genero, name = "n") %>%
-  group_by(ciudad, cuidado_tipo) %>%
-  mutate(pct_dentro_cuidado = 100 * n / sum(n)) %>%
-  ungroup()
-
-# -----------------------------
-# 6) Exportar Excel
-# -----------------------------
-out_xlsx <- file.path(out_dir, "tablas_cuidado_por_ciudad.xlsx")
-wb <- createWorkbook()
-
-addWorksheet(wb, "Pct_del_total_genero")
-writeData(wb, "Pct_del_total_genero", tabla_pct_del_total)
-
-addWorksheet(wb, "Zoom_dentro_cuidado")
-writeData(wb, "Zoom_dentro_cuidado", tabla_zoom)
-
-saveWorkbook(wb, out_xlsx, overwrite = TRUE)
-
-# ============================================================
-# GRÁFICO A — % del total por género
-# ============================================================
-p_A <- ggplot(tabla_pct_del_total,
-              aes(x = genero, y = pct_del_total_genero, fill = cuidado_tipo)) +
-  geom_col(position = position_dodge(width = 0.7), width = 0.65) +
-  geom_text(
-    aes(label = paste0(round(pct_del_total_genero, 1), "%")),
-    position = position_dodge(width = 0.7),
-    vjust = -0.4,
-    size = 4.5
-  ) +
-  facet_wrap(~ ciudad) +
-  scale_fill_manual(values = colores_cuidado) +
-  labs(
-    title = "Trabajo de cuidado como % del total de hombres y mujeres",
-    subtitle = "Base: total de personas en cada género (por ciudad)",
-    x = NULL, y = "Porcentaje (%)",
-    fill = NULL
-  ) +
-  tema_grande +
-  theme(legend.position = "top")
-
-ggsave(
-  filename = file.path(out_dir, "fig_A_pct_del_total_genero_por_ciudad.png"),
-  plot = p_A,
-  width = 13.5, height = 7, dpi = 300
-)
-
-# ============================================================
-# GRÁFICO B — Zoom dentro del cuidado (100%)
-# ============================================================
-
-p_B <- ggplot(
-  tabla_zoom,
-  aes(
-    x = cuidado_tipo,
-    y = pct_dentro_cuidado / 100,
-    fill = genero
+procesar_ciudad <- function(df_ciudad, ciudad_nombre, out_dir) {
+  
+  # -----------------------------
+  # TABLAS
+  # -----------------------------
+  denom <- df_ciudad %>%
+    count(genero, name = "total_genero")
+  
+  num <- df_ciudad %>%
+    filter(!is.na(cuidado_tipo)) %>%
+    count(genero, cuidado_tipo, name = "n_cuidado")
+  
+  tabla_pct <- num %>%
+    left_join(denom, by = "genero") %>%
+    mutate(pct_del_total_genero = 100 * n_cuidado / total_genero)
+  
+  tabla_zoom <- df_ciudad %>%
+    filter(!is.na(cuidado_tipo)) %>%
+    count(cuidado_tipo, genero, name = "n") %>%
+    group_by(cuidado_tipo) %>%
+    mutate(pct_dentro_cuidado = 100 * n / sum(n)) %>%
+    ungroup()
+  
+  # -----------------------------
+  # EXPORTAR EXCEL (uno por ciudad)
+  # -----------------------------
+  out_xlsx <- file.path(out_dir, paste0("tablas_cuidado_", ciudad_nombre, ".xlsx"))
+  wb <- createWorkbook()
+  
+  addWorksheet(wb, "Pct_del_total_genero")
+  writeData(wb, "Pct_del_total_genero", tabla_pct)
+  
+  addWorksheet(wb, "Zoom_dentro_cuidado")
+  writeData(wb, "Zoom_dentro_cuidado", tabla_zoom)
+  
+  saveWorkbook(wb, out_xlsx, overwrite = TRUE)
+  
+  # ============================================================
+  # GRÁFICO A — % del total por género (por ciudad)
+  # ============================================================
+  p_A <- ggplot(tabla_pct,
+                aes(x = genero, y = pct_del_total_genero, fill = cuidado_tipo)) +
+    geom_col(position = position_dodge(width = 0.7), width = 0.65) +
+    geom_text(
+      aes(label = paste0(round(pct_del_total_genero, 1), "%")),
+      position = position_dodge(width = 0.7),
+      vjust = -0.4,
+      size = 6
+    ) +
+    scale_fill_manual(values = colores_cuidado) +
+    labs(
+      title = paste("Trabajo de cuidado como % del total –", ciudad_nombre),
+      subtitle = "Base: total de personas por género",
+      x = NULL,
+      y = "Porcentaje (%)",
+      fill = NULL
+    ) +
+    tema_grande +
+    theme(legend.position = "top")
+  
+  ggsave(
+    filename = file.path(out_dir, paste0("fig_A_pct_total_", ciudad_nombre, ".png")),
+    plot = p_A,
+    width = 10, height = 7, dpi = 300
   )
-) +
-  geom_col(width = 0.7, color = "white") +
-  geom_text(
-    aes(
-      label = paste0(round(pct_dentro_cuidado, 1), "%"),
-      color = genero            # 👈 clave: color por género
-    ),
-    position = position_stack(vjust = 0.5),
-    size = 4.8,
-    fontface = "bold",
-    show.legend = FALSE
+  
+  # ============================================================
+  # GRÁFICO B — Zoom dentro del cuidado (100%) (por ciudad)
+  # ============================================================
+  # Nota: aquí mantenemos el texto por género contrastado.
+  # Hombre (azul oscuro) -> texto blanco / Mujer (azul claro) -> texto negro
+  p_B <- ggplot(
+    tabla_zoom,
+    aes(x = cuidado_tipo, y = pct_dentro_cuidado / 100, fill = genero)
   ) +
-  facet_wrap(~ ciudad) +
-  scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(values = colores_genero) +
-  scale_color_manual(          # 👈 colores del TEXTO
-    values = c(
-      "Hombre" = "white",       # azul oscuro → texto blanco
-      "Mujer"  = "black"        # azul claro → texto negro
+    geom_col(width = 0.7, color = "white") +
+    geom_text(
+      aes(
+        label = paste0(round(pct_dentro_cuidado, 1), "%"),
+        color = genero
+      ),
+      position = position_stack(vjust = 0.5),
+      size = 6,
+      fontface = "bold",
+      show.legend = FALSE
+    ) +
+    scale_y_continuous(labels = scales::percent) +
+    scale_fill_manual(values = colores_genero) +
+    scale_color_manual(
+      values = c(
+        "Hombre" = "white",
+        "Mujer"  = "black"
+      )
+    ) +
+    labs(
+      title = paste("Zoom: composición por género dentro del trabajo de cuidado –", ciudad_nombre),
+      subtitle = "Base: personas clasificadas en cada tipo de cuidado",
+      x = NULL,
+      y = NULL,
+      fill = NULL
+    ) +
+    tema_grande +
+    theme(
+      legend.position = "top",
+      axis.text.y = element_blank(),
+      panel.grid.major.y = element_blank()
     )
-  ) +
-  labs(
-    title = "Zoom: composición por género dentro del trabajo de cuidado",
-    subtitle = "Base: personas clasificadas en cada tipo de cuidado (por ciudad)",
-    x = NULL,
-    y = NULL,
-    fill = NULL
-  ) +
-  tema_grande +
-  theme(
-    legend.position = "top",
-    axis.text.y = element_blank(),
-    panel.grid.major.y = element_blank()
+  
+  ggsave(
+    filename = file.path(out_dir, paste0("fig_B_zoom_", ciudad_nombre, ".png")),
+    plot = p_B,
+    width = 10, height = 7, dpi = 300
   )
+  
+  message(
+    "Listo ✅ Ciudad: ", ciudad_nombre,
+    "\n- Excel: ", out_xlsx,
+    "\n- Fig A: ", file.path(out_dir, paste0("fig_A_pct_total_", ciudad_nombre, ".png")),
+    "\n- Fig B: ", file.path(out_dir, paste0("fig_B_zoom_", ciudad_nombre, ".png"))
+  )
+  
+  invisible(list(tabla_pct = tabla_pct, tabla_zoom = tabla_zoom, excel = out_xlsx, figA = p_A, figB = p_B))
+}
 
-ggsave(
-  filename = file.path(out_dir, "fig_B_zoom_genero_dentro_cuidado_por_ciudad.png"),
-  plot = p_B,
-  width = 13.5,
-  height = 7,
-  dpi = 300
-)
+# ============================================================
+# EJECUCIÓN: Cali y Medellín por separado
+# ============================================================
+datos_cali <- datos %>% filter(ciudad == "Cali")
+datos_med  <- datos %>% filter(ciudad == "Medellín")
+
+procesar_ciudad(datos_cali, "Cali", out_dir)
+procesar_ciudad(datos_med,  "Medellin", out_dir)
 
 # -----------------------------
-# 7) Mensaje final
+# Mensaje final
 # -----------------------------
-message(
-  "Listo ✅ Salidas guardadas en:\n", out_dir,
-  "\n\nExcel:",
-  "\n- ", out_xlsx,
-  "\n\nFiguras:",
-  "\n- fig_A_pct_del_total_genero_por_ciudad.png",
-  "\n- fig_B_zoom_genero_dentro_cuidado_por_ciudad.png"
-)
-
+message("✅ Todo guardado en: ", out_dir)

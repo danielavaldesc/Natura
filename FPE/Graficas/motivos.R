@@ -151,6 +151,7 @@ ggsave(
 # ============================================================
 # FIGURA 2 — motivo_x_genero_x_estrato (100% por estrato)
 # ============================================================
+
 dfB <- cargar_motivos(sheet_B, requiere_estrato = TRUE)
 
 orden_estrato <- c("Rural", "1", "2", "3", "4", "5", "6")
@@ -160,6 +161,7 @@ dfB <- dfB %>%
   ) %>%
   filter(!is.na(estrato))
 
+# Ordenar motivos por % promedio (para lectura)
 motivo_order_B <- dfB %>%
   group_by(motivo) %>%
   summarise(pct_prom = mean(pct, na.rm = TRUE), .groups = "drop") %>%
@@ -168,32 +170,69 @@ motivo_order_B <- dfB %>%
 
 dfB <- dfB %>% mutate(motivo = factor(motivo, levels = motivo_order_B))
 
+# Paleta según # motivos
 n_motivos_B <- nlevels(dfB$motivo)
 paleta_motivos_B <- paleta_base_motivos[seq_len(min(n_motivos_B, length(paleta_base_motivos)))]
 names(paleta_motivos_B) <- levels(dfB$motivo)[seq_along(paleta_motivos_B)]
 
-p2 <- ggplot(dfB, aes(x = estrato, y = pct, fill = motivo)) +
-  geom_col(width = 0.72, color = "grey92", linewidth = 0.15) +
-  facet_grid(genero_2 ~ ciudad) +  # ✅ ciudad separada
-  scale_fill_manual(values = paleta_motivos_B) +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  labs(
-    x = "Estrato",
-    y = "Porcentaje de viajes",
-    title = "Distribución porcentual de motivos de viaje por estrato",
-    subtitle = "Barras 100% apiladas (por género y ciudad)",
-    fill = NULL
-  ) +
-  tema_grande +
+# ------------------------------------------------------------
+# Tema (grande) por si quieres extra grande acá
+# Usa tema_grande si ya lo tienes definido arriba.
+# ------------------------------------------------------------
+tema_fig2 <- theme_minimal(base_size = 18) +
   theme(
-    legend.position = "right"
+    plot.title    = element_text(size = 28, face = "bold"),
+    plot.subtitle = element_text(size = 18),
+    strip.text    = element_text(size = 18, face = "bold"),
+    axis.text     = element_text(size = 16),
+    axis.title    = element_text(size = 18),
+    legend.text   = element_text(size = 14),
+    legend.title  = element_text(size = 15)
   )
 
-ggsave(
-  filename = file.path(out_dir, "fig_2_motivos_100_por_estrato_genero_ciudad.png"),
-  plot = p2,
-  width = 14, height = 7.2, dpi = 300
-)
+# ============================================================
+# FUNCIÓN: guardar figura por ciudad (SIN facet por ciudad)
+# ============================================================
+hacer_fig2_ciudad <- function(dfB, ciudad_nombre, out_dir) {
+  
+  df_ciudad <- dfB %>% filter(ciudad == ciudad_nombre)
+  
+  p2 <- ggplot(df_ciudad, aes(x = estrato, y = pct, fill = motivo)) +
+    geom_col(width = 0.72, color = "grey92", linewidth = 0.15) +
+    facet_grid(genero_2 ~ .) +  # ✅ solo género (ciudad ya filtrada)
+    scale_fill_manual(values = paleta_motivos_B) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    labs(
+      x = "Estrato",
+      y = "Porcentaje de viajes",
+      title = paste0("Distribución porcentual de motivos de viaje por estrato — ", ciudad_nombre),
+      subtitle = "Barras 100% apiladas (por género)",
+      fill = NULL
+    ) +
+    tema_fig2 +   # si prefieres, cámbialo por: tema_grande
+    theme(
+      legend.position = "right"
+    )
+  
+  out_png <- file.path(out_dir, paste0("fig_2_motivos_100_por_estrato_genero_", ciudad_nombre, ".png"))
+  
+  ggsave(
+    filename = out_png,
+    plot = p2,
+    width = 14, height = 7.2, dpi = 300
+  )
+  
+  message("✔ Figura 2 lista: ", ciudad_nombre, "\n- ", out_png)
+  
+  invisible(list(df = df_ciudad, plot = p2, file = out_png))
+}
+
+# ============================================================
+# Ejecutar por ciudad (SIN facet por ciudad)
+# ============================================================
+hacer_fig2_ciudad(dfB, "Cali", out_dir)
+hacer_fig2_ciudad(dfB, "Medellín", out_dir)
+
 
 # ============================================================
 # FIGURA 3 — tiempo_x_motivo_x_genero
@@ -219,47 +258,82 @@ dfC <- dfC_raw %>%
   ) %>%
   filter(!is.na(ciudad), !is.na(motivo), !is.na(genero_2), !is.na(mediana), !is.na(p25), !is.na(p75))
 
-# Ordenar motivos por mediana promedio (para lectura)
+# ------------------------------------------------------------
+# Ordenar motivos por "centro" promedio (usa mediana interna, pero no lo dice en labels)
+# ------------------------------------------------------------
 motivo_order_C <- dfC %>%
   group_by(motivo) %>%
-  summarise(mediana_prom = mean(mediana, na.rm = TRUE), .groups = "drop") %>%
-  arrange(desc(mediana_prom)) %>%
+  summarise(centro_prom = mean(mediana, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(centro_prom)) %>%
   pull(motivo)
 
 dfC <- dfC %>% mutate(motivo = factor(motivo, levels = motivo_order_C))
 
 pd <- position_dodge(width = 0.6)
 
-p3 <- ggplot(dfC, aes(x = motivo, y = mediana, color = genero_2)) +
-  geom_linerange(
-    aes(ymin = p25, ymax = p75),
-    position = pd,
-    linewidth = 1.2
-  ) +
-  geom_point(
-    position = pd,
-    size = 3
-  ) +
-  facet_wrap(~ ciudad, ncol = 1) +  
-  scale_color_manual(values = colores_genero) +
-  labs(
-    x = NULL,
-    y = "Tiempo de viaje (minutos)",
-    title = "Tiempo de viaje por motivo y género (mediana y rango intercuartílico)",
-    subtitle = "Punto = mediana; línea = P25–P75 (por ciudad)",
-    color = NULL
-  ) +
-  tema_grande +
+# ------------------------------------------------------------
+# Tema más grande (por si tu tema_grande global no está gigante)
+# Usa tu tema_grande si ya lo tienes definido arriba; si no, este ayuda.
+# ------------------------------------------------------------
+tema_fig3 <- theme_minimal(base_size = 20) +
   theme(
-    legend.position = "top",              
-    axis.text.x = element_text(angle = 35, hjust = 1)
+    plot.title    = element_text(size = 30, face = "bold"),
+    plot.subtitle = element_text(size = 20),
+    axis.text     = element_text(size = 18),
+    axis.title    = element_text(size = 20),
+    legend.text   = element_text(size = 18),
+    legend.title  = element_text(size = 18)
   )
 
-ggsave(
-  filename = file.path(out_dir, "fig_3_tiempo_motivo_genero_ciudad_mediana_IQR.png"),
-  plot = p3,
-  width = 14, height = 10, dpi = 300
-)
+# ============================================================
+# FUNCIÓN: guardar figura por ciudad (SIN facet)
+# ============================================================
+hacer_fig3_ciudad <- function(dfC, ciudad_nombre, out_dir) {
+  
+  df_ciudad <- dfC %>% filter(ciudad == ciudad_nombre)
+  
+  p3 <- ggplot(df_ciudad, aes(x = motivo, y = mediana, color = genero_2)) +
+    geom_linerange(
+      aes(ymin = p25, ymax = p75),
+      position = pd,
+      linewidth = 1.4
+    ) +
+    geom_point(
+      position = pd,
+      size = 4.2
+    ) +
+    scale_color_manual(values = colores_genero) +
+    labs(
+      x = NULL,
+      y = "Tiempo de viaje (minutos)",
+      title = paste0("Tiempo de viaje por motivo y género — ", ciudad_nombre),
+      subtitle = "Punto = valor central; línea = P25–P75",
+      color = NULL
+    ) +
+    tema_fig3 +        # si prefieres, cambia por: tema_grande
+    theme(
+      legend.position = "top",
+      axis.text.x = element_text(angle = 35, hjust = 1)
+    )
+  
+  out_png <- file.path(out_dir, paste0("fig_3_tiempo_motivo_genero_", ciudad_nombre, ".png"))
+  
+  ggsave(
+    filename = out_png,
+    plot = p3,
+    width = 14, height = 10, dpi = 300
+  )
+  
+  message("✔ Figura 3 lista: ", ciudad_nombre, "\n- ", out_png)
+  
+  invisible(list(df = df_ciudad, plot = p3, file = out_png))
+}
+
+# ============================================================
+# Ejecutar por ciudad (SIN facet)
+# ============================================================
+hacer_fig3_ciudad(dfC, "Cali", out_dir)
+hacer_fig3_ciudad(dfC, "Medellín", out_dir)
 
 
 # -----------------------------

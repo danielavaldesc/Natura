@@ -13,6 +13,9 @@ library(stringr)
 input_cali <- "C:/Users/danie/OneDrive/Escritorio/Natura/FPE/Input/BD Base Movilidad Cali 2025_V01_Cliente.xlsx"
 input_med  <- "C:/Users/danie/OneDrive/Escritorio/Natura/FPE/Input/BD Base Movilidad Medellin 2025_Cliente.xlsx"
 
+stopifnot(file.exists(input_cali))
+stopifnot(file.exists(input_med))
+
 out_dir <- file.path("C:/Users/danie/OneDrive/Escritorio/Natura/FPE/Graficas/trabaja")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -34,7 +37,8 @@ tema_grande <- theme_minimal(base_size = 17) +
     strip.text    = element_text(size = 18, face = "bold"),
     legend.text   = element_text(size = 16),
     legend.title  = element_text(size = 16),
-    axis.text     = element_text(size = 16)
+    axis.text     = element_text(size = 16),
+    axis.title    = element_text(size = 17)
   )
 
 # -----------------------------
@@ -53,23 +57,22 @@ prep_p7 <- function(path_xlsx, ciudad_label) {
     transmute(
       ciudad = ciudad_label,
       p40 = as.character(p40),
-      p7  = as.character(p7)
+      p7  = str_squish(as.character(p7))
     ) %>%
     mutate(
       genero_2 = case_when(
         p40 == "Hombre" ~ "Hombre",
         p40 == "Mujer"  ~ "Mujer",
         TRUE            ~ NA_character_
-      ),
-      p7 = str_squish(p7)
+      )
     ) %>%
     filter(!is.na(genero_2), !is.na(p7))
 }
 
-cali <- prep_p7(input_cali, "Cali")
-med  <- prep_p7(input_med,  "Medellín")
-
-datos <- bind_rows(cali, med) %>%
+datos <- bind_rows(
+  prep_p7(input_cali, "Cali"),
+  prep_p7(input_med,  "Medellín")
+) %>%
   mutate(
     genero_2 = fct_relevel(genero_2, "Hombre", "Mujer"),
     ciudad   = factor(ciudad, levels = c("Cali", "Medellín"))
@@ -83,95 +86,112 @@ trabajan <- datos %>%
   filter(p7 == "2" | str_to_lower(p7) == "trabajar")
 
 # ============================================================
-# Torta TOTAL (Cali + Medellín)
+# FUNCIÓN: Figura torta por ciudad (SIN facet) + labels grandes
 # ============================================================
-df_pie_trab_total <- trabajan %>%
-  count(genero_2) %>%
+hacer_torta_trabajan <- function(df_ciudad, ciudad_nombre, out_dir) {
+  
+  df_pie <- df_ciudad %>%
+    count(genero_2) %>%
+    mutate(
+      porcentaje = 100 * n / sum(n),
+      label = paste0(genero_2, "\n", round(porcentaje, 1), "%"),
+      # Texto blanco si el segmento es oscuro (Mujer)
+      label_color = if_else(genero_2 == "Mujer", "white", "black")
+    )
+  
+  p_pie <- ggplot(df_pie, aes(x = "", y = porcentaje, fill = genero_2)) +
+    geom_col(width = 1, color = "white") +
+    coord_polar(theta = "y") +
+    geom_text(
+      aes(label = label, color = label_color),
+      position = position_stack(vjust = 0.5),
+      size = 6.2,              # 👈 MÁS GRANDE
+      fontface = "bold",
+      show.legend = FALSE
+    ) +
+    scale_fill_manual(values = colores_genero) +
+    scale_color_identity() +
+    labs(
+      title = paste0("Personas que trabajan (p7) — ", ciudad_nombre),
+      fill = NULL
+    ) +
+    tema_grande +
+    theme(
+      axis.title = element_blank(),
+      axis.text  = element_blank(),
+      panel.grid = element_blank(),
+      legend.position = "top"
+    )
+  
+  out_png <- file.path(out_dir, paste0("fig_pie_trabajan_por_genero_", ciudad_nombre, ".png"))
+  
+  ggsave(
+    filename = out_png,
+    plot = p_pie,
+    width = 9.5, height = 7.2, dpi = 300
+  )
+  
+  message("✔ Listo torta: ", ciudad_nombre, "\n- ", out_png)
+  
+  invisible(list(df = df_pie, plot = p_pie, file = out_png))
+}
+
+# ============================================================
+# EJECUCIÓN: Cali y Medellín por separado (SIN facet)
+# ============================================================
+trabajan_cali <- trabajan %>% filter(ciudad == "Cali")
+trabajan_med  <- trabajan %>% filter(ciudad == "Medellín")
+
+hacer_torta_trabajan(trabajan_cali, "Cali", out_dir)
+hacer_torta_trabajan(trabajan_med,  "Medellin", out_dir)
+
+# -----------------------------
+# Mensaje final
+# -----------------------------
+message("✅ Todo guardado en: ", out_dir)
+
+# ============================================================
+# % que trabajan por género SOBRE el TOTAL de la muestra
+# ============================================================
+
+# Total muestra (global y por ciudad)
+totales_global <- datos %>%
+  summarise(N_total = n())
+
+totales_ciudad <- datos %>%
+  count(ciudad, name = "N_total")
+
+# Conteo de quienes trabajan (global y por ciudad) por género
+trabajan_global <- trabajan %>%
+  count(genero_2, name = "N_trabajan") %>%
   mutate(
-    porcentaje = 100 * n / sum(n),
-    label = paste0(genero_2, "\n", round(porcentaje, 1), "%"),
-    # ✅ Texto blanco si el color del segmento es oscuro (aquí: Mujer)
-    label_color = if_else(genero_2 == "Mujer", "white", "black")
+    pct_sobre_total_muestra = 100 * N_trabajan / totales_global$N_total
   )
 
-p_pie_trab_total <- ggplot(df_pie_trab_total, aes(x = "", y = porcentaje, fill = genero_2)) +
-  geom_col(width = 1, color = "white") +
-  coord_polar(theta = "y") +
-  geom_text(
-    aes(label = label, color = label_color),
-    position = position_stack(vjust = 0.5),
-    size = 6.2,
-    fontface = "bold",
-    show.legend = FALSE
-  ) +
-  scale_fill_manual(values = colores_genero) +
-  scale_color_identity() +
-  labs(
-    title = "Personas que trabajan (p7) — Distribución por género",
-    fill = NULL
-  ) +
-  tema_grande +
-  theme(
-    axis.title = element_blank(),
-    axis.text  = element_blank(),
-    panel.grid = element_blank(),
-    legend.position = "top"
+trabajan_ciudad <- trabajan %>%
+  count(ciudad, genero_2, name = "N_trabajan") %>%
+  left_join(totales_ciudad, by = "ciudad") %>%
+  mutate(
+    pct_sobre_total_muestra_ciudad = 100 * N_trabajan / N_total
   )
 
-ggsave(
-  filename = file.path(out_dir, "fig_pie_trabajan_por_genero_total.png"),
-  plot = p_pie_trab_total,
-  width = 9.5, height = 7.2, dpi = 300
-)
+# (Opcional) ver tablas en consola
+print(trabajan_global)
+print(trabajan_ciudad)
 
 # ============================================================
-# Por ciudad
+# Si además quieres AMBAS cosas:
+# A) composición entre quienes trabajan (lo que ya tenías)
+# B) prevalencia sobre el total de la muestra (nuevo)
 # ============================================================
-df_pie_trab_ciudad <- trabajan %>%
-  count(ciudad, genero_2) %>%
+
+trabajan_ciudad_ambos <- trabajan %>%
+  count(ciudad, genero_2, name = "N_trabajan") %>%
   group_by(ciudad) %>%
-  mutate(
-    porcentaje = 100 * n / sum(n),
-    label = paste0(genero_2, "\n", round(porcentaje, 1), "%"),
-    # ✅ Texto blanco si el color del segmento es oscuro (aquí: Mujer)
-    label_color = if_else(genero_2 == "Mujer", "white", "black")
-  ) %>%
-  ungroup()
+  mutate(pct_dentro_de_trabajan_ciudad = 100 * N_trabajan / sum(N_trabajan)) %>%
+  ungroup() %>%
+  left_join(totales_ciudad, by = "ciudad") %>%
+  mutate(pct_sobre_total_muestra_ciudad = 100 * N_trabajan / N_total)
 
-p_pie_trab_ciudad <- ggplot(df_pie_trab_ciudad, aes(x = "", y = porcentaje, fill = genero_2)) +
-  geom_col(width = 1, color = "white") +
-  coord_polar(theta = "y") +
-  geom_text(
-    aes(label = label, color = label_color),
-    position = position_stack(vjust = 0.5),
-    size = 5.8,
-    fontface = "bold",
-    show.legend = FALSE
-  ) +
-  facet_wrap(~ ciudad) +
-  scale_fill_manual(values = colores_genero) +
-  scale_color_identity() +
-  labs(
-    title = "Personas que trabajan (p7) — Por ciudad y género",
-    fill = NULL
-  ) +
-  tema_grande +
-  theme(
-    axis.title = element_blank(),
-    axis.text  = element_blank(),
-    panel.grid = element_blank(),
-    legend.position = "top"
-  )
+print(trabajan_ciudad_ambos)
 
-ggsave(
-  filename = file.path(out_dir, "fig_pie_trabajan_por_genero_por_ciudad.png"),
-  plot = p_pie_trab_ciudad,
-  width = 14, height = 7.4, dpi = 300
-)
-
-message(
-  "Listo. Guardé:\n",
-  "- fig_pie_trabajan_por_genero_total.png\n",
-  "- fig_pie_trabajan_por_genero_por_ciudad.png\n",
-  "En: ", out_dir
-)
