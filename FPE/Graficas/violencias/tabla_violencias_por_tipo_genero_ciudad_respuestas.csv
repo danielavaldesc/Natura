@@ -1,0 +1,92 @@
+ciudad,genero,tipo,respuesta,n,denom_total,pct_sobre_genero
+Cali,Hombre,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",Sí,15,212,7.0754716981132075
+Cali,Hombre,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",No,195,212,91.98113207547169
+Cali,Hombre,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",NA,2,212,0.9433962264150944
+Cali,Hombre,Miradas morbosas al cuerpo,Sí,15,212,7.0754716981132075
+Cali,Hombre,Miradas morbosas al cuerpo,No,195,212,91.98113207547169
+Cali,Hombre,Miradas morbosas al cuerpo,NA,2,212,0.9433962264150944
+Cali,Hombre,Piropos obscenos u ofensivos (sexual),Sí,11,212,5.188679245283019
+Cali,Hombre,Piropos obscenos u ofensivos (sexual),No,199,212,93.86792452830188
+Cali,Hombre,Piropos obscenos u ofensivos (sexual),NA,2,212,0.9433962264150944
+Cali,Hombre,Se le recargaron sin consentimiento (incomodidad),Sí,30,212,14.150943396226415
+Cali,Hombre,Se le recargaron sin consentimiento (incomodidad),No,180,212,84.90566037735849
+Cali,Hombre,Se le recargaron sin consentimiento (incomodidad),NA,2,212,0.9433962264150944
+Cali,Hombre,Le hicieron sentir miedo,Sí,26,212,12.264150943396226
+Cali,Hombre,Le hicieron sentir miedo,No,183,212,86.32075471698113
+Cali,Hombre,Le hicieron sentir miedo,NA,3,212,1.4150943396226414
+Cali,Hombre,Tocamientos / manoseo sin consentimiento,Sí,5,212,2.358490566037736
+Cali,Hombre,Tocamientos / manoseo sin consentimiento,No,205,212,96.69811320754717
+Cali,Hombre,Tocamientos / manoseo sin consentimiento,NA,2,212,0.9433962264150944
+Cali,Hombre,Robo / atraco,Sí,35,212,16.50943396226415
+Cali,Hombre,Robo / atraco,No,173,212,81.60377358490567
+Cali,Hombre,Robo / atraco,NA,4,212,1.8867924528301887
+Cali,Hombre,Otro (99),Sí,3,212,1.4150943396226414
+Cali,Hombre,Otro (99),No,199,212,93.86792452830188
+Cali,Hombre,Otro (99),NA,10,212,4.716981132075472
+Cali,Mujer,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",Sí,19,221,8.597285067873303
+Cali,Mujer,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",No,197,221,89.14027149321267
+Cali,Mujer,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",NA,5,221,2.262443438914027
+Cali,Mujer,Miradas morbosas al cuerpo,Sí,60,221,27.149321266968325
+Cali,Mujer,Miradas morbosas al cuerpo,No,158,221,71.49321266968326
+Cali,Mujer,Miradas morbosas al cuerpo,NA,3,221,1.3574660633484164
+Cali,Mujer,Piropos obscenos u ofensivos (sexual),Sí,47,221,21.266968325791854
+Cali,Mujer,Piropos obscenos u ofensivos (sexual),No,171,221,77.37556561085972
+Cali,Mujer,Piropos obscenos u ofensivos (sexual),NA,3,221,1.3574660633484164
+Cali,Mujer,Se le recargaron sin consentimiento (incomodidad),Sí,60,221,27.149321266968325
+Cali,Mujer,Se le recargaron sin consentimiento (incomodidad),No,159,221,71.94570135746606
+Cali,Mujer,Se le recargaron sin consentimiento (incomodidad),NA,2,221,0.9049773755656109
+Cali,Mujer,Le hicieron sentir miedo,Sí,77,221,34.841628959276015
+Cali,Mujer,Le hicieron sentir miedo,No,142,221,64.25339366515837
+Cali,Mujer,Le hicieron sentir miedo,NA,2,221,0.9049773755656109
+Cali,Mujer,Tocamientos / manoseo sin consentimiento,Sí,21,221,9.502262443438914
+Cali,Mujer,Tocamientos / manoseo sin consentimiento,No,198,221,89.59276018099547
+Cali,Mujer,Tocamientos / manoseo sin consentimiento,NA,2,221,0.9049773755656109
+Cali,Mujer,Robo / atraco,Sí,38,221,17.194570135746606
+Cali,Mujer,Robo / atraco,No,180,221,81.44796380090497
+Cali,Mujer,Robo / atraco,NA,3,221,1.3574660633484164
+Cali,Mujer,Otro (99),Sí,3,221,1.3574660633484164
+Cali,Mujer,Otro (99),No,206,221,93.21266968325791
+Cali,Mujer,Otro (99),NA,12,221,5.429864253393665
+Medellín,Hombre,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",Sí,12,188,6.382978723404255
+Medellín,Hombre,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",No,174,188,92.55319148936171
+Medellín,Hombre,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",NA,2,188,1.0638297872340425
+Medellín,Hombre,Miradas morbosas al cuerpo,Sí,3,188,1.5957446808510638
+Medellín,Hombre,Miradas morbosas al cuerpo,No,183,188,97.34042553191489
+Medellín,Hombre,Miradas morbosas al cuerpo,NA,2,188,1.0638297872340425
+Medellín,Hombre,Piropos obscenos u ofensivos (sexual),Sí,3,188,1.5957446808510638
+Medellín,Hombre,Piropos obscenos u ofensivos (sexual),No,183,188,97.34042553191489
+Medellín,Hombre,Piropos obscenos u ofensivos (sexual),NA,2,188,1.0638297872340425
+Medellín,Hombre,Se le recargaron sin consentimiento (incomodidad),Sí,24,188,12.76595744680851
+Medellín,Hombre,Se le recargaron sin consentimiento (incomodidad),No,163,188,86.70212765957447
+Medellín,Hombre,Se le recargaron sin consentimiento (incomodidad),NA,1,188,0.5319148936170213
+Medellín,Hombre,Le hicieron sentir miedo,Sí,11,188,5.851063829787234
+Medellín,Hombre,Le hicieron sentir miedo,No,175,188,93.08510638297872
+Medellín,Hombre,Le hicieron sentir miedo,NA,2,188,1.0638297872340425
+Medellín,Hombre,Tocamientos / manoseo sin consentimiento,Sí,3,188,1.5957446808510638
+Medellín,Hombre,Tocamientos / manoseo sin consentimiento,No,182,188,96.80851063829788
+Medellín,Hombre,Tocamientos / manoseo sin consentimiento,NA,3,188,1.5957446808510638
+Medellín,Hombre,Robo / atraco,Sí,27,188,14.361702127659575
+Medellín,Hombre,Robo / atraco,No,159,188,84.57446808510639
+Medellín,Hombre,Robo / atraco,NA,2,188,1.0638297872340425
+Medellín,Hombre,Otro (99),No,181,188,96.27659574468085
+Medellín,Hombre,Otro (99),NA,7,188,3.723404255319149
+Medellín,Mujer,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",Sí,22,210,10.476190476190476
+Medellín,Mujer,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",No,187,210,89.04761904761905
+Medellín,Mujer,"Comentarios incómodos / discriminación (aspecto, piel, habla, identidad, etc.)",NA,1,210,0.47619047619047616
+Medellín,Mujer,Miradas morbosas al cuerpo,Sí,48,210,22.857142857142858
+Medellín,Mujer,Miradas morbosas al cuerpo,No,161,210,76.66666666666667
+Medellín,Mujer,Miradas morbosas al cuerpo,NA,1,210,0.47619047619047616
+Medellín,Mujer,Piropos obscenos u ofensivos (sexual),Sí,44,210,20.952380952380953
+Medellín,Mujer,Piropos obscenos u ofensivos (sexual),No,164,210,78.0952380952381
+Medellín,Mujer,Piropos obscenos u ofensivos (sexual),NA,2,210,0.9523809523809523
+Medellín,Mujer,Se le recargaron sin consentimiento (incomodidad),Sí,50,210,23.80952380952381
+Medellín,Mujer,Se le recargaron sin consentimiento (incomodidad),No,160,210,76.19047619047619
+Medellín,Mujer,Le hicieron sentir miedo,Sí,45,210,21.428571428571427
+Medellín,Mujer,Le hicieron sentir miedo,No,165,210,78.57142857142857
+Medellín,Mujer,Tocamientos / manoseo sin consentimiento,Sí,13,210,6.190476190476191
+Medellín,Mujer,Tocamientos / manoseo sin consentimiento,No,197,210,93.80952380952381
+Medellín,Mujer,Robo / atraco,Sí,16,210,7.619047619047619
+Medellín,Mujer,Robo / atraco,No,194,210,92.38095238095238
+Medellín,Mujer,Otro (99),Sí,1,210,0.47619047619047616
+Medellín,Mujer,Otro (99),No,205,210,97.61904761904762
+Medellín,Mujer,Otro (99),NA,4,210,1.9047619047619047

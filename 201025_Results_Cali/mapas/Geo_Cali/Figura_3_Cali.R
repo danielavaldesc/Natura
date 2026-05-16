@@ -210,8 +210,33 @@ colores_medio <- c(
   "Moto privada"        = "#5BA97A",
   "Taxi / Plataforma"   = "#5A9BB0",
   "Transporte informal" = "#9E77A3",
-  "Transporte publico"  = "#6C78A8"
+  "Transporte público"  = "#6C78A8"
 )
+
+norm_medio <- function(x){
+  x0 <- stringr::str_squish(stringr::str_to_lower(as.character(x)))
+  x0 <- stringr::str_replace_all(x0, "\\s+", " ")
+  
+  dplyr::case_when(
+    stringr::str_detect(x0, "auto|carro|veh[ií]culo particular") ~ "Auto privado",
+    stringr::str_detect(x0, "activo|camin|caminar|bici|bicic|peat") ~ "Modo activo",
+    stringr::str_detect(x0, "moto(?!taxi)") ~ "Moto privada",
+    
+    # informal ANTES que taxi/público para no “capturarlo” mal
+    stringr::str_detect(x0, "informal|pirata|mototaxi|colectivo|guala|jeep|buseta\\s*informal|camioneta\\s*informal") ~ "Transporte informal",
+    
+    stringr::str_detect(x0, "taxi|uber|didi|cabif|plataforma") ~ "Taxi / Plataforma",
+    stringr::str_detect(x0, "public|p[uú]blic|mio|bus|brt|trole|masivo|troncal") ~ "Transporte público",
+    TRUE ~ NA_character_
+  )
+}
+
+data <- data %>%
+  mutate(
+    medio = norm_medio(medio),
+    medio = factor(medio, levels = names(colores_medio))
+  ) %>%
+  filter(!is.na(medio))
 
 # Alias por si viene con tilde en la base
 if ("Transporte publico" %in% names(colores_medio) && ("Transporte público" %in% cols_pie_all)) {

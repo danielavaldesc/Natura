@@ -111,12 +111,28 @@ colores_medio <- c(
   "Transporte público"  = "#6C78A8"
 )
 
+# normalizador de etiquetas (tolera tildes, mayúsculas y variantes)
+norm_medio <- function(x){
+  x0 <- str_squish(str_to_lower(as.character(x)))
+  x0 <- str_replace_all(x0, "\\s+", " ")
+  
+  dplyr::case_when(
+    str_detect(x0, "auto") ~ "Auto privado",
+    str_detect(x0, "activo|camin|bici|peat") ~ "Modo activo",
+    str_detect(x0, "moto") ~ "Moto privada",
+    str_detect(x0, "taxi|uber|didi|cabif|plataforma") ~ "Taxi / Plataforma",
+    str_detect(x0, "informal") ~ "Transporte informal",
+    str_detect(x0, "public|p[uú]blic|sitva|metro|metrocable|tranv") ~ "Transporte público",
+    TRUE ~ NA_character_
+  )
+}
+
 data <- data %>%
   mutate(
-    medio = str_squish(as.character(medio)),
+    medio = norm_medio(medio),
     medio = factor(medio, levels = names(colores_medio))
   ) %>%
-  filter(!is.na(medio))   # <- si venían medios fuera del set, se caen
+  filter(!is.na(medio))
 
 table_data_mode <- data %>%
   mutate(Comuna = as.integer(Comuna)) %>%
@@ -124,7 +140,7 @@ table_data_mode <- data %>%
   count(cuadrante, medio) %>%
   pivot_wider(names_from = medio, values_from = n, values_fill = 0)
 
-# columnas a dibujar (en el ORDEN de la paleta)
+# columnas a dibujar
 cols_pie <- intersect(names(colores_medio), names(table_data_mode))
 
 # posiciones de pies

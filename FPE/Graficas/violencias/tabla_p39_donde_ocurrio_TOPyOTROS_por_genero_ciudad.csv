@@ -1,0 +1,39 @@
+ciudad,genero,lugar2,n,denom_total,pct
+Cali,Hombre,En la ruta escolar,1,212,0.4716981132075472
+Cali,Hombre,En los paraderos o estaciones,21,212,9.90566037735849
+Cali,Hombre,En un bus de transporte intermunicipal,1,212,0.4716981132075472
+Cali,Hombre,En un motoratón,2,212,0.9433962264150944
+Cali,Hombre,En un vehículo de aplicación (Uber/Cabify),2,212,0.9433962264150944
+Cali,Hombre,En uno de los alimentadores del metro,3,212,1.4150943396226414
+Cali,Hombre,Entre el paradero y la casa,17,212,8.018867924528301
+Cali,Hombre,Mientras caminaba,18,212,8.49056603773585
+Cali,Hombre,"Otro, cuál?",6,212,2.830188679245283
+Cali,Hombre,Otros lugares,3,212,1.4150943396226414
+Cali,Mujer,En los paraderos o estaciones,51,221,23.076923076923077
+Cali,Mujer,En un bus de transporte intermunicipal,1,221,0.45248868778280543
+Cali,Mujer,En un vehículo de aplicación (Uber/Cabify),1,221,0.45248868778280543
+Cali,Mujer,En uno de los alimentadores del metro,3,221,1.3574660633484164
+Cali,Mujer,Entre el paradero y la casa,24,221,10.85972850678733
+Cali,Mujer,Mientras caminaba,27,221,12.217194570135746
+Cali,Mujer,"Otro, cuál?",4,221,1.8099547511312217
+Cali,Mujer,Otros lugares,2,221,0.9049773755656109
+Medellín,Hombre,En el bus del trabajo,1,188,0.5319148936170213
+Medellín,Hombre,En el metro,20,188,10.638297872340425
+Medellín,Hombre,En el tranvía,2,188,1.0638297872340425
+Medellín,Hombre,En los paraderos o estaciones,3,188,1.5957446808510638
+Medellín,Hombre,En un bus de transporte intermunicipal,2,188,1.0638297872340425
+Medellín,Hombre,En una buseta o colectivo,8,188,4.25531914893617
+Medellín,Hombre,En uno de los alimentadores del metro,1,188,0.5319148936170213
+Medellín,Hombre,Mientras caminaba,7,188,3.723404255319149
+Medellín,Hombre,"Otro, cuál?",3,188,1.5957446808510638
+Medellín,Hombre,Otros lugares,3,188,1.5957446808510638
+Medellín,Mujer,En el bus del trabajo,4,210,1.9047619047619047
+Medellín,Mujer,En el metro,30,210,14.285714285714286
+Medellín,Mujer,En los paraderos o estaciones,11,210,5.238095238095238
+Medellín,Mujer,En un bus de transporte intermunicipal,4,210,1.9047619047619047
+Medellín,Mujer,En un vehículo de aplicación (Uber/Cabify),1,210,0.47619047619047616
+Medellín,Mujer,En una buseta o colectivo,11,210,5.238095238095238
+Medellín,Mujer,En uno de los alimentadores del metro,1,210,0.47619047619047616
+Medellín,Mujer,Mientras caminaba,20,210,9.523809523809524
+Medellín,Mujer,"Otro, cuál?",5,210,2.380952380952381
+Medellín,Mujer,Otros lugares,3,210,1.4285714285714284

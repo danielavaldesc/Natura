@@ -138,9 +138,25 @@ colores_medio <- c(
   "Auto privado"        = "#C86A62",
   "Modo activo"         = "#D4B86A",
   "Moto privada"        = "#5BA97A",
-  "Taxi / Plataforma"   = "#5A9BB0"
+  "Taxi / Plataforma"   = "#5A9BB0",
+  "Transporte público"  = "#6C78A8"
 )
 
+# normalizador de etiquetas (tolera tildes, mayúsculas y variantes)
+norm_medio <- function(x){
+  x0 <- str_squish(str_to_lower(as.character(x)))
+  x0 <- str_replace_all(x0, "\\s+", " ")
+  
+  dplyr::case_when(
+    str_detect(x0, "auto") ~ "Auto privado",
+    str_detect(x0, "activo|camin|bici|peat") ~ "Modo activo",
+    str_detect(x0, "moto") ~ "Moto privada",
+    str_detect(x0, "taxi|uber|didi|cabif|plataforma") ~ "Taxi / Plataforma",
+    str_detect(x0, "informal") ~ "Transporte informal",
+    str_detect(x0, "public|p[uú]blic|sitva|metro|metrocable|tranv") ~ "Transporte público",
+    TRUE ~ NA_character_
+  )
+}
 # fuerza UTF-8 en los nombres (keys) de la paleta
 colores_medio <- setNames(unname(colores_medio), u8(names(colores_medio)))
 cols_pie      <- u8(names(colores_medio))  # orden fijo + UTF-8

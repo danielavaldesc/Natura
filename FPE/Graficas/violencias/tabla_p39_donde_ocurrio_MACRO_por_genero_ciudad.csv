@@ -1,0 +1,21 @@
+ciudad,genero,grupo,n,denom_total,pct
+Cali,Hombre,Espacio público / a pie,57,212,26.88679245283019
+Cali,Hombre,Otros lugares,7,212,3.30188679245283
+Cali,Hombre,Sistema Metro,3,212,1.4150943396226414
+Cali,Hombre,Transporte público (no metro),1,212,0.4716981132075472
+Cali,Hombre,Vehículos individuales,6,212,2.830188679245283
+Cali,Mujer,Espacio público / a pie,102,221,46.15384615384615
+Cali,Mujer,Otros lugares,5,221,2.262443438914027
+Cali,Mujer,Sistema Metro,3,221,1.3574660633484164
+Cali,Mujer,Transporte público (no metro),1,221,0.45248868778280543
+Cali,Mujer,Vehículos individuales,2,221,0.9049773755656109
+Medellín,Hombre,Espacio público / a pie,10,188,5.319148936170213
+Medellín,Hombre,Otros lugares,3,188,1.5957446808510638
+Medellín,Hombre,Sistema Metro,23,188,12.23404255319149
+Medellín,Hombre,Transporte público (no metro),11,188,5.851063829787234
+Medellín,Hombre,Vehículos individuales,3,188,1.5957446808510638
+Medellín,Mujer,Espacio público / a pie,31,210,14.761904761904763
+Medellín,Mujer,Otros lugares,5,210,2.380952380952381
+Medellín,Mujer,Sistema Metro,33,210,15.714285714285715
+Medellín,Mujer,Transporte público (no metro),19,210,9.047619047619047
+Medellín,Mujer,Vehículos individuales,2,210,0.9523809523809523

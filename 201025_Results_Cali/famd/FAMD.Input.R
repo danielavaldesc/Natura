@@ -111,7 +111,7 @@ dataset <- dataset %>%
 
 # Tabla de resumen NAs
 na_summary <- dataset %>%
-  summarise(across(everything(),
+  dplyr::summarise(across(everything(),
                    ~ sum(is.na(.)),
                    .names = "na_{.col}")) %>%
   tidyr::pivot_longer(everything(),

@@ -149,12 +149,13 @@ map_final <- ggplot() +
     drop = FALSE
   ) +
   
-  geom_sf(
-    data = corredores_clip,
-    color = azul_corredor,
-    linewidth = 0.35,
-    alpha = 0.55
-  ) +
+  # ❌ CORREDORES ELIMINADOS (líneas azules)
+  # geom_sf(
+  #   data = corredores_clip,
+  #   color = azul_corredor,
+  #   linewidth = 0.35,
+  #   alpha = 0.55
+  # ) +
   
   geom_sf(
     data = mio_pts,
