@@ -1,0 +1,16 @@
+id_participante,ocupacion,edad,modo_habitual,grupo_focal,ubicacion_grupo
+P4M,Profesional / residente en Jamundí/contratista alcaldía,35 años,"Carro  plataforma Uber y Didi, moto plataforma y MIO (ocasional)",GF_2_Cali,Variado
+P1M,Oficios varios,51 años,"Caminata, moto (para trayectos con carga), Didi moto (ocasional), pirata, MIO",GF_4_Cali,Oriente
+P2M,Trabajo de cuidado no remunerado en su hogar,41 años,"Caminar, MIO, pirata, Didi (ocasional)
+
+",GF_4_Cali,Oriente
+P3M,Trabajo de cuidado no remunerado en su hogar,20 años,"Jeep, MIO, buseta Montebello, Didi carro/moto, pirata (ocasional)",GF_4_Cali,Oriente
+P4M,Cuidadora y lideresa,50 años,"MIO, alimentador, jeep, plataforma (ocasional)",GF_4_Cali,Oriente
+P5M,"Lideresa, cuidadora, comerciante",65 años,"Caminata, taxi, MIO, Didi moto",GF_4_Cali,Oriente
+P6M,"Madre, lideresa comunitaria, acompañante de mujeres",36 años,"Caminata, pirata, MIO, Didi carro",GF_4_Cali,Oriente
+P7M,Trabajo de cuidado no remunerado en su hogar,35 años,"Pirata, MIO, Yango (carro y moto)",GF_4_Cali,Oriente
+P8M,Trabajo de cuidado no remunerado en su hogar,65 años,"Caminar, pirata, MIO.",GF_4_Cali,Oriente
+P9M,Trabajo de cuidado no remunerado en su hogar,37 años,"Caminar, jeep, pirata, MIO, taxi",GF_4_Cali,Oriente
+P7M,Estudiante universitaria y trabajo de cuidado,25 años,"Caminata, jeep, moto, taxi, MIO (ocasional).",GF_5_Cali,Ladera
+P8M,Lideresa comunitaria;  emprendedora,60 años,"Caminata, MIO, jeep, moto, taxi, Yango.",GF_5_Cali,Ladera
+P9M,Trabajadora de cuidado remunerada,54 años,MIO (alimentador y troncal).,GF_5_Cali,Ladera

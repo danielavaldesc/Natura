@@ -30,7 +30,11 @@ paleta <- c(
   azul_2 = "#08284e",
   azul_3 = "#104a91",
   celeste = "#82ceec",
-  gris = "#eceef0"
+  celeste_suave = "#cdeefa",
+  gris = "#eceef0",
+  fondo = "#ffffff",
+  mujeres = "#8686b9",
+  hombres = "#5f82f9"
 )
 
 # -----------------------------------------------------------------------------
@@ -44,7 +48,15 @@ dataset <- read_excel(input_path)
 # -----------------------------------------------------------------------------
 
 dataset <- dataset %>%
-  dplyr::select(-dplyr::starts_with("p28_importancia_"))
+  dplyr::select(-dplyr::starts_with("p28_importancia_")) %>%
+  mutate(
+    genero_agregado = case_when(
+      p40 == "Hombre" ~ "Hombre",
+      p40 == "Mujer" ~ "Mujer",
+      p40 %in% c("Otras identidades de género", "Prefiere no responder") ~ "Otros / No responde",
+      TRUE ~ NA_character_
+    )
+  )
 
 dataset_limpio <- dataset %>%
   dplyr::mutate(
@@ -78,6 +90,38 @@ dataset_limpio <- dataset %>%
       as.character(p24) %in% c("5", "Totalmente satisfecho") ~ 5,
       TRUE ~ NA_real_
     ),
+    
+    dataset_limpio <- dataset_limpio %>%
+      mutate(
+        p23_agregado = case_when(
+          
+          p23 %in% c(
+            "A acompañar o llevar a alguien",
+            "A llevar y/o dejar algo",
+            "A realizar compras"
+          ) ~ "Viajes de cuidado",
+          
+          p23 == "A una cita médica, tomarse  examenes o reclamar medicamentos para usted mismo" ~
+            "Salud",
+          
+          p23 %in% c("Ir a trabajar", "A buscar trabajo") ~ "Trabajo",
+          p23 == "Ir a estudiar" ~ "Estudio",
+          
+          p23 == "A realizar algún trámite personal" ~ "Trámites",
+          
+          p23 %in% c(
+            "A realizar actividades físicas y/o deportivas (ir al gym, trotar, entrenar)",
+            "A realizar actividades recreativas y culturales (ir a cine, a un concierto, una presentación etc)",
+            "A asistir a alguna actividad de tipo religioso y/o de culto (la iglesia)"
+          ) ~ "Recreación y actividades personales",
+          
+          p23 == "A visitar a alguien (familiar o amigo)" ~ "Visitas sociales",
+          
+          p23 == "A otro asunto" ~ "Otro",
+          
+          TRUE ~ NA_character_
+        )
+      ),
     
     p24_label = factor(
       p24,
@@ -213,16 +257,6 @@ dataset_limpio <- dataset %>%
 
 font_family <- "Aptos"
 
-paleta <- c(
-  azul_1 = "#0d3a72",
-  azul_2 = "#08284e",
-  azul_3 = "#104a91",
-  celeste = "#82ceec",
-  celeste_suave = "#cdeefa",
-  gris = "#eceef0",
-  fondo = "#ffffff"
-)
-
 colores_satisfaccion <- c(
   "Alta satisfacción" = "#08284e",
   "Satisfacción media" = "#104a91",
@@ -232,6 +266,11 @@ colores_satisfaccion <- c(
 colores_importancia <- c(
   "#08284e", "#0d3a72", "#104a91", "#1b5a9e",
   "#2f6faf", "#328cc1", "#5fb7d9", "#82ceec", "#cdeefa"
+)
+
+colores_genero <- c(
+  "Mujer" = "#8686b9",
+  "Hombre" = "#5f82f9"
 )
 
 tema_natura <- theme_minimal(base_family = font_family) +
@@ -321,10 +360,7 @@ g_p24 <- dataset_limpio %>%
     size = 4
   ) +
   coord_flip() +
-  scale_fill_manual(
-    values = colores_satisfaccion,
-    name = NULL
-  ) +
+  scale_fill_manual(values = colores_satisfaccion) +
   scale_y_continuous(
     labels = scales::percent,
     limits = c(0, 1),
@@ -335,81 +371,110 @@ g_p24 <- dataset_limpio %>%
     x = NULL,
     y = "Porcentaje"
   ) +
-  tema_natura +
-  theme(
-    legend.position = "bottom"
-  )
+  tema_natura
 
 guardar_grafico(g_p24, "p24.png", 11, 6.5)
 
 # -----------------------------------------------------------------------------
-# 7. P25
+# 7. P25 POR SEXO
 # -----------------------------------------------------------------------------
 
 g_p25 <- dataset_limpio %>%
-  filter(p17 == "Transporte público (MIO)") %>%
-  select(p25, p25_1, p25_2, p25_3, p25_4) %>%
-  pivot_longer(everything(), values_to = "razon") %>%
-  filter(!is.na(razon), razon != "") %>%
-  count(razon, sort = TRUE) %>%
-  mutate(
-    pct = n / sum(n),
-    razon = wrap_txt(razon)
+  filter(
+    p17 == "Transporte público (MIO)",
+    genero_agregado %in% c("Mujer", "Hombre")
   ) %>%
-  ggplot(aes(x = fct_reorder(razon, pct), y = pct)) +
-  geom_col(fill = paleta["azul_1"], width = 0.68) +
+  select(genero_agregado, p25, p25_1, p25_2, p25_3, p25_4) %>%
+  pivot_longer(
+    cols = c(p25, p25_1, p25_2, p25_3, p25_4),
+    values_to = "razon"
+  ) %>%
+  filter(!is.na(razon), razon != "") %>%
+  count(genero_agregado, razon) %>%
+  group_by(genero_agregado) %>%
+  mutate(pct = n / sum(n)) %>%
+  ungroup() %>%
+  group_by(razon) %>%
+  mutate(total = sum(n)) %>%
+  ungroup() %>%
+  mutate(
+    razon = wrap_txt(razon),
+    razon = fct_reorder(razon, total)
+  ) %>%
+  ggplot(aes(x = razon, y = pct, fill = genero_agregado)) +
+  geom_col(
+    position = position_dodge(width = 0.75),
+    width = 0.62
+  ) +
   geom_text(
     aes(label = scales::percent(pct, 0.1)),
+    position = position_dodge(width = 0.75),
     hjust = -0.15,
     fontface = "bold",
-    size = 4,
+    size = 3.6,
     color = paleta["azul_2"]
   ) +
   coord_flip(clip = "off") +
+  scale_fill_manual(values = colores_genero) +
   scale_y_continuous(
     labels = scales::percent,
-    expand = expansion(mult = c(0, .15))
+    expand = expansion(mult = c(0, .25))
   ) +
   labs(
-    title = "Razones para usar el MIO",
+    title = "Razones para usar el MIO por sexo",
     y = "Porcentaje"
   ) +
   tema_natura
 
-guardar_grafico(g_p25, "p25.png", 11, 6.5)
+guardar_grafico(g_p25, "p25.png", 12, 7)
 
 # -----------------------------------------------------------------------------
-# 8. P26
+# 8. P26 POR SEXO
 # -----------------------------------------------------------------------------
 
 g_p26 <- dataset_limpio %>%
-  filter(p17 == "Transporte público (MIO)", !is.na(p26_agregado)) %>%
-  count(p26_agregado, sort = TRUE) %>%
-  mutate(
-    pct = n / sum(n),
-    p26_agregado = wrap_txt(p26_agregado)
+  filter(
+    p17 == "Transporte público (MIO)",
+    !is.na(p26_agregado),
+    genero_agregado %in% c("Mujer", "Hombre")
   ) %>%
-  ggplot(aes(x = fct_reorder(p26_agregado, pct), y = pct)) +
-  geom_col(fill = paleta["azul_2"], width = 0.68) +
+  count(genero_agregado, p26_agregado) %>%
+  group_by(genero_agregado) %>%
+  mutate(pct = n / sum(n)) %>%
+  ungroup() %>%
+  group_by(p26_agregado) %>%
+  mutate(total = sum(n)) %>%
+  ungroup() %>%
+  mutate(
+    p26_agregado = wrap_txt(p26_agregado),
+    p26_agregado = fct_reorder(p26_agregado, total)
+  ) %>%
+  ggplot(aes(x = p26_agregado, y = pct, fill = genero_agregado)) +
+  geom_col(
+    position = position_dodge(width = 0.75),
+    width = 0.62
+  ) +
   geom_text(
     aes(label = scales::percent(pct, 0.1)),
+    position = position_dodge(width = 0.75),
     hjust = -0.15,
     fontface = "bold",
-    size = 4,
+    size = 3.6,
     color = paleta["azul_2"]
   ) +
   coord_flip(clip = "off") +
+  scale_fill_manual(values = colores_genero) +
   scale_y_continuous(
     labels = scales::percent,
-    expand = expansion(mult = c(0, .15))
+    expand = expansion(mult = c(0, .25))
   ) +
   labs(
-    title = "Aspectos que menos gustan del MIO",
+    title = "Aspectos que menos gustan del MIO por sexo",
     y = "Porcentaje"
   ) +
   tema_natura
 
-guardar_grafico(g_p26, "p26.png", 11, 6.5)
+guardar_grafico(g_p26, "p26.png", 12, 7)
 
 # -----------------------------------------------------------------------------
 # 9. P27
@@ -514,3 +579,19 @@ g_p28 <- dataset_limpio %>%
   tema_natura
 
 guardar_grafico(g_p28, "p28.png", 11, 6.5)
+
+# -----------------------------------------------------------------------------
+# 11. P23
+# -----------------------------------------------------------------------------
+tabla_p23_mio <- dataset_limpio %>%
+  filter(p17 == "Transporte público (MIO)", !is.na(p23_agregado)) %>%
+  count(p23_agregado) %>%
+  mutate(
+    pct = n / sum(n)
+  ) %>%
+  arrange(desc(pct))
+
+tabla_p23_mio %>%
+  mutate(
+    pct = scales::percent(pct, accuracy = 0.1)
+  )

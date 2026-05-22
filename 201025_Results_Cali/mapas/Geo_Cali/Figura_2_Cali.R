@@ -176,7 +176,7 @@ if (length(cols_pie) == 0) stop("cols_pie quedó vacío: revisa 'medio' en la ba
 azul_lineas <- "#1F78B4"
 
 # -------------------------------------------------------------------
-# 8) MIO -> líneas punto-a-punto (kNN + MST) SIN puntos (copiado de Figura 5)
+# 8) MIO -> líneas punto-a-punto (kNN + MST) SIN puntos
 # -------------------------------------------------------------------
 mio_pts <- sf::st_read(ruta_pts_mio, quiet = TRUE)
 if (is.na(sf::st_crs(mio_pts))) sf::st_crs(mio_pts) <- crs_shape
@@ -231,7 +231,7 @@ mio_lines_4326 <- sf::st_transform(mio_lines_m, 4326)
 mio_lines_4326 <- sf::st_simplify(mio_lines_4326, dTolerance = 0.0005, preserveTopology = TRUE)
 
 # -------------------------------------------------------------------
-# 9) Pies -> transformar coords_zona (metros) a grados (igual que antes)
+# 9) Pies -> transformar coords_zona (metros) a grados
 # -------------------------------------------------------------------
 pies_sf_m  <- st_as_sf(df_counts, coords = c("long","lat"), crs = crs_shape, remove = FALSE)
 pies_4326  <- st_transform(pies_sf_m, 4326)
